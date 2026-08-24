@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
 import '../../../app/theme.dart';
+import '../../../core/widgets/lume_motion.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -96,37 +97,104 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              LinearProgressIndicator(
-                value: (_step + 1) / 3,
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(99),
-              ),
-              const SizedBox(height: 28),
-              Text(
-                titles[_step],
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: (_step + 1) / 3),
+                duration: lumeMotionDuration(
+                  context,
+                  const Duration(milliseconds: 280),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _description,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: LumeColors.textSecondary,
-                  height: 1.4,
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) => LinearProgressIndicator(
+                  value: value,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(99),
                 ),
               ),
               const SizedBox(height: 28),
-              if (_step == 0) _waterStep(),
-              if (_step == 1) _financeStep(),
-              if (_step == 2) _readyStep(),
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+              LumeAnimatedContent(
+                child: AnimatedSwitcher(
+                  duration: lumeMotionDuration(
+                    context,
+                    const Duration(milliseconds: 260),
+                  ),
+                  layoutBuilder: (currentChild, previousChildren) => Stack(
+                    alignment: Alignment.topLeft,
+                    children: <Widget>[...previousChildren, ?currentChild],
+                  ),
+                  transitionBuilder: lumePageTransition,
+                  child: SizedBox(
+                    key: ValueKey('intro-$_step'),
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          titles[_step],
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          _description,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: LumeColors.textSecondary,
+                                height: 1.4,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
+              ),
+              const SizedBox(height: 28),
+              LumeAnimatedContent(
+                child: AnimatedSwitcher(
+                  duration: lumeMotionDuration(
+                    context,
+                    const Duration(milliseconds: 260),
+                  ),
+                  layoutBuilder: (currentChild, previousChildren) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: <Widget>[...previousChildren, ?currentChild],
+                  ),
+                  transitionBuilder: lumePageTransition,
+                  child: KeyedSubtree(
+                    key: ValueKey('step-$_step'),
+                    child: switch (_step) {
+                      0 => _waterStep(),
+                      1 => _financeStep(),
+                      _ => _readyStep(),
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              LumeAnimatedContent(
+                child: AnimatedSwitcher(
+                  duration: lumeMotionDuration(
+                    context,
+                    const Duration(milliseconds: 180),
+                  ),
+                  layoutBuilder: (currentChild, previousChildren) => Stack(
+                    alignment: Alignment.topLeft,
+                    children: <Widget>[...previousChildren, ?currentChild],
+                  ),
+                  transitionBuilder: lumePageTransition,
+                  child: _error == null
+                      ? const SizedBox(key: ValueKey('no-error'))
+                      : SizedBox(
+                          key: const ValueKey('has-error'),
+                          width: double.infinity,
+                          child: Text(
+                            _error!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                ),
+              ),
               const Spacer(),
               SizedBox(
                 width: double.infinity,

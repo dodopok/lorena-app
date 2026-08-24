@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lume/core/theme/lume_theme.dart';
+import 'package:lume/core/widgets/lume_motion.dart';
 
 enum LumeDestination { today, calendar, wellbeing, finance, corner }
 
@@ -74,41 +75,63 @@ class _DestinationButton extends StatelessWidget {
   final bool selected;
   final VoidCallback onPressed;
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: selected,
-    container: true,
-    excludeSemantics: true,
-    label: '${item.$4}, aba${selected ? ' selecionada' : ''}',
-    child: InkWell(
-      onTap: onPressed,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: LumeSpacing.touchMinimum),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: LumeSpacing.sm),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                item.$3,
-                color: selected
-                    ? context.lumeColors.brand
-                    : context.lumeColors.textSecondary,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                item.$2,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: selected
-                      ? context.lumeColors.brand
-                      : context.lumeColors.textSecondary,
-                  fontWeight: selected ? FontWeight.w700 : null,
+  Widget build(BuildContext context) {
+    final motionDuration = lumeMotionDuration(
+      context,
+      const Duration(milliseconds: 180),
+    );
+    return Semantics(
+      button: true,
+      selected: selected,
+      container: true,
+      excludeSemantics: true,
+      label: '${item.$4}, aba${selected ? ' selecionada' : ''}',
+      child: InkWell(
+        onTap: onPressed,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: LumeSpacing.touchMinimum,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: LumeSpacing.sm),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: motionDuration,
+                  curve: Curves.easeOutCubic,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: selected ? LumeSpacing.sm : 0,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? context.lumeColors.brandSoft
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(LumeRadii.pill),
+                  ),
+                  child: Icon(
+                    item.$3,
+                    color: selected
+                        ? context.lumeColors.brand
+                        : context.lumeColors.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  item.$2,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: selected
+                        ? context.lumeColors.brand
+                        : context.lumeColors.textSecondary,
+                    fontWeight: selected ? FontWeight.w700 : null,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

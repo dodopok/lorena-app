@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lume/core/theme/lume_theme.dart';
 import 'package:lume/core/widgets/lume_card.dart';
+import 'package:lume/core/widgets/lume_motion.dart';
 
 class LumeProgressCard extends StatelessWidget {
   const LumeProgressCard({
@@ -28,6 +29,14 @@ class LumeProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final motionDuration = lumeMotionDuration(
+      context,
+      const Duration(milliseconds: 220),
+    );
+    final progressDuration = lumeMotionDuration(
+      context,
+      const Duration(milliseconds: 420),
+    );
     final safeMax = max != null && max! > 0 ? max! : null;
     final fraction = safeMax == null
         ? 0.0
@@ -50,25 +59,55 @@ class LumeProgressCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                Text(
-                  '$value $unit',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                SizedBox(
+                  width: 104,
+                  child: AnimatedSwitcher(
+                    duration: motionDuration,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    layoutBuilder: (currentChild, previousChildren) => Stack(
+                      alignment: Alignment.centerRight,
+                      children: <Widget>[...previousChildren, ?currentChild],
+                    ),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, .15),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    ),
+                    child: Align(
+                      key: ValueKey('$value $unit'),
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '$value $unit',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
             if (safeMax != null) ...[
               const SizedBox(height: LumeSpacing.md),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(LumeRadii.pill),
-                child: LinearProgressIndicator(
-                  value: fraction,
-                  minHeight: 10,
-                  backgroundColor: context.lumeColors.surface.withValues(
-                    alpha: .7,
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: fraction),
+                duration: progressDuration,
+                curve: Curves.easeOutCubic,
+                builder: (context, animatedFraction, child) => ClipRRect(
+                  borderRadius: BorderRadius.circular(LumeRadii.pill),
+                  child: LinearProgressIndicator(
+                    value: animatedFraction,
+                    minHeight: 10,
+                    backgroundColor: context.lumeColors.surface.withValues(
+                      alpha: .7,
+                    ),
+                    color: context.lumeColors.brandStrong,
                   ),
-                  color: context.lumeColors.brandStrong,
                 ),
               ),
             ],

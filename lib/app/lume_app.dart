@@ -10,6 +10,7 @@ import '../features/today/presentation/today_screen.dart';
 import '../features/wellbeing/presentation/wellbeing_screen.dart';
 import 'app_controller.dart';
 import '../core/biometrics/biometric_gateway.dart';
+import '../core/widgets/lume_motion.dart';
 import 'privacy_shield.dart';
 import 'theme.dart';
 
@@ -163,8 +164,29 @@ class _AppShellState extends State<AppShell> {
       AppDestination.finance => const FinanceScreen(),
       AppDestination.corner => const CornerScreen(),
     };
+    final motionDuration = lumeMotionDuration(
+      context,
+      const Duration(milliseconds: 280),
+    );
+    final reverseMotionDuration = lumeMotionDuration(
+      context,
+      const Duration(milliseconds: 180),
+    );
     return Scaffold(
-      body: page,
+      body: ClipRect(
+        child: AnimatedSwitcher(
+          duration: motionDuration,
+          reverseDuration: reverseMotionDuration,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          layoutBuilder: (currentChild, previousChildren) => Stack(
+            fit: StackFit.expand,
+            children: <Widget>[...previousChildren, ?currentChild],
+          ),
+          transitionBuilder: lumePageTransition,
+          child: KeyedSubtree(key: ValueKey(_destination), child: page),
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _destination.index,
         onDestinationSelected: (index) {
@@ -210,9 +232,33 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     body: Center(
-      child: Semantics(
-        label: 'Carregando Lume',
-        child: CircularProgressIndicator(),
+      child: LumeReveal(
+        child: Semantics(
+          label: 'Carregando Lume',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Icon(
+                  Icons.wb_sunny_outlined,
+                  size: 36,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const SizedBox.square(
+                dimension: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );

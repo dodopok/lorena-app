@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/widgets/lume_motion.dart';
 import 'theme.dart';
 
 class LumePage extends StatelessWidget {
@@ -65,7 +66,9 @@ class LumePage extends StatelessWidget {
           ),
           SliverPadding(
             padding: padding,
-            sliver: SliverToBoxAdapter(child: child),
+            sliver: SliverToBoxAdapter(
+              child: LumeReveal(child: LumeAnimatedContent(child: child)),
+            ),
           ),
         ],
       ),

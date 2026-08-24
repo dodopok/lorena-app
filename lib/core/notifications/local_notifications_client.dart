@@ -21,6 +21,8 @@ abstract interface class LumeLocalNotificationsClient {
   });
 
   Future<void> cancel(int id);
+
+  Future<void> cancelAll();
 }
 
 /// Production adapter for iOS local notifications.
@@ -117,4 +119,7 @@ class FlutterLocalNotificationsClient implements LumeLocalNotificationsClient {
 
   @override
   Future<void> cancel(int id) => _plugin.cancel(id);
+
+  @override
+  Future<void> cancelAll() => _plugin.cancelAll();
 }

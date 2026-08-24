@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../app/environment.dart';
 import '../../../app/lume_app.dart';
+import '../../../app/models.dart';
 import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
 
@@ -75,6 +76,13 @@ class SettingsScreen extends StatelessWidget {
                     );
                   }
                 },
+              ),
+              ListTile(
+                leading: const Icon(Icons.schedule_outlined),
+                title: const Text('Horários dos lembretes'),
+                subtitle: Text(_reminderSummary(settings.reminderPreferences)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _editReminders(context),
               ),
               SwitchListTile(
                 secondary: const Icon(Icons.notifications_none),
@@ -278,6 +286,129 @@ class SettingsScreen extends StatelessWidget {
     day.dispose();
   }
 
+  Future<void> _editReminders(BuildContext context) async {
+    final controller = AppScope.read(context);
+    final current = controller.settings.reminderPreferences;
+    final selectedWater = <String>{
+      ...(current.waterTimes.isEmpty
+          ? const ['10:00', '15:00', '20:00']
+          : current.waterTimes),
+    };
+    final selectedWeekdays = <int>{...current.exerciseWeekdays};
+    var gratitudeTime = current.gratitudeTime;
+    var exerciseTime = current.exerciseTime;
+    const waterOptions = ['08:00', '10:00', '12:00', '15:00', '18:00', '20:00'];
+    const weekdayLabels = {
+      1: 'Seg',
+      2: 'Ter',
+      3: 'Qua',
+      4: 'Qui',
+      5: 'Sex',
+      6: 'Sáb',
+      7: 'Dom',
+    };
+
+    await app_ui.showLumeSheet(
+      context,
+      title: 'Lembretes gentis',
+      child: StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Escolha só os momentos que ajudam. As notificações usam textos genéricos na tela bloqueada.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Text('Água', style: Theme.of(context).textTheme.titleSmall),
+            ...waterOptions.map(
+              (time) => CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: selectedWater.contains(time),
+                title: Text(time),
+                onChanged: (value) => setSheetState(() {
+                  if (value == true) {
+                    selectedWater.add(time);
+                  } else {
+                    selectedWater.remove(time);
+                  }
+                }),
+              ),
+            ),
+            const Divider(height: 24),
+            Text('Exercício', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 8,
+              children: weekdayLabels.entries
+                  .map(
+                    (entry) => FilterChip(
+                      label: Text(entry.value),
+                      selected: selectedWeekdays.contains(entry.key),
+                      onSelected: (value) => setSheetState(() {
+                        if (value) {
+                          selectedWeekdays.add(entry.key);
+                        } else {
+                          selectedWeekdays.remove(entry.key);
+                        }
+                      }),
+                    ),
+                  )
+                  .toList(),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Horário do exercício'),
+              trailing: Text(exerciseTime),
+              onTap: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: _timeOfDay(exerciseTime),
+                );
+                if (picked != null) {
+                  setSheetState(() => exerciseTime = _formatTime(picked));
+                }
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Lembrete de gratidão'),
+              trailing: Text(gratitudeTime),
+              onTap: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: _timeOfDay(gratitudeTime),
+                );
+                if (picked != null) {
+                  setSheetState(() => gratitudeTime = _formatTime(picked));
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () async {
+                  await controller.updateReminderPreferences(
+                    ReminderPreferences(
+                      waterTimes: selectedWater.toList()..sort(),
+                      exerciseWeekdays: selectedWeekdays.toList()..sort(),
+                      exerciseTime: exerciseTime,
+                      gratitudeTime: gratitudeTime,
+                      allowanceTime: current.allowanceTime,
+                    ),
+                  );
+                  if (context.mounted) Navigator.pop(context);
+                },
+                child: const Text('Salvar horários'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _signOut(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -312,6 +443,28 @@ class SettingsScreen extends StatelessWidget {
       raw.trim().replaceAll('.', '').replaceAll(',', '.'),
     );
     return value == null ? null : (value * 100).round();
+  }
+
+  TimeOfDay _timeOfDay(String value) {
+    final parts = value.split(':');
+    return TimeOfDay(
+      hour: int.tryParse(parts.first) ?? 18,
+      minute: int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0,
+    );
+  }
+
+  String _formatTime(TimeOfDay time) =>
+      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
+  String _reminderSummary(ReminderPreferences preferences) {
+    if (preferences.waterTimes.isEmpty &&
+        preferences.exerciseWeekdays.isEmpty) {
+      return 'Escolha os horários depois de ativar';
+    }
+    final water = preferences.waterTimes.isEmpty
+        ? 'sem água'
+        : 'água ${preferences.waterTimes.join(', ')}';
+    return '$water · gratidão ${preferences.gratitudeTime}';
   }
 }
 

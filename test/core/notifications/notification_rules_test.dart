@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lume/core/notifications/notification_rules.dart';
+import 'package:lume/app/models.dart';
 
 void main() {
   group('LumeNotificationId', () {
@@ -73,4 +74,45 @@ void main() {
     expect(schedule.title, 'Lume');
     expect(schedule.body, isNot(contains('18')));
   });
+
+  test(
+    'planner creates concrete local reminders without scheduling the past',
+    () {
+      final schedules = planReminderWindow(
+        now: DateTime(2026, 8, 24, 9),
+        preferences: const ReminderPreferences(
+          waterTimes: ['10:00'],
+          exerciseWeekdays: [1],
+          exerciseTime: '18:00',
+          gratitudeTime: '21:00',
+          allowanceTime: '09:30',
+        ),
+        allowanceDayOfMonth: 24,
+        days: 2,
+      );
+
+      expect(
+        schedules.map((item) => item.kind),
+        contains(LumeReminderKind.water),
+      );
+      expect(
+        schedules.map((item) => item.kind),
+        contains(LumeReminderKind.exercise),
+      );
+      expect(
+        schedules.map((item) => item.kind),
+        contains(LumeReminderKind.gratitude),
+      );
+      expect(
+        schedules.map((item) => item.kind),
+        contains(LumeReminderKind.allowance),
+      );
+      expect(
+        schedules.every(
+          (item) => item.localDateTime.isAfter(DateTime(2026, 8, 24, 9)),
+        ),
+        isTrue,
+      );
+    },
+  );
 }

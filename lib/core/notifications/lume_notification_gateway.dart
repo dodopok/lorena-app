@@ -45,4 +45,6 @@ class LumeNotificationGateway {
       slot: slot,
     ),
   );
+
+  Future<void> cancelAll() => _client.cancelAll();
 }

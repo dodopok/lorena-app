@@ -7,6 +7,7 @@ import '../core/auth/auth_gateway.dart';
 import '../core/biometrics/biometric_gateway.dart';
 import '../core/calendar/calendar_gateway.dart';
 import '../core/notifications/lume_notification_gateway.dart';
+import '../core/notifications/notification_rules.dart';
 import '../core/photos/local_photo_service.dart';
 import '../core/photos/firebase_photo_storage.dart';
 import '../core/sync/remote_snapshot_store.dart';
@@ -219,6 +220,7 @@ class AppController extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _remoteWriteQueue;
+    await _notificationGateway?.cancelAll();
     await _authGateway?.signOut();
     await _calendarGateway?.disconnect();
     calendarEvents = [];
@@ -231,6 +233,7 @@ class AppController extends ChangeNotifier {
     _ensureRemoteStore();
     await _remoteWriteQueue;
     await _photoSyncQueue;
+    await _notificationGateway?.cancelAll();
     await _deleteRemotePhotos();
     await _remoteStore?.clear();
     await _authGateway?.deleteAccount();
@@ -317,9 +320,47 @@ class AppController extends ChangeNotifier {
     if (enabled) {
       final gateway = _notificationGateway;
       if (gateway == null || !await gateway.requestPermission()) return false;
+      final preferences =
+          settings.reminderPreferences.waterTimes.isEmpty &&
+              settings.reminderPreferences.exerciseWeekdays.isEmpty
+          ? const ReminderPreferences(
+              waterTimes: ['10:00', '15:00', '20:00'],
+              exerciseWeekdays: [1, 3, 5],
+            )
+          : settings.reminderPreferences;
+      await updateSettings(
+        settings.copyWith(
+          notificationsEnabled: true,
+          reminderPreferences: preferences,
+        ),
+      );
+      await rescheduleNotifications();
+      return true;
     }
-    await updateSettings(settings.copyWith(notificationsEnabled: enabled));
+    await updateSettings(settings.copyWith(notificationsEnabled: false));
+    await _notificationGateway?.cancelAll();
     return true;
+  }
+
+  Future<void> updateReminderPreferences(
+    ReminderPreferences preferences,
+  ) async {
+    await updateSettings(settings.copyWith(reminderPreferences: preferences));
+    if (settings.notificationsEnabled) await rescheduleNotifications();
+  }
+
+  Future<void> rescheduleNotifications() async {
+    final gateway = _notificationGateway;
+    if (gateway == null || !settings.notificationsEnabled) return;
+    await gateway.cancelAll();
+    final schedules = planReminderWindow(
+      now: DateTime.now(),
+      preferences: settings.reminderPreferences,
+      allowanceDayOfMonth: settings.allowanceDayOfMonth,
+    );
+    for (final schedule in schedules) {
+      await gateway.schedule(schedule);
+    }
   }
 
   Future<String> addWater(int amountMl, {DateTime? at}) async {

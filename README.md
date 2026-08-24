@@ -2,7 +2,7 @@
 
 Aplicativo pessoal para iPhone, planejado em Flutter, que reúne agenda, autocuidado, finanças, leituras, desejos e gratidão em um único espaço acolhedor.
 
-> **Status:** alpha local funcional. O nome público definitivo e o ícone ainda estão em refinamento; “Lume” é o nome de trabalho usado neste repositório. Os fluxos locais do MVP já rodam offline; as integrações Apple/Firebase/Google/Storage entram após configurar as credenciais descritas em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
+> **Status:** alpha funcional com modo offline, ícone nativo rosa e fundações Apple/Firebase/Google/Storage. O nome público é “Lume”; ainda faltam validações em aparelho físico e as configurações de console descritas em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
 
 ## Visão rápida
 

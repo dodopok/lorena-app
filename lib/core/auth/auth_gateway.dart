@@ -9,6 +9,8 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 /// The UI and [AppController] only depend on this contract. Local mode uses
 /// [LocalAuthGateway], while the iPhone dev/prod builds use Firebase + Apple.
 abstract interface class AuthGateway {
+  String? get userId;
+
   Future<bool> hasSession();
 
   Future<void> signInWithApple();
@@ -20,6 +22,9 @@ abstract interface class AuthGateway {
 
 class LocalAuthGateway implements AuthGateway {
   const LocalAuthGateway();
+
+  @override
+  String? get userId => null;
 
   @override
   Future<bool> hasSession() async => false;
@@ -49,6 +54,9 @@ class FirebaseAppleAuthGateway implements AuthGateway {
     : _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _auth;
+
+  @override
+  String? get userId => _auth.currentUser?.uid;
 
   @override
   Future<bool> hasSession() async => _auth.currentUser != null;

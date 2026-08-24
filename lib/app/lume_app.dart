@@ -9,19 +9,23 @@ import '../features/settings/presentation/settings_screen.dart';
 import '../features/today/presentation/today_screen.dart';
 import '../features/wellbeing/presentation/wellbeing_screen.dart';
 import 'app_controller.dart';
+import '../core/biometrics/biometric_gateway.dart';
 import 'privacy_shield.dart';
 import 'theme.dart';
 
 class LumeApp extends StatelessWidget {
-  const LumeApp({required this.controller, super.key});
+  const LumeApp({required this.controller, this.biometricGateway, super.key});
 
   final AppController controller;
+  final BiometricGateway? biometricGateway;
 
   @override
   Widget build(BuildContext context) {
     return AppScope(
       controller: controller,
       child: AppPrivacyShield(
+        controller: controller,
+        biometricGateway: biometricGateway,
         child: MaterialApp(
           title: 'Lume',
           debugShowCheckedModeBanner: false,

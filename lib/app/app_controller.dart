@@ -2,10 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../core/auth/auth_gateway.dart';
+import '../core/biometrics/biometric_gateway.dart';
 import '../core/calendar/calendar_gateway.dart';
+import '../core/notifications/lume_notification_gateway.dart';
 import '../core/photos/local_photo_service.dart';
+import '../core/sync/remote_snapshot_store.dart';
 import 'local_store.dart';
 import 'models.dart';
+
+typedef RemoteSnapshotStoreFactory = RemoteSnapshotStore Function(String uid);
 
 class AppController extends ChangeNotifier {
   AppController({
@@ -13,15 +18,27 @@ class AppController extends ChangeNotifier {
     AuthGateway? authGateway,
     CalendarGateway? calendarGateway,
     LocalPhotoService? photoService,
+    BiometricGateway? biometricGateway,
+    LumeNotificationGateway? notificationGateway,
+    RemoteSnapshotStoreFactory? remoteStoreFactory,
   }) : _store = store ?? LocalStore(),
        _authGateway = authGateway,
        _calendarGateway = calendarGateway,
-       _photoService = photoService ?? LocalPhotoService();
+       _photoService = photoService ?? LocalPhotoService(),
+       _biometricGateway = biometricGateway,
+       _notificationGateway = notificationGateway,
+       _remoteStoreFactory = remoteStoreFactory;
 
   final LocalStore _store;
   final AuthGateway? _authGateway;
   final CalendarGateway? _calendarGateway;
   final LocalPhotoService _photoService;
+  final BiometricGateway? _biometricGateway;
+  final LumeNotificationGateway? _notificationGateway;
+  final RemoteSnapshotStoreFactory? _remoteStoreFactory;
+  RemoteSnapshotStore? _remoteStore;
+  String? _remoteUserId;
+  Future<void> _remoteWriteQueue = Future<void>.value();
 
   bool isReady = false;
   bool signedIn = false;
@@ -63,10 +80,35 @@ class AppController extends ChangeNotifier {
     if (gateway == null) return;
     final providerSession = await gateway.hasSession();
     signedIn = providerSession;
+    _ensureRemoteStore();
     if (!providerSession) {
       settings = settings.copyWith(onboardingComplete: false);
+      _remoteStore = null;
+      _remoteUserId = null;
     }
-    await _commit();
+    await _store.write(_snapshot());
+  }
+
+  /// Reconciles local state with the authenticated user's remote snapshot.
+  /// Firestore remains optional: failures leave the local copy usable.
+  Future<void> syncRemote() async {
+    if (!signedIn) return;
+    _ensureRemoteStore();
+    final remoteStore = _remoteStore;
+    if (remoteStore == null) return;
+    await _remoteWriteQueue;
+    try {
+      final remote = await remoteStore.read();
+      if (remote == null) {
+        await remoteStore.write(_snapshot());
+        return;
+      }
+      _applySnapshot(remote);
+      await _store.write(_snapshot());
+      notifyListeners();
+    } catch (_) {
+      // Local writes are the recovery path when Firebase is unavailable.
+    }
   }
 
   String localDateFor(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
@@ -160,10 +202,13 @@ class AppController extends ChangeNotifier {
     }
     await gateway.signInWithApple();
     signedIn = true;
-    await _commit();
+    _ensureRemoteStore();
+    await _store.write(_snapshot());
+    await syncRemote();
   }
 
   Future<void> signOut() async {
+    await _remoteWriteQueue;
     await _authGateway?.signOut();
     await _calendarGateway?.disconnect();
     calendarEvents = [];
@@ -173,6 +218,9 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> deleteAccount() async {
+    _ensureRemoteStore();
+    await _remoteWriteQueue;
+    await _remoteStore?.clear();
     await _authGateway?.deleteAccount();
     await _calendarGateway?.disconnect();
     calendarEvents = [];
@@ -237,6 +285,28 @@ class AppController extends ChangeNotifier {
       _ensureAllowanceForPeriod(periodFor(DateTime.now()));
     }
     await _commit();
+  }
+
+  /// Enables the lock only when this device exposes a supported authenticator.
+  /// The actual prompt is shown by [AppPrivacyShield] when the setting becomes
+  /// active, keeping settings changes from triggering a duplicate prompt.
+  Future<bool> setBiometricLockEnabled(bool enabled) async {
+    if (enabled) {
+      final gateway = _biometricGateway;
+      if (gateway == null || !await gateway.isAvailable()) return false;
+    }
+    await updateSettings(settings.copyWith(biometricLockEnabled: enabled));
+    return true;
+  }
+
+  /// Requests notification permission only when the user turns reminders on.
+  Future<bool> setNotificationsEnabled(bool enabled) async {
+    if (enabled) {
+      final gateway = _notificationGateway;
+      if (gateway == null || !await gateway.requestPermission()) return false;
+    }
+    await updateSettings(settings.copyWith(notificationsEnabled: enabled));
+    return true;
   }
 
   Future<String> addWater(int amountMl, {DateTime? at}) async {
@@ -549,20 +619,56 @@ class AppController extends ChangeNotifier {
 
   Future<void> _commit() async {
     notifyListeners();
-    await _store.write(
-      AppSnapshot(
-        signedIn: signedIn,
-        settings: settings,
-        waterLogs: waterLogs,
-        bowelLogs: bowelLogs,
-        exerciseLogs: exerciseLogs,
-        transactions: transactions,
-        gratitudeEntries: gratitudeEntries,
-        books: books,
-        wishlistItems: wishlistItems,
-        shoppingItems: shoppingItems,
-      ),
-    );
+    final snapshot = _snapshot();
+    await _store.write(snapshot);
+    _queueRemoteWrite(snapshot);
+  }
+
+  AppSnapshot _snapshot() => AppSnapshot(
+    signedIn: signedIn,
+    settings: settings,
+    waterLogs: waterLogs,
+    bowelLogs: bowelLogs,
+    exerciseLogs: exerciseLogs,
+    transactions: transactions,
+    gratitudeEntries: gratitudeEntries,
+    books: books,
+    wishlistItems: wishlistItems,
+    shoppingItems: shoppingItems,
+  );
+
+  void _applySnapshot(AppSnapshot snapshot) {
+    signedIn = true;
+    settings = snapshot.settings;
+    waterLogs = snapshot.waterLogs;
+    bowelLogs = snapshot.bowelLogs;
+    exerciseLogs = snapshot.exerciseLogs;
+    transactions = snapshot.transactions;
+    gratitudeEntries = snapshot.gratitudeEntries;
+    books = snapshot.books;
+    wishlistItems = snapshot.wishlistItems;
+    shoppingItems = snapshot.shoppingItems;
+  }
+
+  void _ensureRemoteStore() {
+    final userId = _authGateway?.userId;
+    if (userId == null || userId.isEmpty || _remoteStoreFactory == null) return;
+    if (_remoteUserId == userId && _remoteStore != null) return;
+    _remoteUserId = userId;
+    _remoteStore = _remoteStoreFactory(userId);
+    _remoteWriteQueue = Future<void>.value();
+  }
+
+  void _queueRemoteWrite(AppSnapshot snapshot) {
+    final remoteStore = _remoteStore;
+    if (!signedIn || remoteStore == null) return;
+    _remoteWriteQueue = _remoteWriteQueue.then((_) async {
+      try {
+        await remoteStore.write(snapshot);
+      } catch (_) {
+        // Keep the pending local snapshot; a later mutation retries it.
+      }
+    });
   }
 }
 

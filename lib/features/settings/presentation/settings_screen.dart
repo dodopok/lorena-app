@@ -61,9 +61,20 @@ class SettingsScreen extends StatelessWidget {
                   'Protege a abertura do app quando disponível',
                 ),
                 value: settings.biometricLockEnabled,
-                onChanged: (value) => controller.updateSettings(
-                  settings.copyWith(biometricLockEnabled: value),
-                ),
+                onChanged: (value) async {
+                  final enabled = await controller.setBiometricLockEnabled(
+                    value,
+                  );
+                  if (!enabled && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Este aparelho não possui biometria disponível.',
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
               SwitchListTile(
                 secondary: const Icon(Icons.notifications_none),
@@ -72,9 +83,20 @@ class SettingsScreen extends StatelessWidget {
                   'Começam desligados até você escolher ativar',
                 ),
                 value: settings.notificationsEnabled,
-                onChanged: (value) => controller.updateSettings(
-                  settings.copyWith(notificationsEnabled: value),
-                ),
+                onChanged: (value) async {
+                  final enabled = await controller.setNotificationsEnabled(
+                    value,
+                  );
+                  if (!enabled && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'A permissão de lembretes não foi concedida.',
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -131,7 +153,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Lume · ambiente ${LumeBuildConfig.label} · dados no aparelho',
+              'Lume · ambiente ${LumeBuildConfig.label} · dados locais + Firebase',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: app_theme.LumeColors.textSecondary,
               ),
@@ -321,7 +343,7 @@ class PrivacyScreen extends StatelessWidget {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'No protótipo local, os dados ficam no armazenamento do app. A camada de produção deve conectar Firebase, Storage privado, exportação de mídia e exclusão por UID.',
+                    'O Lume mantém uma cópia local para funcionar offline e sincroniza dados próprios com o Firebase quando a sessão estiver configurada. Mídias ficam privadas no Storage por UID.',
                   ),
                 ),
               ],
@@ -342,7 +364,7 @@ class PrivacyScreen extends StatelessWidget {
           Text('Exclusão', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            'A exclusão deve exigir reautenticação e confirmação clara. Neste ambiente local, ela remove o snapshot do aparelho.',
+            'A exclusão deve exigir reautenticação e confirmação clara. O fluxo remove o snapshot local; a camada remota também deve apagar documentos e mídias do UID.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: app_theme.LumeColors.textSecondary,
             ),

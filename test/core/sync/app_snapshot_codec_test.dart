@@ -122,6 +122,42 @@ void main() {
     );
     expect(payload.books['book-1'], isNot(contains('localCoverPath')));
     expect(payload.wishlistItems['wish-1'], isNot(contains('localImagePath')));
+
+    final mediaSnapshot = AppSnapshot(
+      signedIn: true,
+      settings: const UserSettings(),
+      waterLogs: const [],
+      bowelLogs: const [],
+      exerciseLogs: const [],
+      transactions: const [],
+      gratitudeEntries: const [
+        GratitudeEntry(
+          localDate: '2026-08-24',
+          text: '',
+          remoteImagePaths: ['users/user-1/gratitude/2026-08-24/image.jpg'],
+        ),
+      ],
+      books: const [
+        BookEntry(
+          id: 'book-remote',
+          title: 'Livro remoto',
+          remoteCoverPath: 'users/user-1/books/book-remote/image.jpg',
+        ),
+      ],
+      wishlistItems: const [],
+      shoppingItems: const [],
+    );
+    final mediaPayload = AppSnapshotCodec.encode(mediaSnapshot, now: now);
+    expect(mediaPayload.gratitudeEntries['2026-08-24']!['images'], [
+      'users/user-1/gratitude/2026-08-24/image.jpg',
+    ]);
+    expect(
+      mediaPayload.books['book-remote']!['coverImage'],
+      containsPair(
+        'storagePath',
+        'users/user-1/books/book-remote/image.jpg',
+      ),
+    );
   });
 
   test(
@@ -202,6 +238,9 @@ void main() {
         'Arroz',
       ]);
       expect(snapshot.gratitudeEntries.single.localImagePath, isNull);
+      expect(snapshot.gratitudeEntries.single.remoteImagePaths, [
+        '/remote/image.jpg',
+      ]);
     },
   );
 

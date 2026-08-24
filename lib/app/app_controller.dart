@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
@@ -6,6 +8,7 @@ import '../core/biometrics/biometric_gateway.dart';
 import '../core/calendar/calendar_gateway.dart';
 import '../core/notifications/lume_notification_gateway.dart';
 import '../core/photos/local_photo_service.dart';
+import '../core/photos/firebase_photo_storage.dart';
 import '../core/sync/remote_snapshot_store.dart';
 import 'local_store.dart';
 import 'models.dart';
@@ -20,6 +23,7 @@ class AppController extends ChangeNotifier {
     LocalPhotoService? photoService,
     BiometricGateway? biometricGateway,
     LumeNotificationGateway? notificationGateway,
+    PhotoStorageGateway? photoStorage,
     RemoteSnapshotStoreFactory? remoteStoreFactory,
   }) : _store = store ?? LocalStore(),
        _authGateway = authGateway,
@@ -27,6 +31,7 @@ class AppController extends ChangeNotifier {
        _photoService = photoService ?? LocalPhotoService(),
        _biometricGateway = biometricGateway,
        _notificationGateway = notificationGateway,
+       _photoStorage = photoStorage,
        _remoteStoreFactory = remoteStoreFactory;
 
   final LocalStore _store;
@@ -35,10 +40,12 @@ class AppController extends ChangeNotifier {
   final LocalPhotoService _photoService;
   final BiometricGateway? _biometricGateway;
   final LumeNotificationGateway? _notificationGateway;
+  final PhotoStorageGateway? _photoStorage;
   final RemoteSnapshotStoreFactory? _remoteStoreFactory;
   RemoteSnapshotStore? _remoteStore;
   String? _remoteUserId;
   Future<void> _remoteWriteQueue = Future<void>.value();
+  Future<void> _photoSyncQueue = Future<void>.value();
 
   bool isReady = false;
   bool signedIn = false;
@@ -66,6 +73,7 @@ class AppController extends ChangeNotifier {
       books = snapshot.books;
       wishlistItems = snapshot.wishlistItems;
       shoppingItems = snapshot.shoppingItems;
+      calendarEvents = snapshot.calendarEvents;
     }
     isReady = true;
     if (signedIn && settings.allowanceAmountMinor > 0) {
@@ -109,6 +117,7 @@ class AppController extends ChangeNotifier {
     } catch (_) {
       // Local writes are the recovery path when Firebase is unavailable.
     }
+    _queuePhotoSync();
   }
 
   String localDateFor(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
@@ -205,6 +214,7 @@ class AppController extends ChangeNotifier {
     _ensureRemoteStore();
     await _store.write(_snapshot());
     await syncRemote();
+    _queuePhotoSync();
   }
 
   Future<void> signOut() async {
@@ -220,6 +230,8 @@ class AppController extends ChangeNotifier {
   Future<void> deleteAccount() async {
     _ensureRemoteStore();
     await _remoteWriteQueue;
+    await _photoSyncQueue;
+    await _deleteRemotePhotos();
     await _remoteStore?.clear();
     await _authGateway?.deleteAccount();
     await _calendarGateway?.disconnect();
@@ -234,6 +246,7 @@ class AppController extends ChangeNotifier {
     books = [];
     wishlistItems = [];
     shoppingItems = [];
+    await _photoService.clearStoredPhotos();
     await _store.clear();
     notifyListeners();
   }
@@ -332,18 +345,61 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> addBowel({String? note, DateTime? at}) async {
+  Future<String> addBowel({
+    String? note,
+    int? bristolType,
+    BowelComfort? comfort,
+    DateTime? at,
+  }) async {
+    if (bristolType != null && (bristolType < 1 || bristolType > 7)) {
+      throw ArgumentError.value(bristolType, 'bristolType');
+    }
     final occurredAt = at ?? DateTime.now();
+    final id = _id('bowel');
     bowelLogs = [
       ...bowelLogs,
       BowelLog(
-        id: _id('bowel'),
+        id: id,
         occurredAt: occurredAt,
         localDate: localDateFor(occurredAt),
+        bristolType: bristolType,
+        comfort: comfort,
         note: note?.trim().isEmpty == true ? null : note?.trim(),
         syncState: SyncState.pending,
       ),
     ];
+    await _commit();
+    return id;
+  }
+
+  Future<void> updateBowel({
+    required String id,
+    required DateTime at,
+    int? bristolType,
+    BowelComfort? comfort,
+    String? note,
+  }) async {
+    if (bristolType != null && (bristolType < 1 || bristolType > 7)) {
+      throw ArgumentError.value(bristolType, 'bristolType');
+    }
+    final existing = bowelLogs.where((item) => item.id == id).firstOrNull;
+    if (existing == null) throw ArgumentError('Registro não encontrado');
+    bowelLogs = bowelLogs
+        .map(
+          (item) => item.id == id
+              ? existing.copyWith(
+                  occurredAt: at,
+                  localDate: localDateFor(at),
+                  bristolType: bristolType,
+                  clearBristolType: bristolType == null,
+                  comfort: comfort,
+                  clearComfort: comfort == null,
+                  note: note?.trim(),
+                  clearNote: note?.trim().isEmpty != false,
+                )
+              : item,
+        )
+        .toList();
     await _commit();
   }
 
@@ -355,6 +411,7 @@ class AppController extends ChangeNotifier {
   Future<void> addExercise({
     required String activityType,
     required int durationMinutes,
+    ExerciseIntensity? intensity,
     String? note,
     DateTime? at,
   }) async {
@@ -370,10 +427,43 @@ class AppController extends ChangeNotifier {
         durationMinutes: durationMinutes,
         occurredAt: occurredAt,
         localDate: localDateFor(occurredAt),
+        intensity: intensity,
         note: note?.trim().isEmpty == true ? null : note?.trim(),
         syncState: SyncState.pending,
       ),
     ];
+    await _commit();
+  }
+
+  Future<void> updateExercise({
+    required String id,
+    required String activityType,
+    required int durationMinutes,
+    required DateTime at,
+    ExerciseIntensity? intensity,
+    String? note,
+  }) async {
+    if (activityType.trim().isEmpty || durationMinutes <= 0) {
+      throw ArgumentError('activityType e durationMinutes são obrigatórios');
+    }
+    final existing = exerciseLogs.where((item) => item.id == id).firstOrNull;
+    if (existing == null) throw ArgumentError('Sessão não encontrada');
+    exerciseLogs = exerciseLogs
+        .map(
+          (item) => item.id == id
+              ? existing.copyWith(
+                  activityType: activityType.trim(),
+                  durationMinutes: durationMinutes,
+                  occurredAt: at,
+                  localDate: localDateFor(at),
+                  intensity: intensity,
+                  clearIntensity: intensity == null,
+                  note: note?.trim(),
+                  clearNote: note?.trim().isEmpty != false,
+                )
+              : item,
+        )
+        .toList();
     await _commit();
   }
 
@@ -446,6 +536,13 @@ class AppController extends ChangeNotifier {
   Future<String?> pickLocalPhoto(LocalPhotoKind kind) =>
       _photoService.pickAndStore(kind);
 
+  /// Retries local media that has not yet reached the private Storage path.
+  /// The local file remains the source of recovery when the network is down.
+  Future<void> retryPhotoUploads() {
+    _queuePhotoSync();
+    return _photoSyncQueue;
+  }
+
   Future<void> saveGratitude(
     String text, {
     DateTime? date,
@@ -460,6 +557,9 @@ class AppController extends ChangeNotifier {
       localDate: localDate,
       text: trimmed,
       localImagePath: localImagePath,
+      mediaSyncState: localImagePath == null || localImagePath.isEmpty
+          ? MediaSyncState.uploaded
+          : MediaSyncState.pending,
       syncState: SyncState.pending,
     );
     gratitudeEntries = [
@@ -467,6 +567,7 @@ class AppController extends ChangeNotifier {
       entry,
     ];
     await _commit();
+    _queuePhotoSync();
   }
 
   Future<void> addBook({
@@ -476,6 +577,9 @@ class AppController extends ChangeNotifier {
     int? rating,
     String? review,
     String? localCoverPath,
+    DateTime? startedOn,
+    DateTime? finishedOn,
+    String? isbn,
   }) async {
     if (title.trim().isEmpty) throw ArgumentError('Título obrigatório');
     if (rating != null && (rating < 1 || rating > 5)) {
@@ -488,13 +592,63 @@ class AppController extends ChangeNotifier {
         title: title.trim(),
         author: author?.trim().isEmpty == true ? null : author?.trim(),
         status: status,
+        startedOn: startedOn,
+        finishedOn: finishedOn,
         rating: rating,
         review: review?.trim().isEmpty == true ? null : review?.trim(),
+        isbn: isbn?.trim().isEmpty == true ? null : isbn?.trim(),
         localCoverPath: localCoverPath,
+        mediaSyncState: localCoverPath == null || localCoverPath.isEmpty
+            ? MediaSyncState.uploaded
+            : MediaSyncState.pending,
         syncState: SyncState.pending,
       ),
     ];
     await _commit();
+    _queuePhotoSync();
+  }
+
+  Future<void> updateBook({
+    required String id,
+    required String title,
+    String? author,
+    BookStatus? status,
+    DateTime? startedOn,
+    DateTime? finishedOn,
+    int? rating,
+    String? review,
+    String? isbn,
+  }) async {
+    if (title.trim().isEmpty) throw ArgumentError('Título obrigatório');
+    if (rating != null && (rating < 1 || rating > 5)) {
+      throw ArgumentError('A avaliação deve estar entre 1 e 5');
+    }
+    final existing = books.where((item) => item.id == id).firstOrNull;
+    if (existing == null) throw ArgumentError('Livro não encontrado');
+    books = books
+        .map(
+          (item) => item.id == id
+              ? existing.copyWith(
+                  title: title.trim(),
+                  author: author?.trim(),
+                  clearAuthor: author?.trim().isEmpty != false,
+                  status: status,
+                  startedOn: startedOn,
+                  clearStartedOn: startedOn == null,
+                  finishedOn: finishedOn,
+                  clearFinishedOn: finishedOn == null,
+                  rating: rating,
+                  clearRating: rating == null,
+                  review: review?.trim(),
+                  clearReview: review?.trim().isEmpty != false,
+                  isbn: isbn?.trim(),
+                  clearIsbn: isbn?.trim().isEmpty != false,
+                )
+              : item,
+        )
+        .toList();
+    await _commit();
+    _queuePhotoSync();
   }
 
   Future<void> removeBook(String id) async {
@@ -508,6 +662,7 @@ class AppController extends ChangeNotifier {
     int? priceMinor,
     String? note,
     String? localImagePath,
+    WishlistStatus status = WishlistStatus.wanted,
   }) async {
     final uri = Uri.tryParse(originalUrl.trim());
     if (uri == null ||
@@ -529,12 +684,17 @@ class AppController extends ChangeNotifier {
         siteHost: uri.host,
         priceMinor: priceMinor,
         currency: priceMinor == null ? null : 'BRL',
+        status: status,
         note: note?.trim().isEmpty == true ? null : note?.trim(),
         localImagePath: localImagePath,
+        mediaSyncState: localImagePath == null || localImagePath.isEmpty
+            ? MediaSyncState.uploaded
+            : MediaSyncState.pending,
         syncState: SyncState.pending,
       ),
     ];
     await _commit();
+    _queuePhotoSync();
   }
 
   Future<void> updateWishlistStatus(String id, WishlistStatus status) async {
@@ -557,16 +717,23 @@ class AppController extends ChangeNotifier {
         id: _id('shopping'),
         name: name.trim(),
         quantity: quantity.trim().isEmpty ? '1' : quantity.trim(),
+        position: shoppingItems.length,
       ),
     ];
     await _commit();
   }
 
   Future<void> toggleShoppingItem(String id) async {
+    final toggledAt = DateTime.now();
     shoppingItems = shoppingItems
         .map(
-          (item) =>
-              item.id == id ? item.copyWith(isChecked: !item.isChecked) : item,
+          (item) => item.id == id
+              ? item.copyWith(
+                  isChecked: !item.isChecked,
+                  checkedAt: !item.isChecked ? toggledAt : null,
+                  clearCheckedAt: item.isChecked,
+                )
+              : item,
         )
         .toList();
     await _commit();
@@ -617,6 +784,201 @@ class AppController extends ChangeNotifier {
   String _id(String prefix) =>
       '$prefix-${DateTime.now().microsecondsSinceEpoch}';
 
+  void _queuePhotoSync() {
+    if (!signedIn || _photoStorage == null || _authGateway?.userId == null) {
+      return;
+    }
+    _photoSyncQueue = _photoSyncQueue.then((_) => _syncPendingPhotos());
+  }
+
+  Future<void> _syncPendingPhotos() async {
+    final storage = _photoStorage;
+    final uid = _authGateway?.userId;
+    if (!signedIn || storage == null || uid == null || uid.isEmpty) return;
+
+    var changed = false;
+    for (final entry in List<GratitudeEntry>.from(gratitudeEntries)) {
+      final path = entry.localImagePath;
+      if (path == null || path.isEmpty || entry.remoteImagePaths.isNotEmpty) {
+        continue;
+      }
+      try {
+        await storage.uploadFile(
+          uid: uid,
+          category: PhotoCategory.gratitude,
+          id: entry.localDate,
+          file: File(path),
+          fileName: path,
+        );
+        final remotePath = buildPhotoStoragePath(
+          uid: uid,
+          category: PhotoCategory.gratitude,
+          id: entry.localDate,
+          extension: path,
+        );
+        gratitudeEntries = gratitudeEntries
+            .map(
+              (item) => item.localDate == entry.localDate
+                  ? item.copyWith(
+                      remoteImagePaths: [remotePath],
+                      mediaSyncState: MediaSyncState.uploaded,
+                    )
+                  : item,
+            )
+            .toList();
+        changed = true;
+      } catch (_) {
+        gratitudeEntries = gratitudeEntries
+            .map(
+              (item) => item.localDate == entry.localDate
+                  ? item.copyWith(mediaSyncState: MediaSyncState.failed)
+                  : item,
+            )
+            .toList();
+        changed = true;
+      }
+    }
+
+    for (final book in List<BookEntry>.from(books)) {
+      final path = book.localCoverPath;
+      if (path == null || path.isEmpty || book.remoteCoverPath != null) {
+        continue;
+      }
+      try {
+        await storage.uploadFile(
+          uid: uid,
+          category: PhotoCategory.bookCover,
+          id: book.id,
+          file: File(path),
+          fileName: path,
+        );
+        final remotePath = buildPhotoStoragePath(
+          uid: uid,
+          category: PhotoCategory.bookCover,
+          id: book.id,
+          extension: path,
+        );
+        books = books
+            .map(
+              (item) => item.id == book.id
+                  ? item.copyWith(
+                      remoteCoverPath: remotePath,
+                      mediaSyncState: MediaSyncState.uploaded,
+                    )
+                  : item,
+            )
+            .toList();
+        changed = true;
+      } catch (_) {
+        books = books
+            .map(
+              (item) => item.id == book.id
+                  ? item.copyWith(mediaSyncState: MediaSyncState.failed)
+                  : item,
+            )
+            .toList();
+        changed = true;
+      }
+    }
+
+    for (final item in List<WishlistItem>.from(wishlistItems)) {
+      final path = item.localImagePath;
+      if (path == null || path.isEmpty || item.remoteImagePath != null) {
+        continue;
+      }
+      try {
+        await storage.uploadFile(
+          uid: uid,
+          category: PhotoCategory.wishlist,
+          id: item.id,
+          file: File(path),
+          fileName: path,
+        );
+        final remotePath = buildPhotoStoragePath(
+          uid: uid,
+          category: PhotoCategory.wishlist,
+          id: item.id,
+          extension: path,
+        );
+        wishlistItems = wishlistItems
+            .map(
+              (current) => current.id == item.id
+                  ? current.copyWith(
+                      remoteImagePath: remotePath,
+                      mediaSyncState: MediaSyncState.uploaded,
+                    )
+                  : current,
+            )
+            .toList();
+        changed = true;
+      } catch (_) {
+        wishlistItems = wishlistItems
+            .map(
+              (current) => current.id == item.id
+                  ? current.copyWith(mediaSyncState: MediaSyncState.failed)
+                  : current,
+            )
+            .toList();
+        changed = true;
+      }
+    }
+
+    if (changed) await _commit();
+  }
+
+  Future<void> _deleteRemotePhotos() async {
+    final storage = _photoStorage;
+    final uid = _authGateway?.userId;
+    if (storage == null || uid == null || uid.isEmpty) return;
+    final operations = <Future<void>>[];
+    for (final entry in gratitudeEntries) {
+      for (final path in entry.remoteImagePaths) {
+        operations.add(
+          storage.delete(
+            uid: uid,
+            category: PhotoCategory.gratitude,
+            id: entry.localDate,
+            fileName: path,
+          ),
+        );
+      }
+    }
+    for (final book in books) {
+      final path = book.remoteCoverPath;
+      if (path != null) {
+        operations.add(
+          storage.delete(
+            uid: uid,
+            category: PhotoCategory.bookCover,
+            id: book.id,
+            fileName: path,
+          ),
+        );
+      }
+    }
+    for (final item in wishlistItems) {
+      final path = item.remoteImagePath;
+      if (path != null) {
+        operations.add(
+          storage.delete(
+            uid: uid,
+            category: PhotoCategory.wishlist,
+            id: item.id,
+            fileName: path,
+          ),
+        );
+      }
+    }
+    for (final operation in operations) {
+      try {
+        await operation;
+      } catch (_) {
+        // Account deletion still proceeds; a backend cleanup job can remove
+        // orphaned media when a single object is already missing/offline.
+      }
+    }
+  }
+
   Future<void> _commit() async {
     notifyListeners();
     final snapshot = _snapshot();
@@ -635,6 +997,7 @@ class AppController extends ChangeNotifier {
     books: books,
     wishlistItems: wishlistItems,
     shoppingItems: shoppingItems,
+    calendarEvents: calendarEvents,
   );
 
   void _applySnapshot(AppSnapshot snapshot) {
@@ -648,6 +1011,7 @@ class AppController extends ChangeNotifier {
     books = snapshot.books;
     wishlistItems = snapshot.wishlistItems;
     shoppingItems = snapshot.shoppingItems;
+    calendarEvents = snapshot.calendarEvents;
   }
 
   void _ensureRemoteStore() {

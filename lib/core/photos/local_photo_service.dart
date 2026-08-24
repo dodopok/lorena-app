@@ -57,6 +57,27 @@ class LocalPhotoService {
     return destination.path;
   }
 
+  /// Removes one file only when it belongs to the app's private media folder.
+  /// Paths coming from a remote document or another app are ignored.
+  Future<void> deleteStored(String path) async {
+    final supportDirectory = await getApplicationSupportDirectory();
+    final root = Directory('${supportDirectory.path}/lume_photos');
+    final normalizedRoot = _normalizedPath(root.path);
+    final normalizedPath = _normalizedPath(path);
+    if (!normalizedPath.startsWith('$normalizedRoot/')) return;
+    final file = File(path);
+    if (await file.exists()) await file.delete();
+  }
+
+  Future<void> clearStoredPhotos() async {
+    final supportDirectory = await getApplicationSupportDirectory();
+    final directory = Directory('${supportDirectory.path}/lume_photos');
+    if (await directory.exists()) await directory.delete(recursive: true);
+  }
+
+  static String _normalizedPath(String value) =>
+      value.replaceAll('\\', '/').replaceAll(RegExp(r'/+'), '/');
+
   static String _safeExtension(String name) {
     final dot = name.lastIndexOf('.');
     if (dot < 0 || dot == name.length - 1) return '.jpg';

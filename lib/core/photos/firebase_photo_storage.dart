@@ -115,6 +115,8 @@ abstract interface class PhotoStorageGateway {
     required String id,
     String? fileName,
   });
+
+  Future<String> downloadUrl(String storagePath);
 }
 
 /// Firebase Storage implementation for private user-owned photos.
@@ -192,6 +194,10 @@ class FirebasePhotoStorage implements PhotoStorageGateway {
     ).delete();
   }
 
+  @override
+  Future<String> downloadUrl(String storagePath) =>
+      _storage.ref().child(_validateStoragePath(storagePath)).getDownloadURL();
+
   Reference _reference({
     required String uid,
     required PhotoCategory category,
@@ -216,6 +222,17 @@ class FirebasePhotoStorage implements PhotoStorageGateway {
       throw ArgumentError('maxBytes must be greater than zero.');
     }
     return value;
+  }
+
+  static String _validateStoragePath(String value) {
+    final normalized = value.trim();
+    if (!normalized.startsWith('users/') ||
+        normalized.contains('..') ||
+        normalized.contains('\\') ||
+        normalized.contains('//')) {
+      throw ArgumentError.value(value, 'storagePath');
+    }
+    return normalized;
   }
 }
 

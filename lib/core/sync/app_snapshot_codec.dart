@@ -118,6 +118,8 @@ class AppSnapshotCodec {
         {
           'occurredAt': timestampFromDate(item.occurredAt),
           'localDate': item.localDate,
+          if (item.bristolType != null) 'bristolType': item.bristolType,
+          if (item.comfort != null) 'comfort': item.comfort!.name,
           if (_nonEmpty(item.note) != null) 'note': item.note,
         },
         updatedAt: updatedAt,
@@ -134,6 +136,7 @@ class AppSnapshotCodec {
           'startedAt': timestampFromDate(item.occurredAt),
           'localDate': item.localDate,
           'durationMinutes': item.durationMinutes,
+          if (item.intensity != null) 'intensity': item.intensity!.name,
           if (_nonEmpty(item.note) != null) 'note': item.note,
         },
         updatedAt: updatedAt,
@@ -170,8 +173,15 @@ class AppSnapshotCodec {
           'title': item.title,
           if (_nonEmpty(item.author) != null) 'author': item.author,
           'status': _bookStatusToRemote(item.status),
+          if (item.startedOn != null)
+            'startedOn': timestampFromDate(item.startedOn!),
+          if (item.finishedOn != null)
+            'finishedOn': timestampFromDate(item.finishedOn!),
           if (item.rating != null) 'rating': item.rating,
           if (_nonEmpty(item.review) != null) 'review': item.review,
+          if (_nonEmpty(item.isbn) != null) 'isbn': item.isbn,
+          if (_nonEmpty(item.remoteCoverPath) != null)
+            'coverImage': {'storagePath': item.remoteCoverPath},
         },
         updatedAt: updatedAt,
         schemaVersion: schemaVersion,
@@ -180,12 +190,19 @@ class AppSnapshotCodec {
 
     final gratitudeEntries = <String, Map<String, dynamic>>{};
     for (final item in snapshot.gratitudeEntries) {
-      // A local path is intentionally not a remote image. Without text or an
-      // uploaded image, writing this document would violate the Firestore
-      // invariant documented for gratitude entries.
-      if (!_validId(item.localDate) || _nonEmpty(item.text) == null) continue;
+      // A local path is intentionally not a remote image. The document is
+      // valid while it has text or at least one uploaded Storage path.
+      if (!_validId(item.localDate) ||
+          (_nonEmpty(item.text) == null && item.remoteImagePaths.isEmpty)) {
+        continue;
+      }
       gratitudeEntries[item.localDate] = _withAudit(
-        {'localDate': item.localDate, 'text': item.text},
+        {
+          'localDate': item.localDate,
+          if (_nonEmpty(item.text) != null) 'text': item.text,
+          if (item.remoteImagePaths.isNotEmpty)
+            'images': List<String>.from(item.remoteImagePaths),
+        },
         updatedAt: updatedAt,
         schemaVersion: schemaVersion,
       );
@@ -203,6 +220,8 @@ class AppSnapshotCodec {
           if (_nonEmpty(item.currency) != null) 'currency': item.currency,
           'status': item.status.name,
           if (_nonEmpty(item.note) != null) 'note': item.note,
+          if (_nonEmpty(item.remoteImagePath) != null)
+            'image': {'storagePath': item.remoteImagePath},
         },
         updatedAt: updatedAt,
         schemaVersion: schemaVersion,
@@ -219,7 +238,11 @@ class AppSnapshotCodec {
           'quantity': item.quantity,
           if (_nonEmpty(item.note) != null) 'note': item.note,
           'isChecked': item.isChecked,
-          'position': index,
+          'position': item.position == 0 ? index : item.position,
+          if (item.estimatedPriceMinor != null)
+            'estimatedPriceMinor': item.estimatedPriceMinor,
+          if (item.checkedAt != null)
+            'checkedAt': timestampFromDate(item.checkedAt!),
         },
         updatedAt: updatedAt,
         schemaVersion: schemaVersion,
@@ -333,6 +356,7 @@ class AppSnapshotCodec {
     'biometricLockEnabled': settings.biometricLockEnabled,
     'notificationPreferences': <String, dynamic>{
       'enabled': settings.notificationsEnabled,
+      ...settings.reminderPreferences.toJson(),
     },
     'calendarPreferences': <String, dynamic>{
       'connected': settings.calendarConnected,
@@ -349,6 +373,9 @@ class AppSnapshotCodec {
     final notifications = _map(data['notificationPreferences']);
     if (notifications != null && notifications['enabled'] is bool) {
       data['notificationsEnabled'] = notifications['enabled'];
+    }
+    if (notifications != null) {
+      data['reminderPreferences'] = notifications;
     }
 
     final calendar = _map(data['calendarPreferences']);
@@ -389,10 +416,17 @@ class AppSnapshotCodec {
     final occurredAt = isoFromFirestore(entry.value['occurredAt']);
     if (!_validId(entry.key) || occurredAt == null) return null;
     final note = _nonEmpty(entry.value['note']);
+    final bristolType = _boundedInt(entry.value['bristolType'], 1, 7);
+    final comfort = _enumName(
+      entry.value['comfort'],
+      BowelComfort.values.map((value) => value.name),
+    );
     return BowelLog.fromJson({
       'id': entry.key,
       'occurredAt': occurredAt,
       'localDate': _localDate(entry.value['localDate'], occurredAt),
+      ..._optionalField('bristolType', bristolType),
+      ..._optionalField('comfort', comfort),
       ..._optionalField('note', note),
     });
   }
@@ -414,12 +448,17 @@ class AppSnapshotCodec {
       return null;
     }
     final note = _nonEmpty(data['note']);
+    final intensity = _enumName(
+      data['intensity'],
+      ExerciseIntensity.values.map((value) => value.name),
+    );
     return ExerciseLog.fromJson({
       'id': entry.key,
       'activityType': _nonEmpty(data['activityType']) ?? 'Movimento',
       'durationMinutes': duration,
       'occurredAt': startedAt,
       'localDate': _localDate(data['localDate'], startedAt),
+      ..._optionalField('intensity', intensity),
       ..._optionalField('note', note),
     });
   }
@@ -472,9 +511,18 @@ class AppSnapshotCodec {
     final data = entry.value;
     final localDate = _nonEmpty(data['localDate']) ?? _nonEmpty(entry.key);
     final text = _nonEmpty(data['text']);
-    // Remote image URLs are intentionally not copied into localImagePath.
-    if (localDate == null || text == null) return null;
-    return GratitudeEntry(localDate: localDate, text: text);
+    final images = data['images'] is List
+        ? (data['images'] as List).whereType<String>().toList()
+        : const <String>[];
+    if (localDate == null || (text == null && images.isEmpty)) return null;
+    return GratitudeEntry(
+      localDate: localDate,
+      text: text ?? '',
+      remoteImagePaths: images,
+      mediaSyncState: images.isEmpty
+          ? MediaSyncState.local
+          : MediaSyncState.uploaded,
+    );
   }
 
   static List<BookEntry> _decodeBooks(
@@ -488,13 +536,22 @@ class AppSnapshotCodec {
     final rating = _boundedInt(data['rating'], 1, 5);
     final author = _nonEmpty(data['author']);
     final review = _nonEmpty(data['review']);
+    final coverImage = _map(data['coverImage']);
+    final coverPath = _nonEmpty(coverImage?['storagePath']);
+    final startedOn = isoFromFirestore(data['startedOn']);
+    final finishedOn = isoFromFirestore(data['finishedOn']);
+    final isbn = _nonEmpty(data['isbn']);
     return BookEntry.fromJson({
       'id': entry.key,
       'title': title,
       ..._optionalField('author', author),
       'status': _bookStatusToDomain(data['status']),
+      ..._optionalField('remoteCoverPath', coverPath),
+      ..._optionalField('startedOn', startedOn),
+      ..._optionalField('finishedOn', finishedOn),
       ..._optionalField('rating', rating),
       ..._optionalField('review', review),
+      ..._optionalField('isbn', isbn),
     });
   }
 
@@ -516,6 +573,8 @@ class AppSnapshotCodec {
     final priceMinor = _nonNegativeInt(data['priceMinor']);
     final currency = _nonEmpty(data['currency']);
     final note = _nonEmpty(data['note']);
+    final image = _map(data['image']);
+    final imagePath = _nonEmpty(image?['storagePath']);
     return WishlistItem.fromJson({
       'id': entry.key,
       'originalUrl': originalUrl,
@@ -525,6 +584,7 @@ class AppSnapshotCodec {
       ..._optionalField('currency', currency),
       'status': data['status'],
       ..._optionalField('note', note),
+      ..._optionalField('remoteImagePath', imagePath),
     });
   }
 
@@ -560,6 +620,12 @@ class AppSnapshotCodec {
       'quantity': quantity,
       ..._optionalField('note', note),
       'isChecked': data['isChecked'] == true,
+      ..._optionalField(
+        'estimatedPriceMinor',
+        _nonNegativeInt(data['estimatedPriceMinor']),
+      ),
+      'position': _intValue(data['position']) ?? 0,
+      ..._optionalField('checkedAt', isoFromFirestore(data['checkedAt'])),
     });
   }
 
@@ -623,6 +689,11 @@ class AppSnapshotCodec {
     if (value is! String) return null;
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : value;
+  }
+
+  static String? _enumName(Object? value, Iterable<String> allowed) {
+    if (value is! String || !allowed.contains(value)) return null;
+    return value;
   }
 
   static int? _positiveInt(Object? value) {

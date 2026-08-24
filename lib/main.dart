@@ -7,6 +7,7 @@ import 'core/auth/auth_gateway.dart';
 import 'core/biometrics/local_auth_biometric_gateway.dart';
 import 'core/bootstrap/firebase_bootstrap.dart';
 import 'core/notifications/lume_notification_gateway.dart';
+import 'core/photos/firebase_photo_storage.dart';
 import 'core/sync/firestore_snapshot_store.dart';
 
 Future<void> main() async {
@@ -18,6 +19,7 @@ Future<void> main() async {
     authGateway: authGateway,
     biometricGateway: biometricGateway,
     notificationGateway: LumeNotificationGateway(),
+    photoStorage: firebaseReady ? FirebasePhotoStorage() : null,
     remoteStoreFactory: firebaseReady
         ? (uid) => FirestoreSnapshotStore(
             uid: uid,

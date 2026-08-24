@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app/environment.dart';
 import '../../../app/lume_app.dart';
@@ -510,14 +510,14 @@ class PrivacyScreen extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => _export(context),
               icon: const Icon(Icons.download_outlined),
-              label: const Text('Copiar exportação dos dados'),
+              label: const Text('Exportar e compartilhar meus dados'),
             ),
           ),
           const SizedBox(height: 24),
           Text('Exclusão', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            'A exclusão deve exigir reautenticação e confirmação clara. O fluxo remove o snapshot local; a camada remota também deve apagar documentos e mídias do UID.',
+            'A exclusão exige confirmação clara. O fluxo remove o snapshot local, dados remotos e mídias conhecidas do UID.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: app_theme.LumeColors.textSecondary,
             ),
@@ -540,14 +540,23 @@ class PrivacyScreen extends StatelessWidget {
   }
 
   Future<void> _export(BuildContext context) async {
-    final json = AppScope.read(context).exportJson();
-    await Clipboard.setData(ClipboardData(text: json));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Exportação copiada (${json.length} caracteres).'),
-      ),
-    );
+    try {
+      final bundle = await AppScope.read(context).createExport();
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(bundle.path, name: bundle.fileName)],
+          subject: 'Exportação dos dados do Lume',
+          text: 'Exportação sensível dos dados do Lume. Guarde com cuidado.',
+        ),
+      );
+    } on Object catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível preparar a exportação.'),
+        ),
+      );
+    }
   }
 
   Future<void> _delete(BuildContext context) async {
@@ -556,12 +565,19 @@ class PrivacyScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Excluir todos os dados?'),
         content: const Text(
-          'Esta ação remove os registros locais e encerra a sessão. Em produção, a exclusão também removerá dados remotos e mídias do UID.',
+          'Esta ação remove registros locais, dados remotos, mídias conhecidas e encerra a sessão. Exporte uma cópia antes se quiser guardá-la.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context, false);
+              await _export(context);
+            },
+            child: const Text('Exportar antes'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -574,7 +590,19 @@ class PrivacyScreen extends StatelessWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await AppScope.read(context).deleteAccount();
+    try {
+      await AppScope.read(context).deleteAccount();
+    } on Object catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível confirmar sua identidade. Nenhum dado foi excluído.',
+          ),
+        ),
+      );
+      return;
+    }
     if (context.mounted) {
       Navigator.of(
         context,

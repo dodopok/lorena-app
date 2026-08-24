@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../core/auth/auth_gateway.dart';
 import '../core/biometrics/biometric_gateway.dart';
 import '../core/calendar/calendar_gateway.dart';
+import '../core/export/export_service.dart';
 import '../core/notifications/lume_notification_gateway.dart';
 import '../core/notifications/notification_rules.dart';
 import '../core/photos/local_photo_service.dart';
@@ -25,6 +26,7 @@ class AppController extends ChangeNotifier {
     BiometricGateway? biometricGateway,
     LumeNotificationGateway? notificationGateway,
     PhotoStorageGateway? photoStorage,
+    ExportService? exportService,
     RemoteSnapshotStoreFactory? remoteStoreFactory,
   }) : _store = store ?? LocalStore(),
        _authGateway = authGateway,
@@ -33,6 +35,7 @@ class AppController extends ChangeNotifier {
        _biometricGateway = biometricGateway,
        _notificationGateway = notificationGateway,
        _photoStorage = photoStorage,
+       _exportService = exportService ?? ExportService(),
        _remoteStoreFactory = remoteStoreFactory;
 
   final LocalStore _store;
@@ -42,6 +45,7 @@ class AppController extends ChangeNotifier {
   final BiometricGateway? _biometricGateway;
   final LumeNotificationGateway? _notificationGateway;
   final PhotoStorageGateway? _photoStorage;
+  final ExportService _exportService;
   final RemoteSnapshotStoreFactory? _remoteStoreFactory;
   RemoteSnapshotStore? _remoteStore;
   String? _remoteUserId;
@@ -110,6 +114,7 @@ class AppController extends ChangeNotifier {
       final remote = await remoteStore.read();
       if (remote == null) {
         await remoteStore.write(_snapshot());
+        _queuePhotoSync();
         return;
       }
       _applySnapshot(remote);
@@ -199,6 +204,8 @@ class AppController extends ChangeNotifier {
     shoppingItems: shoppingItems,
   ).encode();
 
+  Future<ExportBundle> createExport() => _exportService.create(_snapshot());
+
   Future<void> signInOnDevice() async {
     signedIn = true;
     await _commit();
@@ -230,6 +237,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> deleteAccount() async {
+    await _authGateway?.reauthenticate();
     _ensureRemoteStore();
     await _remoteWriteQueue;
     await _photoSyncQueue;

@@ -15,6 +15,8 @@ abstract interface class AuthGateway {
 
   Future<void> signInWithApple();
 
+  Future<void> reauthenticate();
+
   Future<void> signOut();
 
   Future<void> deleteAccount();
@@ -31,6 +33,9 @@ class LocalAuthGateway implements AuthGateway {
 
   @override
   Future<void> signInWithApple() async {}
+
+  @override
+  Future<void> reauthenticate() async {}
 
   @override
   Future<void> signOut() async {}
@@ -63,6 +68,19 @@ class FirebaseAppleAuthGateway implements AuthGateway {
 
   @override
   Future<void> signInWithApple() async {
+    await _auth.signInWithCredential(await _appleCredential());
+  }
+
+  @override
+  Future<void> reauthenticate() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthGatewayException('A sessão do Lume não está disponível.');
+    }
+    await user.reauthenticateWithCredential(await _appleCredential());
+  }
+
+  Future<OAuthCredential> _appleCredential() async {
     final rawNonce = generateNonce();
     final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
     final available = await SignInWithApple.isAvailable();
@@ -89,7 +107,7 @@ class FirebaseAppleAuthGateway implements AuthGateway {
     final credential = OAuthProvider(
       'apple.com',
     ).credential(idToken: identityToken, rawNonce: rawNonce);
-    await _auth.signInWithCredential(credential);
+    return credential;
   }
 
   @override

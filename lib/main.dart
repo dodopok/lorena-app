@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/app_controller.dart';
 import 'app/lume_app.dart';
@@ -12,6 +13,7 @@ import 'core/sync/firestore_snapshot_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('pt_BR');
   final firebaseReady = await FirebaseBootstrap.initialize();
   final biometricGateway = LocalAuthBiometricGateway();
   final authGateway = firebaseReady ? FirebaseAppleAuthGateway() : null;

@@ -153,10 +153,7 @@ void main() {
     ]);
     expect(
       mediaPayload.books['book-remote']!['coverImage'],
-      containsPair(
-        'storagePath',
-        'users/user-1/books/book-remote/image.jpg',
-      ),
+      containsPair('storagePath', 'users/user-1/books/book-remote/image.jpg'),
     );
   });
 

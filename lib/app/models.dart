@@ -955,6 +955,8 @@ class AppSnapshot {
     required this.wishlistItems,
     required this.shoppingItems,
     this.calendarEvents = const [],
+    this.calendarSyncToken,
+    this.calendarLastSyncedAt,
   });
 
   final bool signedIn;
@@ -969,6 +971,12 @@ class AppSnapshot {
   final List<ShoppingItem> shoppingItems;
   final List<CalendarEvent> calendarEvents;
 
+  /// Calendar integration state is local-only. It is deliberately not part
+  /// of the Firestore snapshot codec because Google cache tokens must not be
+  /// synced to the Lume backend.
+  final String? calendarSyncToken;
+  final DateTime? calendarLastSyncedAt;
+
   Map<String, dynamic> toJson() => {
     'signedIn': signedIn,
     'settings': settings.toJson(),
@@ -981,6 +989,9 @@ class AppSnapshot {
     'wishlistItems': wishlistItems.map((item) => item.toJson()).toList(),
     'shoppingItems': shoppingItems.map((item) => item.toJson()).toList(),
     'calendarEvents': calendarEvents.map((item) => item.toJson()).toList(),
+    if (calendarSyncToken != null) 'calendarSyncToken': calendarSyncToken,
+    if (calendarLastSyncedAt != null)
+      'calendarLastSyncedAt': calendarLastSyncedAt!.toIso8601String(),
   };
 
   String encode() => jsonEncode(toJson());
@@ -1001,6 +1012,10 @@ class AppSnapshot {
     wishlistItems: _list(map, 'wishlistItems', WishlistItem.fromJson),
     shoppingItems: _list(map, 'shoppingItems', ShoppingItem.fromJson),
     calendarEvents: _list(map, 'calendarEvents', CalendarEvent.fromJson),
+    calendarSyncToken: map['calendarSyncToken'] is String
+        ? map['calendarSyncToken'] as String
+        : null,
+    calendarLastSyncedAt: _optionalDate(map, 'calendarLastSyncedAt'),
   );
 
   static List<T> _list<T>(

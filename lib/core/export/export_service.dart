@@ -80,6 +80,14 @@ class ExportService {
       'gratitude.json',
       _prettyJson(snapshot.gratitudeEntries.map(_gratitude).toList()),
     );
+    _addText(
+      archive,
+      'calendar.json',
+      _prettyJson({
+        'lastSyncedAt': snapshot.calendarLastSyncedAt?.toIso8601String(),
+        'events': snapshot.calendarEvents.map(_calendarEvent).toList(),
+      }),
+    );
 
     await _addLocalMedia(archive, snapshot);
 
@@ -175,6 +183,21 @@ class ExportService {
     if (entry.text.isNotEmpty) 'text': entry.text,
     'hasPhoto':
         entry.localImagePath != null || entry.remoteImagePaths.isNotEmpty,
+  };
+
+  Map<String, dynamic> _calendarEvent(CalendarEvent event) => {
+    if (event.id != null) 'id': event.id,
+    'calendarId': event.calendarId,
+    'title': event.title,
+    'start': event.start.toIso8601String(),
+    'end': event.end.toIso8601String(),
+    'isAllDay': event.isAllDay,
+    if (event.description != null && event.description!.isNotEmpty)
+      'description': event.description,
+    if (event.colorId != null) 'colorId': event.colorId,
+    if (event.recurrence.isNotEmpty) 'recurrence': event.recurrence,
+    if (event.reminderMinutes.isNotEmpty)
+      'reminderMinutes': event.reminderMinutes,
   };
 
   String _waterCsv(List<WaterLog> logs) => _csv(

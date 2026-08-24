@@ -121,6 +121,19 @@ O Google OAuth é uma autorização para Agenda, não o login principal do Lume.
 - lista de test users no modo `Testing`;
 - escopos aprovados e calendário(s) habilitado(s).
 
+No código, a Agenda permanece desligada por padrão até o client iOS correto do
+projeto `lume-app-506521` ser criado e conferido. Depois disso, o build pode
+receber somente o identificador público por `--dart-define`, por exemplo:
+
+```text
+LUME_ENABLE_CALENDAR=true
+LUME_GOOGLE_IOS_CLIENT_ID=<client-id-ios-do-projeto-lume-app-506521>
+```
+
+O client `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`
+continua documentado como recebido, mas não é ligado automaticamente ao app
+enquanto o tipo (iOS/Web) e os redirect URIs não forem confirmados.
+
 ### Onde não armazenar
 
 - nunca incluir `client_secret` ou refresh token no Flutter, plist, Firestore, Storage, analytics ou Crashlytics;

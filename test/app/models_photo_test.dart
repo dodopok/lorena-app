@@ -53,4 +53,37 @@ void main() {
       isFalse,
     );
   });
+
+  test(
+    'cache local da Agenda preserva eventos e cursor sem ir para o domínio',
+    () {
+      final snapshot = AppSnapshot(
+        signedIn: true,
+        settings: const UserSettings(calendarConnected: true),
+        waterLogs: const [],
+        bowelLogs: const [],
+        exerciseLogs: const [],
+        transactions: const [],
+        gratitudeEntries: const [],
+        books: const [],
+        wishlistItems: const [],
+        shoppingItems: const [],
+        calendarEvents: [
+          CalendarEvent(
+            id: 'event-1',
+            title: 'Consulta',
+            start: DateTime(2026, 8, 24, 10),
+            end: DateTime(2026, 8, 24, 11),
+          ),
+        ],
+        calendarSyncToken: 'sync-token',
+        calendarLastSyncedAt: DateTime(2026, 8, 24, 12),
+      );
+
+      final restored = AppSnapshot.fromJson(snapshot.toJson());
+      expect(restored.calendarEvents.single.id, 'event-1');
+      expect(restored.calendarSyncToken, 'sync-token');
+      expect(restored.calendarLastSyncedAt, DateTime(2026, 8, 24, 12));
+    },
+  );
 }

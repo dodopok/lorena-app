@@ -48,6 +48,7 @@ void main() {
         'shopping/wishlist.csv',
         'books.json',
         'gratitude.json',
+        'calendar.json',
       ]),
     );
     final profileFile = archive.files.firstWhere(

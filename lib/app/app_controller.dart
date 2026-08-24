@@ -64,6 +64,8 @@ class AppController extends ChangeNotifier {
   List<WishlistItem> wishlistItems = [];
   List<ShoppingItem> shoppingItems = [];
   List<CalendarEvent> calendarEvents = [];
+  String? calendarSyncToken;
+  DateTime? calendarLastSyncedAt;
 
   Future<void> hydrate() async {
     final snapshot = await _store.read();
@@ -79,6 +81,8 @@ class AppController extends ChangeNotifier {
       wishlistItems = snapshot.wishlistItems;
       shoppingItems = snapshot.shoppingItems;
       calendarEvents = snapshot.calendarEvents;
+      calendarSyncToken = snapshot.calendarSyncToken;
+      calendarLastSyncedAt = snapshot.calendarLastSyncedAt;
     }
     isReady = true;
     if (signedIn && settings.allowanceAmountMinor > 0) {
@@ -231,6 +235,8 @@ class AppController extends ChangeNotifier {
     await _authGateway?.signOut();
     await _calendarGateway?.disconnect();
     calendarEvents = [];
+    calendarSyncToken = null;
+    calendarLastSyncedAt = null;
     signedIn = false;
     settings = settings.copyWith(onboardingComplete: false);
     await _commit();
@@ -247,6 +253,8 @@ class AppController extends ChangeNotifier {
     await _authGateway?.deleteAccount();
     await _calendarGateway?.disconnect();
     calendarEvents = [];
+    calendarSyncToken = null;
+    calendarLastSyncedAt = null;
     signedIn = false;
     settings = const UserSettings();
     waterLogs = [];
@@ -265,26 +273,109 @@ class AppController extends ChangeNotifier {
   Future<void> connectCalendar() async {
     final gateway = _calendarGateway;
     if (gateway == null) {
-      await updateSettings(settings.copyWith(calendarConnected: true));
-      return;
+      throw const CalendarGatewayException(
+        'A Agenda ainda não está configurada neste build.',
+      );
     }
     await gateway.connect();
-    calendarEvents = await gateway.fetchEvents();
+    final result = await gateway.syncEvents();
+    calendarEvents = result.events;
+    calendarSyncToken = result.nextSyncToken;
+    calendarLastSyncedAt = DateTime.now();
     await updateSettings(settings.copyWith(calendarConnected: true));
   }
 
   Future<void> refreshCalendar() async {
     final gateway = _calendarGateway;
     if (gateway == null || !settings.calendarConnected) return;
-    calendarEvents = await gateway.fetchEvents();
-    notifyListeners();
+    final result = await gateway.syncEvents(syncToken: calendarSyncToken);
+    if (result.isIncremental) {
+      final byId = <String, CalendarEvent>{
+        for (final event in calendarEvents)
+          if (event.id != null) event.id!: event,
+      };
+      for (final id in result.removedEventIds) {
+        byId.remove(id);
+      }
+      for (final event in result.events) {
+        if (event.id != null) byId[event.id!] = event;
+      }
+      calendarEvents = byId.values.toList()..sort(_compareCalendarEvents);
+    } else {
+      calendarEvents = result.events;
+    }
+    calendarSyncToken = result.nextSyncToken ?? calendarSyncToken;
+    calendarLastSyncedAt = DateTime.now();
+    await _commit();
   }
 
   Future<void> disconnectCalendar() async {
     await _calendarGateway?.disconnect();
     calendarEvents = [];
+    calendarSyncToken = null;
+    calendarLastSyncedAt = null;
     await updateSettings(settings.copyWith(calendarConnected: false));
   }
+
+  Future<CalendarEvent> createCalendarEvent(CalendarEvent event) async {
+    final gateway = _requireCalendarGateway();
+    final created = await gateway.createEvent(event);
+    calendarEvents = _sortedCalendarEvents([...calendarEvents, created]);
+    await _commit();
+    return created;
+  }
+
+  Future<CalendarEvent> updateCalendarEvent(CalendarEvent event) async {
+    final gateway = _requireCalendarGateway();
+    if (event.id == null || event.id!.isEmpty) {
+      throw const CalendarGatewayException(
+        'Este evento não possui um identificador do Google.',
+      );
+    }
+    final updated = await gateway.updateEvent(event);
+    calendarEvents = _sortedCalendarEvents(
+      calendarEvents
+          .map((item) => item.id == updated.id ? updated : item)
+          .toList(),
+    );
+    await _commit();
+    return updated;
+  }
+
+  Future<void> deleteCalendarEvent(CalendarEvent event) async {
+    final gateway = _requireCalendarGateway();
+    if (event.id == null || event.id!.isEmpty) {
+      throw const CalendarGatewayException(
+        'Este evento não possui um identificador do Google.',
+      );
+    }
+    await gateway.deleteEvent(event);
+    calendarEvents = calendarEvents
+        .where((item) => item.id != event.id)
+        .toList();
+    await _commit();
+  }
+
+  CalendarGateway _requireCalendarGateway() {
+    if (!settings.calendarConnected) {
+      throw const CalendarGatewayException(
+        'Conecte a Agenda do Google primeiro.',
+      );
+    }
+    final gateway = _calendarGateway;
+    if (gateway == null) {
+      throw const CalendarGatewayException(
+        'A Agenda ainda não está configurada neste build.',
+      );
+    }
+    return gateway;
+  }
+
+  List<CalendarEvent> _sortedCalendarEvents(List<CalendarEvent> events) =>
+      events..sort(_compareCalendarEvents);
+
+  int _compareCalendarEvents(CalendarEvent a, CalendarEvent b) =>
+      a.start.compareTo(b.start);
 
   Future<void> saveOnboarding({
     required int waterGoalMl,
@@ -1047,6 +1138,8 @@ class AppController extends ChangeNotifier {
     wishlistItems: wishlistItems,
     shoppingItems: shoppingItems,
     calendarEvents: calendarEvents,
+    calendarSyncToken: calendarSyncToken,
+    calendarLastSyncedAt: calendarLastSyncedAt,
   );
 
   void _applySnapshot(AppSnapshot snapshot) {
@@ -1060,7 +1153,8 @@ class AppController extends ChangeNotifier {
     books = snapshot.books;
     wishlistItems = snapshot.wishlistItems;
     shoppingItems = snapshot.shoppingItems;
-    calendarEvents = snapshot.calendarEvents;
+    // Calendar events and sync tokens are deliberately local-only. Firestore
+    // snapshots do not contain this integration's cache.
   }
 
   void _ensureRemoteStore() {

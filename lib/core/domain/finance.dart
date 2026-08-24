@@ -37,21 +37,26 @@ class Transaction {
     this.deletedAt,
   }) : createdAt = createdAt ?? occurredAt,
        updatedAt = updatedAt ?? occurredAt {
-    if (id.trim().isEmpty || userId.trim().isEmpty)
+    if (id.trim().isEmpty || userId.trim().isEmpty) {
       throw ArgumentError('id e userId são obrigatórios');
-    if (amountMinor <= 0)
+    }
+    if (amountMinor <= 0) {
       throw ArgumentError.value(
         amountMinor,
         'amountMinor',
         'deve ser positivo',
       );
-    if (currency != 'BRL')
+    }
+    if (currency != 'BRL') {
       throw ArgumentError.value(currency, 'currency', 'a moeda do MVP é BRL');
+    }
     DateRules.parseDate(localDate);
-    if (DateRules.periodOf(localDate) != period)
+    if (DateRules.periodOf(localDate) != period) {
       throw ArgumentError('localDate e period não correspondem');
-    if (description.trim().isEmpty)
+    }
+    if (description.trim().isEmpty) {
       throw ArgumentError('description é obrigatório');
+    }
     if (type == TransactionType.adjustment && adjustmentDirection == null) {
       throw ArgumentError('adjustmentDirection é obrigatório para ajuste');
     }
@@ -115,14 +120,18 @@ class AllowancePeriod {
        endsOn = endsOn ?? DateRules.lastDayOfMonth(period),
        createdAt = createdAt ?? DateTime.now().toUtc(),
        updatedAt = updatedAt ?? createdAt ?? DateTime.now().toUtc() {
-    if (userId.trim().isEmpty) throw ArgumentError('userId é obrigatório');
+    if (userId.trim().isEmpty) {
+      throw ArgumentError('userId é obrigatório');
+    }
     DateRules.parsePeriod(period);
     DateRules.parseDate(this.startsOn);
     DateRules.parseDate(this.endsOn);
-    if (allowanceAmountMinor < 0 || rolloverMinor < 0)
+    if (allowanceAmountMinor < 0 || rolloverMinor < 0) {
       throw ArgumentError('valores da mesada não podem ser negativos');
-    if (currency != 'BRL')
+    }
+    if (currency != 'BRL') {
       throw ArgumentError.value(currency, 'currency', 'a moeda do MVP é BRL');
+    }
   }
 
   final String userId;
@@ -170,8 +179,9 @@ FinancialSummary summarizePeriod(
   Iterable<Transaction> transactions,
 ) {
   DateRules.parsePeriod(period);
-  if (rolloverMinor < 0)
+  if (rolloverMinor < 0) {
     throw ArgumentError.value(rolloverMinor, 'rolloverMinor');
+  }
   var received = 0;
   var spent = 0;
   for (final transaction in transactions) {

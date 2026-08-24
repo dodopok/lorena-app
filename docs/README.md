@@ -24,12 +24,13 @@ Este diretório é a fonte de verdade para o planejamento do aplicativo. O plano
 11. [Backlog e critérios de aceite](10-backlog-aceite.md)
 12. [Contratos das telas](12-contratos-telas.md)
 13. [Componentes compartilhados](13-componentes-compartilhados.md)
-14. [Decisões arquiteturais](adr/README.md)
-15. [Referências oficiais](11-referencias.md)
+14. [Credenciais e integrações](14-credenciais-e-integracoes.md)
+15. [Decisões arquiteturais](adr/README.md)
+16. [Referências oficiais](11-referencias.md)
 
 ## Status
 
-O produto está na fase de planejamento. O repositório ainda não possui um projeto Flutter inicializado.
+O produto está em alpha local funcional. Os fluxos próprios do MVP e a camada de domínio já estão implementados; integrações externas e distribuição aguardam as credenciais e os gates descritos em [Credenciais e integrações](14-credenciais-e-integracoes.md).
 
 ## Decisões já tomadas
 
@@ -41,6 +42,8 @@ O produto está na fase de planejamento. O repositório ainda não possui um pro
 | Conta do app | Sign in with Apple |
 | Integração de agenda | Conta Google separada |
 | Persistência em nuvem | Firebase |
+| Projeto Firebase | `lume-13125` — compartilhado por dev e prod |
+| Projeto Google Cloud | `lume-app-506521` (“Lume App”) — compartilhado por dev e prod |
 | Estratégia de uso | Offline-first com sincronização |
 | Distribuição inicial | Instalação privada/TestFlight |
 | Moeda inicial | Real brasileiro (BRL) |

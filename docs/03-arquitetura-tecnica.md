@@ -136,14 +136,16 @@ Essa exceção deve ser comunicada sem bloquear os demais módulos.
 | Ambiente | Uso |
 |---|---|
 | local | Desenvolvimento, emuladores Firebase e mocks Google |
-| dev | Testes em aparelho e conta Google de desenvolvimento |
-| prod | Dados reais da usuária e distribuição privada |
+| dev | Testes em aparelho e build de desenvolvimento |
+| prod | Distribuição privada e build de produção |
 
-Cada ambiente possui projeto Firebase, bundle ID, arquivos de configuração e OAuth clients separados. Dados reais não devem ser copiados para dev.
+Dev e prod usam um único projeto Firebase para os dados próprios e um único projeto Google Cloud para a Agenda. O Firebase compartilhado informado é `lume-13125`, com Authentication, Firestore, Storage, Functions, App Check e Crashlytics; o Google Cloud compartilhado é `lume-app-506521` (“Lume App”), com Calendar API e OAuth. Não existe isolamento de dados entre os dois builds: um build dev pode ler e alterar os mesmos dados que o build prod. O modo `local` continua usando emuladores/mocks para evitar escrita acidental.
+
+Neste projeto, dev e prod compartilham o mesmo bundle ID iOS por decisão explícita e apontam para os mesmos projetos Firebase e Google Cloud. A diferença entre builds fica restrita a flags, rótulo visual, logs técnicos e integrações locais; ela não é uma barreira de segurança. Isso impede instalação lado a lado e exige confirmação visual do ambiente antes de qualquer login, teste destrutivo ou migração.
 
 ## Configuração e segredos
 
-- Configurações públicas do Firebase podem ficar nos arquivos gerados por ambiente.
+- A configuração pública do Firebase pode ficar no arquivo gerado do projeto compartilhado; o modo `local` usa configuração de emulador.
 - Segredos de backend ficam no Secret Manager/configuração segura de Functions.
 - Tokens de acesso não entram em logs, Firestore ou controle de versão.
 - Variáveis de build selecionam ambiente, nunca contêm chaves privadas.

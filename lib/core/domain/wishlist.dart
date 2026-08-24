@@ -106,8 +106,7 @@ class WishlistItem {
     }
   }
 
-  static String? _normalizeCurrency(String? value) =>
-      value == null ? null : value.toUpperCase();
+  static String? _normalizeCurrency(String? value) => value?.toUpperCase();
 
   static void _validateCurrency(String value) {
     if (!RegExp(r'^[A-Z]{3}$').hasMatch(value.toUpperCase())) {

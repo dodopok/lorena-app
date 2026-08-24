@@ -12,8 +12,9 @@ class GratitudeEntry {
   }) : images = List.unmodifiable(images),
        createdAt = createdAt ?? DateTime.now().toUtc(),
        updatedAt = updatedAt ?? createdAt ?? DateTime.now().toUtc() {
-    if (id.trim().isEmpty || userId.trim().isEmpty)
+    if (id.trim().isEmpty || userId.trim().isEmpty) {
       throw ArgumentError('id e userId são obrigatórios');
+    }
     DateRules.parseDate(localDate);
     if (!hasContent) throw ArgumentError('gratidão precisa de texto ou imagem');
   }

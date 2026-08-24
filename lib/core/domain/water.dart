@@ -14,10 +14,12 @@ class WaterLog {
     DateTime? updatedAt,
   }) : createdAt = createdAt ?? occurredAt,
        updatedAt = updatedAt ?? occurredAt {
-    if (id.trim().isEmpty || userId.trim().isEmpty)
+    if (id.trim().isEmpty || userId.trim().isEmpty) {
       throw ArgumentError('id e userId são obrigatórios');
-    if (amountMl <= 0)
+    }
+    if (amountMl <= 0) {
       throw ArgumentError.value(amountMl, 'amountMl', 'deve ser positivo');
+    }
     DateRules.parseDate(localDate);
   }
 
@@ -53,7 +55,8 @@ int totalWaterForDate(Iterable<WaterLog> logs, String localDate) => logs
     .fold(0, (total, log) => total + log.amountMl);
 
 double waterProgress(int totalMl, int goalMl) {
-  if (goalMl <= 0)
+  if (goalMl <= 0) {
     throw ArgumentError.value(goalMl, 'goalMl', 'deve ser positivo');
+  }
   return totalMl / goalMl;
 }

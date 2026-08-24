@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/app_controller.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/theme.dart';
 import '../../../app/ui.dart';

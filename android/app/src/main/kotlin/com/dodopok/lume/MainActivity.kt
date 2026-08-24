@@ -1,4 +1,4 @@
-package com.lume.lume
+package com.dodopok.lume
 
 import io.flutter.embedding.android.FlutterActivity
 

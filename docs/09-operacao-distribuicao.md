@@ -14,21 +14,22 @@ TestFlight evita reinstalações manuais frequentes, mas builds expiram após 90
 
 - Apple Developer Program ativo.
 - App Store Connect com app, bundle ID e capabilities.
-- Projetos Firebase dev/prod.
-- Projeto Google Cloud, Calendar API e OAuth consent screen.
+- Um único projeto Firebase compartilhado por dev/prod (`lume-13125`), incluindo Authentication, Firestore, Storage, Functions, App Check e Crashlytics.
+- Um projeto Google Cloud compartilhado por dev/prod (`lume-app-506521` — “Lume App”), com Calendar API e OAuth consent screen.
 - E-mail e URL para suporte/privacidade.
 - Domínio simples para política de privacidade, se houver distribuição revisada.
 
 ## Bundle IDs e ambientes
 
-Exemplo:
+Por decisão do projeto, dev e prod usarão o mesmo App ID/bundle ID iOS:
 
 ```text
-com.seudominio.lorena.dev
-com.seudominio.lorena
+com.dodopok.lume
 ```
 
-Cada ambiente possui OAuth clients, Firebase apps e configuração isolados. O nome exibido da versão dev deve deixar claro que não contém dados de produção.
+O binário seleciona o perfil por configuração de build (flags, rótulo visual e integrações locais), mas dev e prod apontam para o mesmo backend e não podem ser instalados lado a lado no mesmo aparelho. A versão dev deve deixar claro que é um build de teste e que compartilha dados com prod; o modo local é o ambiente para dados fictícios. A equipe deve validar cuidadosamente que o build carregou a configuração pública compartilhada antes de autenticar.
+
+O mesmo App ID também implica compartilhar capabilities e a identidade de assinatura Apple. Firebase, Storage, dados e Google Cloud serão compartilhados por dev e prod. O Firebase é `lume-13125`; o projeto Google da Agenda é `lume-app-506521` (“Lume App”). Dentro do projeto Google, usar client IDs/redirects distintos somente quando necessário e controlar os escopos, contas de teste e configuração selecionada no build. Como não há isolamento de backend entre os builds, testes destrutivos devem usar o modo `local` com emuladores ou registros claramente marcados.
 
 ## OAuth Google
 
@@ -41,7 +42,7 @@ O modo Testing do Google é adequado ao spike, mas pode produzir autorizações 
 - cumprir verificação caso o Google a exija para a configuração/distribuição escolhida;
 - oferecer página de privacidade e explicar revogação/exclusão.
 
-Não prometer uma conexão permanente com Agenda até validar o fluxo no projeto Google real.
+Não prometer uma conexão permanente com Agenda até validar o fluxo no projeto Google/Firebase compartilhado real.
 
 ## CI/CD
 
@@ -143,4 +144,3 @@ Mesmo com uma usuária, oferecer em Configurações:
 - Conta e exclusão cumprem as diretrizes Apple vigentes.
 - Custos monitorados e limitados.
 - Canal de suporte definido.
-

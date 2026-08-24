@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/app_controller.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
 import '../../../app/theme.dart';
@@ -185,7 +184,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       const SizedBox(height: 20),
       DropdownButtonFormField<RolloverMode>(
-        value: _rolloverMode,
+        initialValue: _rolloverMode,
         decoration: const InputDecoration(
           labelText: 'Saldo positivo do mês anterior',
         ),

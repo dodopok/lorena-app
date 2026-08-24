@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/environment.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/ui.dart' as app_ui;
-import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class CalendarScreen extends StatelessWidget {
@@ -12,13 +12,21 @@ class CalendarScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = AppScope.of(context);
     final connected = controller.settings.calendarConnected;
+    final integrationEnabled = LumeBuildConfig.enableCalendar;
     return app_ui.LumePage(
       title: 'Agenda',
       subtitle: connected ? 'Conta Google conectada' : 'Uma conexão opcional',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!connected)
+          if (!integrationEnabled)
+            const LumeErrorState(
+              title: 'Agenda em preparação',
+              description:
+                  'Esta integração está atrás de uma feature flag enquanto o OAuth e o cache local são validados.',
+              errorKind: LumeErrorKind.permission,
+            )
+          else if (!connected)
             LumeCard(
               tone: LumeCardTone.calendar,
               child: Column(

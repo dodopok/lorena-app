@@ -168,7 +168,7 @@ class LocalDomainRepository {
       updatedAt: now,
     );
     _bucket(_periods, userId)[period] = periodModel;
-    if (settings.amountMinor > 0)
+    if (settings.amountMinor > 0) {
       saveTransaction(
         _allowanceTransaction(
           userId,
@@ -178,6 +178,7 @@ class LocalDomainRepository {
           now,
         ),
       );
+    }
     return periodModel;
   }
 
@@ -226,8 +227,9 @@ class LocalDomainRepository {
   }
 
   ShoppingItem saveShoppingItem(ShoppingItem item) {
-    if (_lists[item.userId]?[item.listId] == null)
+    if (_lists[item.userId]?[item.listId] == null) {
       throw StateError('lista não encontrada para este usuário');
+    }
     _bucket(_items, item.userId)[item.id] = item;
     return item;
   }
@@ -253,7 +255,9 @@ class LocalDomainRepository {
             .map((item) => item.id)
             .toList() ??
         <String>[];
-    for (final id in ids) _items[userId]!.remove(id);
+    for (final id in ids) {
+      _items[userId]!.remove(id);
+    }
     return ids.isNotEmpty;
   }
 }

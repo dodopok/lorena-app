@@ -11,7 +11,7 @@ Estimativas abaixo são relativas e servem para ordem de grandeza. Um desenvolve
 **Resultado:** esqueleto seguro rodando em iPhone físico.
 
 - Inicializar Flutter/iOS e flavors `dev`/`prod`.
-- Criar projetos Firebase e configuração por ambiente.
+- Configurar o projeto Firebase compartilhado e o modo local com Emulator Suite; dev e prod usam o mesmo backend.
 - Implementar Sign in with Apple.
 - Provar Google Sign-In + leitura/criação de evento.
 - Provar Firestore offline.

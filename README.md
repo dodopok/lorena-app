@@ -2,7 +2,7 @@
 
 Aplicativo pessoal para iPhone, planejado em Flutter, que reúne agenda, autocuidado, finanças, leituras, desejos e gratidão em um único espaço acolhedor.
 
-> **Status:** planejamento. O nome público definitivo e o ícone ainda estão em refinamento; “Lume” é o nome de trabalho usado neste repositório. O projeto Flutter ainda não foi inicializado.
+> **Status:** alpha local funcional. O nome público definitivo e o ícone ainda estão em refinamento; “Lume” é o nome de trabalho usado neste repositório. Os fluxos locais do MVP já rodam offline; as integrações Apple/Firebase/Google/Storage entram após configurar as credenciais descritas em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
 
 ## Visão rápida
 
@@ -37,7 +37,8 @@ Integrações como HealthKit, Open Finance, pagamentos, Apple Watch, Android, co
 | Aplicativo | Flutter/Dart |
 | Conta do app | Sign in with Apple via Firebase Authentication |
 | Agenda | Conta Google separada e opcional |
-| Backend | Firebase Authentication, Firestore, Storage e Functions pontuais |
+| Backend | Firebase Authentication, Firestore, Storage e Functions pontuais no projeto compartilhado `lume-13125` |
+| Google Cloud | Calendar API e OAuth no projeto compartilhado `lume-app-506521` (“Lume App”) |
 | Offline | Persistência offline do Firestore para dados próprios |
 | Cache operacional | SQLite/Drift para Agenda, rascunhos e fila de fotos |
 | Idioma e localização | Português do Brasil, `America/Sao_Paulo` e BRL |
@@ -76,7 +77,7 @@ O [plano completo do produto](docs/README.md) é a fonte de verdade para escopo,
 
 ## Roadmap resumido
 
-1. **Fundação:** inicializar Flutter/iOS, ambientes Firebase, autenticação, offline, fotos, biometria e design system.
+1. **Fundação:** inicializar Flutter/iOS, backend Firebase compartilhado, autenticação, offline, fotos, biometria e design system.
 2. **Primeira fatia diária:** onboarding, tela Hoje, água, gratidão em texto e configurações básicas.
 3. **Bem-estar:** evacuações, exercícios, fotos e lembretes locais opcionais.
 4. **Finanças:** mesada, lançamentos, rollover, saldo e lista de compras.
@@ -87,9 +88,25 @@ Consulte o [roadmap detalhado](docs/08-roadmap.md) e os [critérios de aceite](d
 
 ## Estado do repositório
 
-Neste momento, o repositório contém a documentação de discovery e planejamento. Ainda não há `pubspec.yaml`, código em `lib/`, configuração Firebase ou pipeline de CI/CD.
+O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, compras, desejos manuais, livros, gratidão, configurações, exportação local, cobertura no app switcher, regras Firebase iniciais, índices e CI. A persistência local usa `SharedPreferences` como fonte de desenvolvimento; os contratos de domínio e as regras de segurança já estão isolados para a futura troca por Firebase/SQLite/Storage.
 
-A implementação deve começar pela Fase 0, com os spikes descritos em [Arquitetura técnica](docs/03-arquitetura-tecnica.md#decisoes-que-exigem-spike-tecnico) e os gates de segurança descritos em [Segurança e privacidade](docs/06-seguranca-privacidade.md).
+Para rodar localmente:
+
+```bash
+flutter pub get
+flutter run
+```
+
+Para validar a entrega:
+
+```bash
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+flutter build ios --no-codesign
+```
+
+As integrações externas e os gates de distribuição continuam condicionados às credenciais e aos spikes descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md), [Arquitetura técnica](docs/03-arquitetura-tecnica.md#decisoes-que-exigem-spike-tecnico) e [Segurança e privacidade](docs/06-seguranca-privacidade.md).
 
 ## Critério de sucesso da beta
 

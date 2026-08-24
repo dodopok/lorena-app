@@ -9,6 +9,7 @@ import '../features/settings/presentation/settings_screen.dart';
 import '../features/today/presentation/today_screen.dart';
 import '../features/wellbeing/presentation/wellbeing_screen.dart';
 import 'app_controller.dart';
+import 'privacy_shield.dart';
 import 'theme.dart';
 
 class LumeApp extends StatelessWidget {
@@ -20,14 +21,16 @@ class LumeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScope(
       controller: controller,
-      child: MaterialApp(
-        title: 'Lume',
-        debugShowCheckedModeBanner: false,
-        theme: LumeTheme.light(),
-        darkTheme: LumeTheme.dark(),
-        themeMode: ThemeMode.system,
-        home: const AppLaunchScreen(),
-        onGenerateRoute: _routes,
+      child: AppPrivacyShield(
+        child: MaterialApp(
+          title: 'Lume',
+          debugShowCheckedModeBanner: false,
+          theme: LumeTheme.light(),
+          darkTheme: LumeTheme.dark(),
+          themeMode: ThemeMode.system,
+          home: const AppLaunchScreen(),
+          onGenerateRoute: _routes,
+        ),
       ),
     );
   }
@@ -94,10 +97,15 @@ class AppLaunchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = AppScope.of(context);
-    if (!controller.isReady) return const SplashScreen();
-    if (!controller.signedIn) return const WelcomeScreen();
-    if (!controller.settings.onboardingComplete)
+    if (!controller.isReady) {
+      return const SplashScreen();
+    }
+    if (!controller.signedIn) {
+      return const WelcomeScreen();
+    }
+    if (!controller.settings.onboardingComplete) {
       return const OnboardingScreen();
+    }
     return const AppShell(initialDestination: AppDestination.today);
   }
 }

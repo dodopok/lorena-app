@@ -8,8 +8,9 @@ class ShoppingList {
     this.archivedAt,
   }) : createdAt = createdAt ?? DateTime.now().toUtc(),
        updatedAt = updatedAt ?? createdAt ?? DateTime.now().toUtc() {
-    if (id.trim().isEmpty || userId.trim().isEmpty || name.trim().isEmpty)
+    if (id.trim().isEmpty || userId.trim().isEmpty || name.trim().isEmpty) {
       throw ArgumentError('lista precisa de id, usuário e nome');
+    }
   }
   final String id;
   final String userId;
@@ -39,16 +40,22 @@ class ShoppingItem {
     if (id.trim().isEmpty ||
         userId.trim().isEmpty ||
         listId.trim().isEmpty ||
-        name.trim().isEmpty)
+        name.trim().isEmpty) {
       throw ArgumentError('item incompleto');
-    if (position < 0) throw ArgumentError.value(position, 'position');
-    if (estimatedPriceMinor != null && estimatedPriceMinor! < 0)
+    }
+    if (position < 0) {
+      throw ArgumentError.value(position, 'position');
+    }
+    if (estimatedPriceMinor != null && estimatedPriceMinor! < 0) {
       throw ArgumentError.value(estimatedPriceMinor, 'estimatedPriceMinor');
+    }
     if (estimatedPriceMinor != null &&
-        (currency == null || currency!.trim().isEmpty))
+        (currency == null || currency!.trim().isEmpty)) {
       throw ArgumentError('preço estimado precisa de moeda');
-    if (estimatedPriceMinor == null && currency != null)
+    }
+    if (estimatedPriceMinor == null && currency != null) {
       throw ArgumentError('moeda sem preço é inválida');
+    }
   }
   final String id;
   final String userId;

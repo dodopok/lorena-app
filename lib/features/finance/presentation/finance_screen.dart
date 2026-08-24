@@ -5,7 +5,6 @@ import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
 import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
-import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class FinanceScreen extends StatelessWidget {
@@ -435,6 +434,7 @@ class FinanceScreen extends StatelessWidget {
                     note: note.text,
                   );
                 } on ArgumentError catch (error) {
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(

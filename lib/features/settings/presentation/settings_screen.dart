@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../app/environment.dart';
 import '../../../app/lume_app.dart';
-import '../../../app/models.dart';
 import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
-import '../../../core/theme/lume_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -132,7 +131,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Lume · ambiente local · dados no aparelho',
+              'Lume · ambiente ${LumeBuildConfig.label} · dados no aparelho',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: app_theme.LumeColors.textSecondary,
               ),
@@ -279,10 +278,11 @@ class SettingsScreen extends StatelessWidget {
     );
     if (confirmed != true || !context.mounted) return;
     await AppScope.read(context).signOut();
-    if (context.mounted)
+    if (context.mounted) {
       Navigator.of(
         context,
       ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+    }
   }
 
   int? _parseMoney(String raw) {
@@ -400,10 +400,11 @@ class PrivacyScreen extends StatelessWidget {
     );
     if (confirmed != true || !context.mounted) return;
     await AppScope.read(context).deleteAccount();
-    if (context.mounted)
+    if (context.mounted) {
       Navigator.of(
         context,
       ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+    }
   }
 }
 

@@ -1,13 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
+import '../core/auth/auth_gateway.dart';
 import 'local_store.dart';
 import 'models.dart';
 
 class AppController extends ChangeNotifier {
-  AppController({LocalStore? store}) : _store = store ?? LocalStore();
+  AppController({LocalStore? store, AuthGateway? authGateway})
+    : _store = store ?? LocalStore(),
+      _authGateway = authGateway;
 
   final LocalStore _store;
+  final AuthGateway? _authGateway;
 
   bool isReady = false;
   bool signedIn = false;
@@ -40,6 +44,18 @@ class AppController extends ChangeNotifier {
       _ensureAllowanceForPeriod(periodFor(DateTime.now()));
     }
     notifyListeners();
+  }
+
+  /// Aligns the local shell with the provider session after Firebase starts.
+  Future<void> restoreAuthSession() async {
+    final gateway = _authGateway;
+    if (gateway == null) return;
+    final providerSession = await gateway.hasSession();
+    signedIn = providerSession;
+    if (!providerSession) {
+      settings = settings.copyWith(onboardingComplete: false);
+    }
+    await _commit();
   }
 
   String localDateFor(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
@@ -125,13 +141,26 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
+  Future<void> signInWithApple() async {
+    final gateway = _authGateway;
+    if (gateway == null) {
+      await signInOnDevice();
+      return;
+    }
+    await gateway.signInWithApple();
+    signedIn = true;
+    await _commit();
+  }
+
   Future<void> signOut() async {
+    await _authGateway?.signOut();
     signedIn = false;
     settings = settings.copyWith(onboardingComplete: false);
     await _commit();
   }
 
   Future<void> deleteAccount() async {
+    await _authGateway?.deleteAccount();
     signedIn = false;
     settings = const UserSettings();
     waterLogs = [];

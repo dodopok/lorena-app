@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../app/lume_app.dart';
 import '../../../app/theme.dart';
@@ -96,10 +98,47 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _signIn() async {
     setState(() => _saving = true);
     final controller = AppScope.read(context);
-    await controller.signInOnDevice();
+    try {
+      await controller.signInWithApple();
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_authError(error))));
+      return;
+    } on SignInWithAppleException catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_appleError(error))));
+      return;
+    } on Exception catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      return;
+    }
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/onboarding');
   }
+
+  String _authError(FirebaseAuthException error) => switch (error.code) {
+    'user-cancelled' || 'web-context-canceled' => 'Login cancelado.',
+    'credential-already-in-use' =>
+      'Esta credencial Apple já está vinculada a outra conta.',
+    'requires-recent-login' => 'Entre novamente para continuar.',
+    _ => 'Não foi possível entrar com a Apple agora.',
+  };
+
+  String _appleError(SignInWithAppleException error) =>
+      error is SignInWithAppleAuthorizationException &&
+          error.code == AuthorizationErrorCode.canceled
+      ? 'Login cancelado.'
+      : 'Não foi possível concluir o login com a Apple.';
 
   @override
   Widget build(BuildContext context) {

@@ -16,6 +16,10 @@
 	<string>Lume - Personal App</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>O Lume usa o Face ID somente para proteger seus registros pessoais.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O Lume usa suas fotos para registrar gratidão, capas de livros e desejos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>O Lume usa a câmera quando você escolhe registrar uma foto do seu dia.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

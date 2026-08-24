@@ -106,6 +106,8 @@ O Google OAuth é uma autorização para Agenda, não o login principal do Lume.
 - Projeto Firebase: `lume-13125`; domínio de autenticação `lume-13125.firebaseapp.com`.
 - OAuth client ID informado: `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`.
 - OAuth client iOS presente no `GoogleService-Info.plist`: `980338934048-d1ijkl2g5e2o1u28bo2ihtnbfi04a5vk.apps.googleusercontent.com`, com reversed client ID `com.googleusercontent.apps.980338934048-d1ijkl2g5e2o1u28bo2ihtnbfi04a5vk`.
+- O client iOS acima foi gerado para o Firebase `lume-13125`; ele não deve ser presumido como client da Agenda no Google Cloud `lume-app-506521`.
+- Para ativar a Agenda, criar no projeto `lume-app-506521` um OAuth client **iOS** com bundle `com.dodopok.lume` e registrar seu client ID/reversed client ID no target. O client `101842...` recebido pode ser usado como Web/server client somente se os redirect URIs e o consent screen estiverem configurados para esse fluxo.
 - O tipo exato desse client (iOS/Web) e seus redirect URIs ainda devem ser conferidos no Google Cloud Console antes de ligá-lo ao build.
 - O arquivo JSON de client secret recebido localmente contém material sensível: não copiar para o repositório, não embutir no Flutter e não compartilhar em tickets.
 
@@ -113,7 +115,7 @@ O Google OAuth é uma autorização para Agenda, não o login principal do Lume.
 
 - `GOOGLE_CLOUD_PROJECT_ID=lume-app-506521`, compartilhado por `dev` e `prod`;
 - `FIREBASE_PROJECT_ID=lume-13125`, compartilhado por `dev` e `prod`;
-- OAuth iOS client ID e, se necessário, OAuth Web client IDs registrados no mesmo projeto; o client informado acima deve ser classificado antes do uso;
+- OAuth iOS client ID do projeto `lume-app-506521` e, se necessário, OAuth Web client IDs registrados no mesmo projeto; o client informado acima deve ser classificado antes do uso;
 - `REVERSED_CLIENT_ID`/URL scheme no target iOS correspondente;
 - OAuth Web client ID e secret somente se houver fluxo backend;
 - lista de test users no modo `Testing`;

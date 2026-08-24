@@ -2,16 +2,26 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../core/auth/auth_gateway.dart';
+import '../core/calendar/calendar_gateway.dart';
+import '../core/photos/local_photo_service.dart';
 import 'local_store.dart';
 import 'models.dart';
 
 class AppController extends ChangeNotifier {
-  AppController({LocalStore? store, AuthGateway? authGateway})
-    : _store = store ?? LocalStore(),
-      _authGateway = authGateway;
+  AppController({
+    LocalStore? store,
+    AuthGateway? authGateway,
+    CalendarGateway? calendarGateway,
+    LocalPhotoService? photoService,
+  }) : _store = store ?? LocalStore(),
+       _authGateway = authGateway,
+       _calendarGateway = calendarGateway,
+       _photoService = photoService ?? LocalPhotoService();
 
   final LocalStore _store;
   final AuthGateway? _authGateway;
+  final CalendarGateway? _calendarGateway;
+  final LocalPhotoService _photoService;
 
   bool isReady = false;
   bool signedIn = false;
@@ -24,6 +34,7 @@ class AppController extends ChangeNotifier {
   List<BookEntry> books = [];
   List<WishlistItem> wishlistItems = [];
   List<ShoppingItem> shoppingItems = [];
+  List<CalendarEvent> calendarEvents = [];
 
   Future<void> hydrate() async {
     final snapshot = await _store.read();
@@ -154,6 +165,8 @@ class AppController extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _authGateway?.signOut();
+    await _calendarGateway?.disconnect();
+    calendarEvents = [];
     signedIn = false;
     settings = settings.copyWith(onboardingComplete: false);
     await _commit();
@@ -161,6 +174,8 @@ class AppController extends ChangeNotifier {
 
   Future<void> deleteAccount() async {
     await _authGateway?.deleteAccount();
+    await _calendarGateway?.disconnect();
+    calendarEvents = [];
     signedIn = false;
     settings = const UserSettings();
     waterLogs = [];
@@ -173,6 +188,30 @@ class AppController extends ChangeNotifier {
     shoppingItems = [];
     await _store.clear();
     notifyListeners();
+  }
+
+  Future<void> connectCalendar() async {
+    final gateway = _calendarGateway;
+    if (gateway == null) {
+      await updateSettings(settings.copyWith(calendarConnected: true));
+      return;
+    }
+    await gateway.connect();
+    calendarEvents = await gateway.fetchEvents();
+    await updateSettings(settings.copyWith(calendarConnected: true));
+  }
+
+  Future<void> refreshCalendar() async {
+    final gateway = _calendarGateway;
+    if (gateway == null || !settings.calendarConnected) return;
+    calendarEvents = await gateway.fetchEvents();
+    notifyListeners();
+  }
+
+  Future<void> disconnectCalendar() async {
+    await _calendarGateway?.disconnect();
+    calendarEvents = [];
+    await updateSettings(settings.copyWith(calendarConnected: false));
   }
 
   Future<void> saveOnboarding({
@@ -334,13 +373,23 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> saveGratitude(String text, {DateTime? date}) async {
+  Future<String?> pickLocalPhoto(LocalPhotoKind kind) =>
+      _photoService.pickAndStore(kind);
+
+  Future<void> saveGratitude(
+    String text, {
+    DateTime? date,
+    String? localImagePath,
+  }) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty) throw ArgumentError('A gratidão não pode ficar vazia');
+    if (trimmed.isEmpty && (localImagePath == null || localImagePath.isEmpty)) {
+      throw ArgumentError('A gratidão precisa de texto ou foto');
+    }
     final localDate = localDateFor(date ?? DateTime.now());
     final entry = GratitudeEntry(
       localDate: localDate,
       text: trimmed,
+      localImagePath: localImagePath,
       syncState: SyncState.pending,
     );
     gratitudeEntries = [
@@ -356,6 +405,7 @@ class AppController extends ChangeNotifier {
     BookStatus status = BookStatus.wantToRead,
     int? rating,
     String? review,
+    String? localCoverPath,
   }) async {
     if (title.trim().isEmpty) throw ArgumentError('Título obrigatório');
     if (rating != null && (rating < 1 || rating > 5)) {
@@ -370,6 +420,7 @@ class AppController extends ChangeNotifier {
         status: status,
         rating: rating,
         review: review?.trim().isEmpty == true ? null : review?.trim(),
+        localCoverPath: localCoverPath,
         syncState: SyncState.pending,
       ),
     ];
@@ -386,6 +437,7 @@ class AppController extends ChangeNotifier {
     required String title,
     int? priceMinor,
     String? note,
+    String? localImagePath,
   }) async {
     final uri = Uri.tryParse(originalUrl.trim());
     if (uri == null ||
@@ -408,6 +460,7 @@ class AppController extends ChangeNotifier {
         priceMinor: priceMinor,
         currency: priceMinor == null ? null : 'BRL',
         note: note?.trim().isEmpty == true ? null : note?.trim(),
+        localImagePath: localImagePath,
         syncState: SyncState.pending,
       ),
     ];

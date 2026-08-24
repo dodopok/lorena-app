@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/environment.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/ui.dart' as app_ui;
+import '../../../core/calendar/calendar_gateway.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class CalendarScreen extends StatelessWidget {
@@ -80,12 +81,30 @@ class CalendarScreen extends StatelessWidget {
               onAction: () => _showDraftEvent(context),
             ),
             const SizedBox(height: 8),
-            const LumeEmptyState(
-              title: 'Nenhum evento no cache',
-              description:
-                  'Quando a API do Google estiver configurada, seus eventos aparecerão aqui com data, duração e calendário.',
-              illustration: Icon(Icons.event_available_outlined, size: 40),
-            ),
+            if (controller.calendarEvents.isEmpty)
+              const LumeEmptyState(
+                title: 'Nenhum evento no cache',
+                description:
+                    'Quando a API do Google estiver configurada, seus eventos aparecerão aqui com data, duração e calendário.',
+                illustration: Icon(Icons.event_available_outlined, size: 40),
+              )
+            else
+              ...controller.calendarEvents.map(
+                (event) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    event.isAllDay
+                        ? Icons.wb_sunny_outlined
+                        : Icons.event_outlined,
+                  ),
+                  title: Text(event.title),
+                  subtitle: Text(
+                    event.isAllDay
+                        ? 'Dia inteiro · ${_date(event.start)}'
+                        : '${_date(event.start)} · ${_time(event.start)}–${_time(event.end)}',
+                  ),
+                ),
+              ),
           ],
           const SizedBox(height: 24),
           LumeCard(
@@ -109,12 +128,18 @@ class CalendarScreen extends StatelessWidget {
 
   Future<void> _connect(BuildContext context) async {
     final controller = AppScope.read(context);
-    await controller.updateSettings(
-      controller.settings.copyWith(calendarConnected: true),
-    );
+    try {
+      await controller.connectCalendar();
+    } on CalendarGatewayException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Agenda conectada neste aparelho.')),
+      const SnackBar(content: Text('Agenda conectada e sincronizada.')),
     );
   }
 
@@ -139,9 +164,7 @@ class CalendarScreen extends StatelessWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await AppScope.read(context).updateSettings(
-      AppScope.read(context).settings.copyWith(calendarConnected: false),
-    );
+    await AppScope.read(context).disconnectCalendar();
   }
 
   Future<void> _showDraftEvent(BuildContext context) async {
@@ -175,4 +198,10 @@ class CalendarScreen extends StatelessWidget {
     );
     title.dispose();
   }
+
+  String _date(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+
+  String _time(DateTime date) =>
+      '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 }

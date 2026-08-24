@@ -41,6 +41,7 @@ dependencies:
   crypto: ^3.0.7
   http: ^1.6.0
   image_picker: ^1.2.3
+  path_provider: ^2.1.5
   url_launcher: ^6.3.2
   flutter_local_notifications: ^18.0.1
 

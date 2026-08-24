@@ -305,22 +305,29 @@ class GratitudeEntry {
   const GratitudeEntry({
     required this.localDate,
     required this.text,
+    this.localImagePath,
     this.syncState = SyncState.synced,
   });
 
   final String localDate;
   final String text;
+  final String? localImagePath;
   final SyncState syncState;
 
   Map<String, dynamic> toJson() => {
     'localDate': localDate,
     'text': text,
+    if (localImagePath != null && localImagePath!.isNotEmpty)
+      'localImagePath': localImagePath,
     'syncState': syncState.name,
   };
 
   factory GratitudeEntry.fromJson(Map<String, dynamic> map) => GratitudeEntry(
     localDate: _string(map, 'localDate'),
     text: _string(map, 'text'),
+    localImagePath: map['localImagePath'] is String
+        ? map['localImagePath'] as String
+        : null,
     syncState: SyncState.values.firstWhere(
       (value) => value.name == _string(map, 'syncState'),
       orElse: () => SyncState.synced,
@@ -333,6 +340,7 @@ class BookEntry {
     required this.id,
     required this.title,
     this.author,
+    this.localCoverPath,
     this.status = BookStatus.wantToRead,
     this.rating,
     this.review,
@@ -342,6 +350,7 @@ class BookEntry {
   final String id;
   final String title;
   final String? author;
+  final String? localCoverPath;
   final BookStatus status;
   final int? rating;
   final String? review;
@@ -351,6 +360,8 @@ class BookEntry {
     'id': id,
     'title': title,
     if (author != null && author!.isNotEmpty) 'author': author,
+    if (localCoverPath != null && localCoverPath!.isNotEmpty)
+      'localCoverPath': localCoverPath,
     'status': status.name,
     if (rating != null) 'rating': rating,
     if (review != null && review!.isNotEmpty) 'review': review,
@@ -361,6 +372,9 @@ class BookEntry {
     id: _string(map, 'id'),
     title: _string(map, 'title'),
     author: map['author'] is String ? map['author'] as String : null,
+    localCoverPath: map['localCoverPath'] is String
+        ? map['localCoverPath'] as String
+        : null,
     status: BookStatus.values.firstWhere(
       (value) => value.name == _string(map, 'status'),
       orElse: () => BookStatus.wantToRead,
@@ -382,6 +396,7 @@ class WishlistItem {
     required this.siteHost,
     this.priceMinor,
     this.currency = 'BRL',
+    this.localImagePath,
     this.status = WishlistStatus.wanted,
     this.note,
     this.syncState = SyncState.synced,
@@ -393,6 +408,7 @@ class WishlistItem {
   final String siteHost;
   final int? priceMinor;
   final String? currency;
+  final String? localImagePath;
   final WishlistStatus status;
   final String? note;
   final SyncState syncState;
@@ -405,6 +421,8 @@ class WishlistItem {
     String? currency,
     WishlistStatus? status,
     String? note,
+    String? localImagePath,
+    bool clearLocalImagePath = false,
   }) => WishlistItem(
     id: id,
     originalUrl: originalUrl,
@@ -414,6 +432,9 @@ class WishlistItem {
     currency: clearPrice ? null : currency ?? this.currency,
     status: status ?? this.status,
     note: note ?? this.note,
+    localImagePath: clearLocalImagePath
+        ? null
+        : localImagePath ?? this.localImagePath,
     syncState: SyncState.pending,
   );
 
@@ -426,6 +447,8 @@ class WishlistItem {
     if (currency != null) 'currency': currency,
     'status': status.name,
     if (note != null && note!.isNotEmpty) 'note': note,
+    if (localImagePath != null && localImagePath!.isNotEmpty)
+      'localImagePath': localImagePath,
     'syncState': syncState.name,
   };
 
@@ -443,6 +466,9 @@ class WishlistItem {
       orElse: () => WishlistStatus.wanted,
     ),
     note: map['note'] is String ? map['note'] as String : null,
+    localImagePath: map['localImagePath'] is String
+        ? map['localImagePath'] as String
+        : null,
     syncState: SyncState.values.firstWhere(
       (value) => value.name == _string(map, 'syncState'),
       orElse: () => SyncState.synced,

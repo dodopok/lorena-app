@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
 import '../../../app/ui.dart' as app_ui;
+import '../../../core/photos/local_photo_service.dart';
 import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
@@ -24,10 +27,17 @@ class CornerScreen extends StatelessWidget {
         children: [
           LumeCard(
             tone: LumeCardTone.corner,
-            onTap: () => _showGratitude(context, today?.text ?? ''),
+            onTap: () => _showGratitude(
+              context,
+              today?.text ?? '',
+              initialImagePath: today?.localImagePath,
+            ),
             child: Row(
               children: [
-                const Icon(Icons.favorite_border, size: 28),
+                if (today?.localImagePath != null)
+                  _LocalPhotoThumb(path: today!.localImagePath!, size: 48)
+                else
+                  const Icon(Icons.favorite_border, size: 28),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
@@ -95,14 +105,20 @@ class CornerScreen extends StatelessWidget {
                 children: sortedGratitude.take(10).map((entry) {
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.favorite_outline),
+                    leading: entry.localImagePath == null
+                        ? const Icon(Icons.favorite_outline)
+                        : _LocalPhotoThumb(path: entry.localImagePath!),
                     title: Text(entry.localDate),
                     subtitle: Text(
-                      entry.text,
+                      entry.text.isEmpty ? 'Foto salva localmente' : entry.text,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    onTap: () => _showGratitude(context, entry.text),
+                    onTap: () => _showGratitude(
+                      context,
+                      entry.text,
+                      initialImagePath: entry.localImagePath,
+                    ),
                   );
                 }).toList(),
               ),
@@ -116,7 +132,7 @@ class CornerScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
-                    'Fotos entram no fluxo de gratidão e livros quando o seletor do iOS e a fila privada de uploads forem configurados. O texto já funciona offline.',
+                    'Fotos são copiadas para o suporte local do app. O texto continua funcionando offline; o upload ainda não é feito.',
                   ),
                 ),
               ],
@@ -127,43 +143,71 @@ class CornerScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showGratitude(BuildContext context, String initial) async {
+  Future<void> _showGratitude(
+    BuildContext context,
+    String initial, {
+    String? initialImagePath,
+  }) async {
     final text = TextEditingController(text: initial);
+    String? localImagePath = initialImagePath;
     await app_ui.showLumeSheet(
       context,
       title: 'Gratidão de hoje',
-      child: Column(
-        children: [
-          TextField(
-            controller: text,
-            autofocus: true,
-            maxLines: 5,
-            maxLength: 1000,
-            decoration: const InputDecoration(
-              labelText: 'O que foi bom hoje?',
-              alignLabelWithHint: true,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
+      child: StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          children: [
+            if (localImagePath != null) ...[
+              _LocalPhotoPreview(path: localImagePath!),
+              const SizedBox(height: 8),
+            ],
+            OutlinedButton.icon(
               onPressed: () async {
-                if (text.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Escreva algo ou adicione uma foto.'),
-                    ),
-                  );
-                  return;
+                final path = await AppScope.read(
+                  context,
+                ).pickLocalPhoto(LocalPhotoKind.gratitude);
+                if (path != null && context.mounted) {
+                  setSheetState(() => localImagePath = path);
                 }
-                await AppScope.read(context).saveGratitude(text.text);
-                if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Guardar'),
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(
+                localImagePath == null ? 'Adicionar foto' : 'Trocar foto',
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            TextField(
+              controller: text,
+              autofocus: true,
+              maxLines: 5,
+              maxLength: 1000,
+              decoration: const InputDecoration(
+                labelText: 'O que foi bom hoje?',
+                alignLabelWithHint: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () async {
+                  if (text.text.trim().isEmpty && localImagePath == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Escreva algo ou adicione uma foto.'),
+                      ),
+                    );
+                    return;
+                  }
+                  await AppScope.read(
+                    context,
+                  ).saveGratitude(text.text, localImagePath: localImagePath);
+                  if (context.mounted) Navigator.pop(context);
+                },
+                child: const Text('Guardar'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
     text.dispose();
@@ -175,6 +219,7 @@ class CornerScreen extends StatelessWidget {
     final review = TextEditingController();
     var status = BookStatus.wantToRead;
     int? rating;
+    String? localCoverPath;
 
     await app_ui.showLumeSheet(
       context,
@@ -182,6 +227,25 @@ class CornerScreen extends StatelessWidget {
       child: StatefulBuilder(
         builder: (context, setSheetState) => Column(
           children: [
+            if (localCoverPath != null) ...[
+              _LocalPhotoPreview(path: localCoverPath!, isCover: true),
+              const SizedBox(height: 8),
+            ],
+            OutlinedButton.icon(
+              onPressed: () async {
+                final path = await AppScope.read(
+                  context,
+                ).pickLocalPhoto(LocalPhotoKind.bookCover);
+                if (path != null && context.mounted) {
+                  setSheetState(() => localCoverPath = path);
+                }
+              },
+              icon: const Icon(Icons.photo_camera_back_outlined),
+              label: Text(
+                localCoverPath == null ? 'Adicionar capa' : 'Trocar capa',
+              ),
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: title,
               autofocus: true,
@@ -251,6 +315,7 @@ class CornerScreen extends StatelessWidget {
                     status: status,
                     rating: rating,
                     review: review.text,
+                    localCoverPath: localCoverPath,
                   );
                   if (context.mounted) Navigator.pop(context);
                 },
@@ -291,10 +356,12 @@ class _BookRow extends StatelessWidget {
     };
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: context.lumeColors.calendar,
-        child: const Icon(Icons.menu_book_outlined),
-      ),
+      leading: book.localCoverPath == null
+          ? CircleAvatar(
+              backgroundColor: context.lumeColors.calendar,
+              child: const Icon(Icons.menu_book_outlined),
+            )
+          : _LocalPhotoThumb(path: book.localCoverPath!, size: 48),
       title: Text(book.title),
       subtitle: Text(
         [
@@ -310,6 +377,61 @@ class _BookRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LocalPhotoThumb extends StatelessWidget {
+  const _LocalPhotoThumb({required this.path, this.size = 40});
+
+  final String path;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(10),
+    child: Image.file(
+      File(path),
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: size,
+        height: size,
+        color: context.lumeColors.surface,
+        child: const Icon(Icons.broken_image_outlined),
+      ),
+    ),
+  );
+}
+
+class _LocalPhotoPreview extends StatelessWidget {
+  const _LocalPhotoPreview({required this.path, this.isCover = false});
+
+  final String path;
+  final bool isCover;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(16),
+    child: Image.file(
+      File(path),
+      width: double.infinity,
+      height: isCover ? 180 : 220,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: isCover ? 180 : 220,
+        alignment: Alignment.center,
+        color: context.lumeColors.surface,
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.broken_image_outlined),
+            SizedBox(height: 4),
+            Text('Prévia indisponível; o texto continua salvo.'),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 extension<T> on List<T> {

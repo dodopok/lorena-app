@@ -70,6 +70,8 @@ Cada feature contém:
 
 A UI não acessa Firebase ou Google diretamente. Repositórios formam a fronteira testável e a fonte de verdade para cada recurso.
 
+As responsabilidades e APIs iniciais dos widgets em `core/widgets` estão documentadas em [Componentes compartilhados](13-componentes-compartilhados.md). As rotas, estados e eventos das telas estão em [Contratos das telas](12-contratos-telas.md).
+
 ## Fluxo de dependências
 
 ```text

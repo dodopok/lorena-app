@@ -112,6 +112,8 @@ As combinações finais precisam ser validadas com contraste WCAG. Rosa claro n�
 - Animações entre 150 e 300 ms, respeitando “Reduzir Movimento”.
 - Tipografia principal legível e arredondada; Nunito ou equivalente licenciada e empacotada.
 
+Os contratos implementáveis dos componentes estão em [Componentes compartilhados](13-componentes-compartilhados.md); esta seção continua sendo a direção visual e de personalidade.
+
 ## Conteúdo e tom de voz
 
 ### Usar

@@ -55,6 +55,11 @@ O [plano completo do produto](docs/README.md) é a fonte de verdade para escopo,
 - [Roadmap e entregas](docs/08-roadmap.md)
 - [Backlog e critérios de aceite](docs/10-backlog-aceite.md)
 
+### Interfaces
+
+- [Contratos das telas](docs/12-contratos-telas.md)
+- [Componentes compartilhados](docs/13-componentes-compartilhados.md)
+
 ### Engenharia
 
 - [Arquitetura técnica](docs/03-arquitetura-tecnica.md)

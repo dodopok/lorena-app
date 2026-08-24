@@ -22,8 +22,10 @@ Este diretório é a fonte de verdade para o planejamento do aplicativo. O plano
 9. [Roadmap e entregas](08-roadmap.md)
 10. [Operação e distribuição](09-operacao-distribuicao.md)
 11. [Backlog e critérios de aceite](10-backlog-aceite.md)
-12. [Decisões arquiteturais](adr/README.md)
-13. [Referências oficiais](11-referencias.md)
+12. [Contratos das telas](12-contratos-telas.md)
+13. [Componentes compartilhados](13-componentes-compartilhados.md)
+14. [Decisões arquiteturais](adr/README.md)
+15. [Referências oficiais](11-referencias.md)
 
 ## Status
 

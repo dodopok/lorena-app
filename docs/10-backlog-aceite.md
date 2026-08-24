@@ -1,6 +1,6 @@
 # Backlog e critérios de aceite
 
-Este arquivo transforma o escopo em épicos e histórias rastreáveis. Critérios transversais da [Definition of Done](07-qualidade-testes.md#definition-of-done) valem para todas as histórias.
+Este arquivo transforma o escopo em épicos e histórias rastreáveis. Critérios transversais da [Definition of Done](07-qualidade-testes.md#definition-of-done) valem para todas as histórias. As superfícies e estados de UI correspondentes estão nos [contratos das telas](12-contratos-telas.md).
 
 ## E0 — Fundação
 

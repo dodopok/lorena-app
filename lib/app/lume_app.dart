@@ -26,7 +26,7 @@ class LumeApp extends StatelessWidget {
         theme: LumeTheme.light(),
         darkTheme: LumeTheme.dark(),
         themeMode: ThemeMode.system,
-        initialRoute: '/welcome',
+        home: const AppLaunchScreen(),
         onGenerateRoute: _routes,
       ),
     );
@@ -45,11 +45,17 @@ class LumeApp extends StatelessWidget {
       case '/app/today':
         return _page(const AppShell(initialDestination: AppDestination.today));
       case '/app/calendar':
-        return _page(const AppShell(initialDestination: AppDestination.calendar));
+        return _page(
+          const AppShell(initialDestination: AppDestination.calendar),
+        );
       case '/app/wellbeing':
-        return _page(const AppShell(initialDestination: AppDestination.wellbeing));
+        return _page(
+          const AppShell(initialDestination: AppDestination.wellbeing),
+        );
       case '/app/finance':
-        return _page(const AppShell(initialDestination: AppDestination.finance));
+        return _page(
+          const AppShell(initialDestination: AppDestination.finance),
+        );
       case '/app/corner':
         return _page(const AppShell(initialDestination: AppDestination.corner));
       case '/app/settings':
@@ -59,12 +65,16 @@ class LumeApp extends StatelessWidget {
       case '/app/wellbeing/water/new':
       case '/app/wellbeing/bowel/new':
       case '/app/wellbeing/exercise/new':
-        return _page(const AppShell(initialDestination: AppDestination.wellbeing));
+        return _page(
+          const AppShell(initialDestination: AppDestination.wellbeing),
+        );
       case '/app/finance/transaction/new':
       case '/app/finance/shopping/default':
       case '/app/finance/wishlist':
       case '/app/finance/wishlist/new':
-        return _page(const AppShell(initialDestination: AppDestination.finance));
+        return _page(
+          const AppShell(initialDestination: AppDestination.finance),
+        );
       case '/app/corner/books':
       case '/app/corner/books/new':
       case '/app/corner/gratitude':
@@ -78,9 +88,23 @@ class LumeApp extends StatelessWidget {
       MaterialPageRoute<void>(builder: (_) => child);
 }
 
+class AppLaunchScreen extends StatelessWidget {
+  const AppLaunchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = AppScope.of(context);
+    if (!controller.isReady) return const SplashScreen();
+    if (!controller.signedIn) return const WelcomeScreen();
+    if (!controller.settings.onboardingComplete)
+      return const OnboardingScreen();
+    return const AppShell(initialDestination: AppDestination.today);
+  }
+}
+
 class AppScope extends InheritedNotifier<AppController> {
   const AppScope({required this.controller, required super.child, super.key})
-      : super(notifier: controller);
+    : super(notifier: controller);
 
   final AppController controller;
 
@@ -172,14 +196,14 @@ class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(
-          child: Semantics(
-            label: 'Carregando Lume',
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
+  Widget build(BuildContext context) => Scaffold(
+    body: Center(
+      child: Semantics(
+        label: 'Carregando Lume',
+        child: CircularProgressIndicator(),
+      ),
+    ),
+  );
 }
 
 class NotFoundScreen extends StatelessWidget {
@@ -187,13 +211,12 @@ class NotFoundScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Página não encontrada')),
-        body: Center(
-          child: FilledButton(
-            onPressed: () => Navigator.of(context).pushReplacementNamed('/app'),
-            child: const Text('Voltar para Hoje'),
-          ),
-        ),
-      );
+    appBar: AppBar(title: const Text('Página não encontrada')),
+    body: Center(
+      child: FilledButton(
+        onPressed: () => Navigator.of(context).pushReplacementNamed('/app'),
+        child: const Text('Voltar para Hoje'),
+      ),
+    ),
+  );
 }
-

@@ -17,8 +17,14 @@ class TodayScreen extends StatelessWidget {
     final waterTotal = controller.waterTotalFor(now);
     final gratitude = controller.gratitudeFor(now).firstOrNull;
     final currentPeriod = controller.periodFor(now);
-    final pending = controller.waterFor(now).any((log) => log.syncState == SyncState.pending);
-    final greeting = now.hour < 12 ? 'Bom dia' : now.hour < 18 ? 'Boa tarde' : 'Boa noite';
+    final pending = controller
+        .waterFor(now)
+        .any((log) => log.syncState == SyncState.pending);
+    final greeting = now.hour < 12
+        ? 'Bom dia'
+        : now.hour < 18
+        ? 'Boa tarde'
+        : 'Boa noite';
     return app_ui.LumePage(
       title: greeting,
       subtitle: '${controller.formatDate(now)} · um passo de cada vez',
@@ -34,21 +40,30 @@ class TodayScreen extends StatelessWidget {
             semanticLabel: 'Próximo compromisso',
             child: Row(
               children: [
-                const CircleAvatar(backgroundColor: Colors.white54, child: Icon(Icons.event_outlined)),
+                const CircleAvatar(
+                  backgroundColor: Colors.white54,
+                  child: Icon(Icons.event_outlined),
+                ),
                 const SizedBox(width: 14),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Próximo compromisso', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text(
+                        'Próximo compromisso',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                       SizedBox(height: 4),
-                      Text('Conecte a Agenda quando quiser visualizar seus eventos.'),
+                      Text(
+                        'Conecte a Agenda quando quiser visualizar seus eventos.',
+                      ),
                     ],
                   ),
                 ),
                 IconButton(
                   tooltip: 'Abrir Agenda',
-                  onPressed: () => Navigator.of(context).pushNamed('/app/calendar'),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/app/calendar'),
                   icon: const Icon(Icons.chevron_right),
                 ),
               ],
@@ -86,11 +101,32 @@ class TodayScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _ActionTile(icon: Icons.self_improvement_outlined, label: 'Evacuação', color: context.lumeColors.wellbeing, onTap: () => _showBowel(context))),
+              Expanded(
+                child: _ActionTile(
+                  icon: Icons.self_improvement_outlined,
+                  label: 'Evacuação',
+                  color: context.lumeColors.wellbeing,
+                  onTap: () => _showBowel(context),
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _ActionTile(icon: Icons.directions_walk_outlined, label: 'Exercício', color: context.lumeColors.calendar, onTap: () => _showExercise(context))),
+              Expanded(
+                child: _ActionTile(
+                  icon: Icons.directions_walk_outlined,
+                  label: 'Exercício',
+                  color: context.lumeColors.calendar,
+                  onTap: () => _showExercise(context),
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _ActionTile(icon: Icons.add_card_outlined, label: 'Gasto', color: context.lumeColors.finance, onTap: () => _showExpense(context))),
+              Expanded(
+                child: _ActionTile(
+                  icon: Icons.add_card_outlined,
+                  label: 'Gasto',
+                  color: context.lumeColors.finance,
+                  onTap: () => _showExpense(context),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -100,6 +136,7 @@ class TodayScreen extends StatelessWidget {
             currency: 'BRL',
             incomeMinor: controller.incomeFor(currentPeriod),
             expenseMinor: controller.expensesFor(currentPeriod),
+            rolloverMinor: controller.rolloverFor(currentPeriod),
             onTap: () => Navigator.of(context).pushNamed('/app/finance'),
           ),
           const SizedBox(height: 24),
@@ -122,7 +159,13 @@ class TodayScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.favorite, color: Colors.pink),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(gratitude.text, maxLines: 4, overflow: TextOverflow.ellipsis)),
+                      Expanded(
+                        child: Text(
+                          gratitude.text,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       const Icon(Icons.edit_outlined, size: 20),
                     ],
                   ),
@@ -134,13 +177,20 @@ class TodayScreen extends StatelessWidget {
 
   String _monthLabel(DateTime date) => '${date.month}/${date.year}';
 
-  Future<void> _addWater(BuildContext context, AppController controller, int amount) async {
+  Future<void> _addWater(
+    BuildContext context,
+    AppController controller,
+    int amount,
+  ) async {
     final id = await controller.addWater(amount);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$amount ml adicionados.'),
-        action: SnackBarAction(label: 'Desfazer', onPressed: () => controller.removeWater(id)),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => controller.removeWater(id),
+        ),
       ),
     );
   }
@@ -152,11 +202,31 @@ class TodayScreen extends StatelessWidget {
       title: 'Registrar evacuação',
       child: Column(
         children: [
-          const Align(alignment: Alignment.centerLeft, child: Text('O horário atual já está preenchido. Observações são opcionais e não geram diagnóstico.')),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'O horário atual já está preenchido. Observações são opcionais e não geram diagnóstico.',
+            ),
+          ),
           const SizedBox(height: 16),
-          TextField(controller: note, maxLines: 3, decoration: const InputDecoration(labelText: 'Observação (opcional)')),
+          TextField(
+            controller: note,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Observação (opcional)',
+            ),
+          ),
           const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: FilledButton(onPressed: () async { await AppScope.read(context).addBowel(note: note.text); if (context.mounted) Navigator.pop(context); }, child: const Text('Salvar'))),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () async {
+                await AppScope.read(context).addBowel(note: note.text);
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Salvar'),
+            ),
+          ),
         ],
       ),
     );
@@ -171,11 +241,42 @@ class TodayScreen extends StatelessWidget {
       title: 'Novo exercício',
       child: Column(
         children: [
-          TextField(controller: type, decoration: const InputDecoration(labelText: 'Atividade')),
+          TextField(
+            controller: type,
+            decoration: const InputDecoration(labelText: 'Atividade'),
+          ),
           const SizedBox(height: 12),
-          TextField(controller: duration, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Duração', suffixText: 'minutos')),
+          TextField(
+            controller: duration,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Duração',
+              suffixText: 'minutos',
+            ),
+          ),
           const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: FilledButton(onPressed: () async { final minutes = int.tryParse(duration.text); if (minutes == null || minutes <= 0) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Informe uma duração positiva.'))); return; } await AppScope.read(context).addExercise(activityType: type.text, durationMinutes: minutes); if (context.mounted) Navigator.pop(context); }, child: const Text('Salvar'))),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () async {
+                final minutes = int.tryParse(duration.text);
+                if (minutes == null || minutes <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Informe uma duração positiva.'),
+                    ),
+                  );
+                  return;
+                }
+                await AppScope.read(context).addExercise(
+                  activityType: type.text,
+                  durationMinutes: minutes,
+                );
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Salvar'),
+            ),
+          ),
         ],
       ),
     );
@@ -192,13 +293,50 @@ class TodayScreen extends StatelessWidget {
       title: 'Novo gasto',
       child: Column(
         children: [
-          TextField(controller: amount, autofocus: true, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Valor', prefixText: 'R$ ')),
+          TextField(
+            controller: amount,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Valor',
+              prefixText: r'R$ ',
+            ),
+          ),
           const SizedBox(height: 12),
-          TextField(controller: description, decoration: const InputDecoration(labelText: 'Descrição')),
+          TextField(
+            controller: description,
+            decoration: const InputDecoration(labelText: 'Descrição'),
+          ),
           const SizedBox(height: 12),
-          TextField(controller: category, decoration: const InputDecoration(labelText: 'Categoria')),
+          TextField(
+            controller: category,
+            decoration: const InputDecoration(labelText: 'Categoria'),
+          ),
           const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: FilledButton(onPressed: () async { final value = _parseMoney(amount.text); if (value == null || value <= 0 || description.text.trim().isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Informe valor e descrição.'))); return; } await AppScope.read(context).addTransaction(type: TransactionType.expense, amountMinor: value, category: category.text, description: description.text); if (context.mounted) Navigator.pop(context); }, child: const Text('Salvar gasto'))),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () async {
+                final value = _parseMoney(amount.text);
+                if (value == null ||
+                    value <= 0 ||
+                    description.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Informe valor e descrição.')),
+                  );
+                  return;
+                }
+                await AppScope.read(context).addTransaction(
+                  type: TransactionType.expense,
+                  amountMinor: value,
+                  category: category.text,
+                  description: description.text,
+                );
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Salvar gasto'),
+            ),
+          ),
         ],
       ),
     );
@@ -214,9 +352,35 @@ class TodayScreen extends StatelessWidget {
       title: 'Gratidão de hoje',
       child: Column(
         children: [
-          TextField(controller: text, autofocus: true, maxLines: 5, maxLength: 1000, decoration: const InputDecoration(labelText: 'O que foi bom hoje?', alignLabelWithHint: true)),
+          TextField(
+            controller: text,
+            autofocus: true,
+            maxLines: 5,
+            maxLength: 1000,
+            decoration: const InputDecoration(
+              labelText: 'O que foi bom hoje?',
+              alignLabelWithHint: true,
+            ),
+          ),
           const SizedBox(height: 12),
-          SizedBox(width: double.infinity, child: FilledButton(onPressed: () async { if (text.text.trim().isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escreva algo antes de salvar.'))); return; } await AppScope.read(context).saveGratitude(text.text); if (context.mounted) Navigator.pop(context); }, child: const Text('Guardar'))),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () async {
+                if (text.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Escreva algo antes de salvar.'),
+                    ),
+                  );
+                  return;
+                }
+                await AppScope.read(context).saveGratitude(text.text);
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Guardar'),
+            ),
+          ),
         ],
       ),
     );
@@ -231,7 +395,12 @@ class TodayScreen extends StatelessWidget {
 }
 
 class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.label, required this.color, required this.onTap});
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -240,26 +409,36 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: label,
-        child: Material(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-              child: Column(
-                children: [Icon(icon, size: 24), const SizedBox(height: 6), Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),],
+    button: true,
+    label: label,
+    child: Material(
+      color: color,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          child: Column(
+            children: [
+              Icon(icon, size: 24),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 extension<T> on List<T> {
   T? get firstOrNull => isEmpty ? null : first;
 }
-

@@ -18,6 +18,7 @@ class AppController extends ChangeNotifier {
   List<TransactionEntry> transactions = [];
   List<GratitudeEntry> gratitudeEntries = [];
   List<BookEntry> books = [];
+  List<WishlistItem> wishlistItems = [];
   List<ShoppingItem> shoppingItems = [];
 
   Future<void> hydrate() async {
@@ -31,6 +32,7 @@ class AppController extends ChangeNotifier {
       transactions = snapshot.transactions;
       gratitudeEntries = snapshot.gratitudeEntries;
       books = snapshot.books;
+      wishlistItems = snapshot.wishlistItems;
       shoppingItems = snapshot.shoppingItems;
     }
     isReady = true;
@@ -45,19 +47,19 @@ class AppController extends ChangeNotifier {
   String periodFor(DateTime date) => DateFormat('yyyy-MM').format(date);
 
   String formatMinor(int amountMinor) => NumberFormat.currency(
-        locale: 'pt_BR',
-        symbol: 'R\$',
-        decimalDigits: 2,
-      ).format(amountMinor / 100);
+    locale: 'pt_BR',
+    symbol: 'R\$',
+    decimalDigits: 2,
+  ).format(amountMinor / 100);
 
-  String formatDate(DateTime date) => DateFormat("d 'de' MMMM", 'pt_BR').format(date);
+  String formatDate(DateTime date) =>
+      DateFormat("d 'de' MMMM", 'pt_BR').format(date);
 
   String formatTime(DateTime date) => DateFormat('HH:mm').format(date);
 
-  List<WaterLog> waterFor(DateTime date) => waterLogs
-      .where((log) => log.localDate == localDateFor(date))
-      .toList()
-    ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+  List<WaterLog> waterFor(DateTime date) =>
+      waterLogs.where((log) => log.localDate == localDateFor(date)).toList()
+        ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
 
   int waterTotalFor(DateTime date) =>
       waterFor(date).fold(0, (total, log) => total + log.amountMl);
@@ -70,10 +72,9 @@ class AppController extends ChangeNotifier {
       .where((log) => log.localDate.startsWith(period))
       .fold(0, (total, log) => total + log.durationMinutes);
 
-  List<TransactionEntry> transactionsFor(String period) => transactions
-      .where((entry) => entry.period == period)
-      .toList()
-    ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+  List<TransactionEntry> transactionsFor(String period) =>
+      transactions.where((entry) => entry.period == period).toList()
+        ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
 
   int incomeFor(String period) => transactionsFor(period)
       .where((entry) => entry.type != TransactionType.expense)
@@ -83,7 +84,41 @@ class AppController extends ChangeNotifier {
       .where((entry) => entry.type == TransactionType.expense)
       .fold(0, (total, entry) => total + entry.amountMinor);
 
-  int balanceFor(String period) => incomeFor(period) - expensesFor(period);
+  int rolloverFor(String period) {
+    if (settings.rolloverMode == RolloverMode.none) return 0;
+    return _rolloverFor(period, 0);
+  }
+
+  int balanceFor(String period) =>
+      rolloverFor(period) + incomeFor(period) - expensesFor(period);
+
+  int _rolloverFor(String period, int depth) {
+    if (depth > 24) return 0;
+    final parts = period.split('-');
+    final year = int.parse(parts[0]);
+    final month = int.parse(parts[1]);
+    final previous = DateTime(year, month - 1);
+    final previousPeriod =
+        '${previous.year.toString().padLeft(4, '0')}-${previous.month.toString().padLeft(2, '0')}';
+    final previousBalance =
+        _rolloverFor(previousPeriod, depth + 1) +
+        incomeFor(previousPeriod) -
+        expensesFor(previousPeriod);
+    return previousBalance > 0 ? previousBalance : 0;
+  }
+
+  String exportJson() => AppSnapshot(
+    signedIn: signedIn,
+    settings: settings,
+    waterLogs: waterLogs,
+    bowelLogs: bowelLogs,
+    exerciseLogs: exerciseLogs,
+    transactions: transactions,
+    gratitudeEntries: gratitudeEntries,
+    books: books,
+    wishlistItems: wishlistItems,
+    shoppingItems: shoppingItems,
+  ).encode();
 
   Future<void> signInOnDevice() async {
     signedIn = true;
@@ -105,6 +140,7 @@ class AppController extends ChangeNotifier {
     transactions = [];
     gratitudeEntries = [];
     books = [];
+    wishlistItems = [];
     shoppingItems = [];
     await _store.clear();
     notifyListeners();
@@ -173,6 +209,11 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
+  Future<void> removeBowel(String id) async {
+    bowelLogs = bowelLogs.where((log) => log.id != id).toList();
+    await _commit();
+  }
+
   Future<void> addExercise({
     required String activityType,
     required int durationMinutes,
@@ -195,6 +236,11 @@ class AppController extends ChangeNotifier {
         syncState: SyncState.pending,
       ),
     ];
+    await _commit();
+  }
+
+  Future<void> removeExercise(String id) async {
+    exerciseLogs = exerciseLogs.where((log) => log.id != id).toList();
     await _commit();
   }
 
@@ -227,6 +273,35 @@ class AppController extends ChangeNotifier {
 
   Future<void> removeTransaction(String id) async {
     transactions = transactions.where((entry) => entry.id != id).toList();
+    await _commit();
+  }
+
+  Future<void> updateTransaction({
+    required String id,
+    required TransactionType type,
+    required int amountMinor,
+    required String category,
+    required String description,
+    String? note,
+  }) async {
+    if (amountMinor <= 0) throw ArgumentError.value(amountMinor, 'amountMinor');
+    final existing = transactions.where((entry) => entry.id == id).firstOrNull;
+    if (existing == null) throw ArgumentError('Lançamento não encontrado');
+    transactions = transactions
+        .map(
+          (entry) => entry.id == id
+              ? existing.copyWith(
+                  type: type,
+                  amountMinor: amountMinor,
+                  category: category.trim().isEmpty
+                      ? 'Outros'
+                      : category.trim(),
+                  description: description.trim(),
+                  note: note,
+                )
+              : entry,
+        )
+        .toList();
     await _commit();
   }
 
@@ -277,6 +352,51 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
+  Future<void> addWishlistItem({
+    required String originalUrl,
+    required String title,
+    int? priceMinor,
+    String? note,
+  }) async {
+    final uri = Uri.tryParse(originalUrl.trim());
+    if (uri == null ||
+        (uri.scheme != 'http' && uri.scheme != 'https') ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty) {
+      throw ArgumentError('Informe uma URL http(s) válida e segura');
+    }
+    if (title.trim().isEmpty) throw ArgumentError('Nome obrigatório');
+    if (priceMinor != null && priceMinor < 0) {
+      throw ArgumentError('Preço não pode ser negativo');
+    }
+    wishlistItems = [
+      ...wishlistItems,
+      WishlistItem(
+        id: _id('wishlist'),
+        originalUrl: uri.toString(),
+        title: title.trim(),
+        siteHost: uri.host,
+        priceMinor: priceMinor,
+        currency: priceMinor == null ? null : 'BRL',
+        note: note?.trim().isEmpty == true ? null : note?.trim(),
+        syncState: SyncState.pending,
+      ),
+    ];
+    await _commit();
+  }
+
+  Future<void> updateWishlistStatus(String id, WishlistStatus status) async {
+    wishlistItems = wishlistItems
+        .map((item) => item.id == id ? item.copyWith(status: status) : item)
+        .toList();
+    await _commit();
+  }
+
+  Future<void> removeWishlistItem(String id) async {
+    wishlistItems = wishlistItems.where((item) => item.id != id).toList();
+    await _commit();
+  }
+
   Future<void> addShoppingItem(String name, {String quantity = '1'}) async {
     if (name.trim().isEmpty) throw ArgumentError('Item obrigatório');
     shoppingItems = [
@@ -292,7 +412,10 @@ class AppController extends ChangeNotifier {
 
   Future<void> toggleShoppingItem(String id) async {
     shoppingItems = shoppingItems
-        .map((item) => item.id == id ? item.copyWith(isChecked: !item.isChecked) : item)
+        .map(
+          (item) =>
+              item.id == id ? item.copyWith(isChecked: !item.isChecked) : item,
+        )
         .toList();
     await _commit();
   }
@@ -339,7 +462,8 @@ class AppController extends ChangeNotifier {
     return desiredDay.clamp(1, lastDay);
   }
 
-  String _id(String prefix) => '$prefix-${DateTime.now().microsecondsSinceEpoch}';
+  String _id(String prefix) =>
+      '$prefix-${DateTime.now().microsecondsSinceEpoch}';
 
   Future<void> _commit() async {
     notifyListeners();
@@ -353,8 +477,13 @@ class AppController extends ChangeNotifier {
         transactions: transactions,
         gratitudeEntries: gratitudeEntries,
         books: books,
+        wishlistItems: wishlistItems,
         shoppingItems: shoppingItems,
       ),
     );
   }
+}
+
+extension<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

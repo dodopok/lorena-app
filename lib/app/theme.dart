@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/lume_theme.dart' as core_theme;
+
 abstract final class LumeColors {
   static const background = Color(0xFFFFF8FB);
   static const surface = Color(0xFFFFFFFF);
@@ -16,19 +18,20 @@ abstract final class LumeColors {
 
 abstract final class LumeTheme {
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: LumeColors.brand,
-      brightness: Brightness.light,
-      surface: LumeColors.surface,
-    ).copyWith(
-      primary: LumeColors.brand,
-      onPrimary: Colors.white,
-      primaryContainer: LumeColors.brandSoft,
-      onPrimaryContainer: LumeColors.brandStrong,
-      surface: LumeColors.surface,
-      onSurface: LumeColors.text,
-      error: LumeColors.error,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: LumeColors.brand,
+          brightness: Brightness.light,
+          surface: LumeColors.surface,
+        ).copyWith(
+          primary: LumeColors.brand,
+          onPrimary: Colors.white,
+          primaryContainer: LumeColors.brandSoft,
+          onPrimaryContainer: LumeColors.brandStrong,
+          surface: LumeColors.surface,
+          onSurface: LumeColors.text,
+          error: LumeColors.error,
+        );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
@@ -66,7 +69,10 @@ abstract final class LumeTheme {
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: LumeColors.error),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       cardTheme: CardThemeData(
         color: LumeColors.surface,
@@ -81,6 +87,7 @@ abstract final class LumeTheme {
           TextStyle(color: LumeColors.brandStrong, fontWeight: FontWeight.w600),
         ),
       ),
+      extensions: const <ThemeExtension<dynamic>>[core_theme.LumeColors.light],
     );
   }
 
@@ -109,6 +116,7 @@ abstract final class LumeTheme {
           borderSide: BorderSide(color: Color(0xFF6A2843)),
         ),
       ),
+      extensions: const <ThemeExtension<dynamic>>[core_theme.LumeColors.dark],
     );
   }
 }

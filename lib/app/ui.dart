@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'lume_app.dart';
 import 'theme.dart';
 
 class LumePage extends StatelessWidget {
@@ -39,8 +38,8 @@ class LumePage extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: LumeColors.textSecondary,
-                        ),
+                      color: LumeColors.textSecondary,
+                    ),
                   ),
               ],
             ),
@@ -49,11 +48,16 @@ class LumePage extends StatelessWidget {
               if (showProfile)
                 IconButton(
                   tooltip: 'Abrir configurações',
-                  onPressed: () => Navigator.of(context).pushNamed('/app/settings'),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/app/settings'),
                   icon: const CircleAvatar(
                     radius: 16,
                     backgroundColor: LumeColors.brandSoft,
-                    child: Icon(Icons.person_outline, size: 18, color: LumeColors.brandStrong),
+                    child: Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: LumeColors.brandStrong,
+                    ),
                   ),
                 ),
               const SizedBox(width: 8),
@@ -70,7 +74,13 @@ class LumePage extends StatelessWidget {
 }
 
 class LumeCard extends StatelessWidget {
-  const LumeCard({required this.child, this.color, this.onTap, this.padding, super.key});
+  const LumeCard({
+    required this.child,
+    this.color,
+    this.onTap,
+    this.padding,
+    super.key,
+  });
 
   final Widget child;
   final Color? color;
@@ -81,7 +91,10 @@ class LumeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Card(
       color: color ?? Theme.of(context).colorScheme.surface,
-      child: Padding(padding: padding ?? const EdgeInsets.all(18), child: child),
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(18),
+        child: child,
+      ),
     );
     if (onTap == null) return card;
     return Semantics(
@@ -96,7 +109,12 @@ class LumeCard extends StatelessWidget {
 }
 
 class LumeSectionHeader extends StatelessWidget {
-  const LumeSectionHeader({required this.title, this.actionLabel, this.onAction, super.key});
+  const LumeSectionHeader({
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    super.key,
+  });
 
   final String title;
   final String? actionLabel;
@@ -104,14 +122,14 @@ class LumeSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(
-            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-          ),
-          if (actionLabel != null && onAction != null)
-            TextButton(onPressed: onAction, child: Text(actionLabel!)),
-        ],
-      );
+    children: [
+      Expanded(
+        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      ),
+      if (actionLabel != null && onAction != null)
+        TextButton(onPressed: onAction, child: Text(actionLabel!)),
+    ],
+  );
 }
 
 class LumeSyncBadge extends StatelessWidget {
@@ -122,9 +140,21 @@ class LumeSyncBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, label, color) = switch (state) {
-      SyncBadgeState.synced => (Icons.cloud_done_outlined, 'Sincronizado', LumeColors.brandStrong),
-      SyncBadgeState.pending => (Icons.cloud_upload_outlined, 'Salvo neste aparelho; sincronizando', LumeColors.brandStrong),
-      SyncBadgeState.offline => (Icons.cloud_off_outlined, 'Sem conexão; mostrando dados salvos', LumeColors.textSecondary),
+      SyncBadgeState.synced => (
+        Icons.cloud_done_outlined,
+        'Sincronizado',
+        LumeColors.brandStrong,
+      ),
+      SyncBadgeState.pending => (
+        Icons.cloud_upload_outlined,
+        'Salvo neste aparelho; sincronizando',
+        LumeColors.brandStrong,
+      ),
+      SyncBadgeState.offline => (
+        Icons.cloud_off_outlined,
+        'Sem conexão; mostrando dados salvos',
+        LumeColors.textSecondary,
+      ),
     };
     return Semantics(
       label: label,
@@ -133,7 +163,14 @@ class LumeSyncBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: color),
           const SizedBox(width: 5),
-          Flexible(child: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color))),
+          Flexible(
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: color),
+            ),
+          ),
         ],
       ),
     );
@@ -143,7 +180,13 @@ class LumeSyncBadge extends StatelessWidget {
 enum SyncBadgeState { synced, pending, offline }
 
 class LumeEmptyState extends StatelessWidget {
-  const LumeEmptyState({required this.icon, required this.title, required this.description, this.action, super.key});
+  const LumeEmptyState({
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.action,
+    super.key,
+  });
 
   final IconData icon;
   final String title;
@@ -152,25 +195,35 @@ class LumeEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          children: [
-            Icon(icon, size: 40, color: LumeColors.brand),
-            const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
-            const SizedBox(height: 6),
-            Text(description, textAlign: TextAlign.center),
-            if (action != null) ...[
-              const SizedBox(height: 16),
-              FilledButton(onPressed: action, child: const Text('Começar')),
-            ],
-          ],
+    padding: const EdgeInsets.symmetric(vertical: 24),
+    child: Column(
+      children: [
+        Icon(icon, size: 40, color: LumeColors.brand),
+        const SizedBox(height: 12),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium,
+          textAlign: TextAlign.center,
         ),
-      );
+        const SizedBox(height: 6),
+        Text(description, textAlign: TextAlign.center),
+        if (action != null) ...[
+          const SizedBox(height: 16),
+          FilledButton(onPressed: action, child: const Text('Começar')),
+        ],
+      ],
+    ),
+  );
 }
 
 class LumeProgress extends StatelessWidget {
-  const LumeProgress({required this.value, required this.goal, required this.label, required this.unit, super.key});
+  const LumeProgress({
+    required this.value,
+    required this.goal,
+    required this.label,
+    required this.unit,
+    super.key,
+  });
 
   final int value;
   final int goal;
@@ -186,9 +239,20 @@ class LumeProgress extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(child: Text(label, style: Theme.of(context).textTheme.titleMedium)),
-            Text('$value $unit', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-            if (goal > 0) Text(' / $goal', style: Theme.of(context).textTheme.bodySmall),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            Text(
+              '$value $unit',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            if (goal > 0)
+              Text(' / $goal', style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
         const SizedBox(height: 12),
@@ -211,7 +275,13 @@ class LumeProgress extends StatelessWidget {
 }
 
 class LumeQuickAction extends StatelessWidget {
-  const LumeQuickAction({required this.icon, required this.label, required this.onPressed, this.tone, super.key});
+  const LumeQuickAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.tone,
+    super.key,
+  });
 
   final IconData icon;
   final String label;
@@ -220,30 +290,39 @@ class LumeQuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: label,
-        child: FilledButton.tonalIcon(
-          onPressed: onPressed,
-          icon: Icon(icon),
-          label: Text(label),
-          style: FilledButton.styleFrom(
-            backgroundColor: tone ?? LumeColors.brandSoft,
-            foregroundColor: LumeColors.brandStrong,
-            minimumSize: const Size(44, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          ),
-        ),
-      );
+    button: true,
+    label: label,
+    child: FilledButton.tonalIcon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: FilledButton.styleFrom(
+        backgroundColor: tone ?? LumeColors.brandSoft,
+        foregroundColor: LumeColors.brandStrong,
+        minimumSize: const Size(44, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    ),
+  );
 }
 
-Future<void> showLumeSheet(BuildContext context, {required String title, required Widget child}) {
+Future<void> showLumeSheet(
+  BuildContext context, {
+  required String title,
+  required Widget child,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (context) => Padding(
-      padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(context).bottom + 24),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        0,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -258,4 +337,3 @@ Future<void> showLumeSheet(BuildContext context, {required String title, require
     ),
   );
 }
-

@@ -9,8 +9,16 @@ import '../../../core/photos/local_photo_service.dart';
 import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
-class CornerScreen extends StatelessWidget {
+class CornerScreen extends StatefulWidget {
   const CornerScreen({super.key});
+
+  @override
+  State<CornerScreen> createState() => _CornerScreenState();
+}
+
+class _CornerScreenState extends State<CornerScreen> {
+  String _bookQuery = '';
+  BookStatus? _bookFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +26,32 @@ class CornerScreen extends StatelessWidget {
     final today = controller.gratitudeFor(DateTime.now()).firstOrNull;
     final sortedGratitude = [...controller.gratitudeEntries]
       ..sort((a, b) => b.localDate.compareTo(a.localDate));
+    final filteredBooks = controller.books.where((book) {
+      final query = _bookQuery.trim().toLowerCase();
+      final matchesQuery =
+          query.isEmpty ||
+          book.title.toLowerCase().contains(query) ||
+          (book.author?.toLowerCase().contains(query) ?? false);
+      return matchesQuery &&
+          (_bookFilter == null || book.status == _bookFilter);
+    }).toList();
+    final todayImagePath = today?.localImagePath;
+    final hasPendingMedia =
+        controller.gratitudeEntries.any(
+          (item) =>
+              item.mediaSyncState == MediaSyncState.pending ||
+              item.mediaSyncState == MediaSyncState.failed,
+        ) ||
+        controller.books.any(
+          (item) =>
+              item.mediaSyncState == MediaSyncState.pending ||
+              item.mediaSyncState == MediaSyncState.failed,
+        ) ||
+        controller.wishlistItems.any(
+          (item) =>
+              item.mediaSyncState == MediaSyncState.pending ||
+              item.mediaSyncState == MediaSyncState.failed,
+        );
 
     return app_ui.LumePage(
       title: 'Cantinho',
@@ -27,15 +61,18 @@ class CornerScreen extends StatelessWidget {
         children: [
           LumeCard(
             tone: LumeCardTone.corner,
-            onTap: () => _showGratitude(
-              context,
-              today?.text ?? '',
-              initialImagePath: today?.localImagePath,
-            ),
+            onTap: () => _showGratitude(context, entry: today),
             child: Row(
               children: [
-                if (today?.localImagePath != null)
-                  _LocalPhotoThumb(path: today!.localImagePath!, size: 48)
+                if (todayImagePath != null)
+                  GestureDetector(
+                    onTap: () => showLumePhotoViewer(
+                      context,
+                      path: todayImagePath,
+                      semanticLabel: 'Foto de gratidão de hoje',
+                    ),
+                    child: _LocalPhotoThumb(path: todayImagePath, size: 48),
+                  )
                 else
                   const Icon(Icons.favorite_border, size: 28),
                 const SizedBox(width: 14),
@@ -59,6 +96,36 @@ class CornerScreen extends StatelessWidget {
             onAction: () => _showBook(context),
           ),
           const SizedBox(height: 8),
+          TextField(
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search),
+              labelText: 'Buscar por título ou autor',
+            ),
+            onChanged: (value) => setState(() => _bookQuery = value),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                FilterChip(
+                  label: const Text('Todos'),
+                  selected: _bookFilter == null,
+                  onSelected: (_) => setState(() => _bookFilter = null),
+                ),
+                const SizedBox(width: 8),
+                for (final filter in BookStatus.values) ...[
+                  FilterChip(
+                    label: Text(_bookStatusLabel(filter)),
+                    selected: _bookFilter == filter,
+                    onSelected: (_) => setState(() => _bookFilter = filter),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           if (controller.books.isEmpty)
             LumeCard(
               child: LumeEmptyState(
@@ -72,15 +139,27 @@ class CornerScreen extends StatelessWidget {
                 ),
               ),
             )
+          else if (filteredBooks.isEmpty)
+            const LumeCard(
+              child: Text('Nenhum livro corresponde a esta busca ou filtro.'),
+            )
           else
             LumeCard(
               tone: LumeCardTone.calendar,
               child: Column(
-                children: controller.books
+                children: filteredBooks
                     .map(
                       (book) => _BookRow(
                         book: book,
+                        onEdit: () => _showBook(context, existing: book),
                         onDelete: () => _deleteBook(context, book),
+                        onViewCover: book.localCoverPath == null
+                            ? null
+                            : () => showLumePhotoViewer(
+                                context,
+                                path: book.localCoverPath!,
+                                semanticLabel: 'Capa de ${book.title}',
+                              ),
                       ),
                     )
                     .toList(),
@@ -107,68 +186,95 @@ class CornerScreen extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                     leading: entry.localImagePath == null
                         ? const Icon(Icons.favorite_outline)
-                        : _LocalPhotoThumb(path: entry.localImagePath!),
+                        : GestureDetector(
+                            onTap: () => showLumePhotoViewer(
+                              context,
+                              path: entry.localImagePath!,
+                              semanticLabel:
+                                  'Foto de gratidão de ${entry.localDate}',
+                            ),
+                            child: _LocalPhotoThumb(
+                              path: entry.localImagePath!,
+                            ),
+                          ),
                     title: Text(entry.localDate),
                     subtitle: Text(
                       entry.text.isEmpty ? 'Foto salva localmente' : entry.text,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    onTap: () => _showGratitude(
-                      context,
-                      entry.text,
-                      initialImagePath: entry.localImagePath,
-                    ),
+                    onTap: () => _showGratitude(context, entry: entry),
                   );
                 }).toList(),
               ),
             ),
           const SizedBox(height: 26),
-          LumeCard(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.photo_library_outlined),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Fotos são copiadas para o suporte local do app. O texto continua funcionando offline; o upload ainda não é feito.',
-                  ),
-                ),
-              ],
-            ),
+          _MediaStatusCard(
+            hasPendingMedia: hasPendingMedia,
+            onRetry: hasPendingMedia
+                ? () => controller.retryPhotoUploads()
+                : null,
           ),
         ],
       ),
     );
   }
 
+  String _bookStatusLabel(BookStatus status) => switch (status) {
+    BookStatus.wantToRead => 'Quero ler',
+    BookStatus.reading => 'Lendo',
+    BookStatus.read => 'Lido',
+    BookStatus.abandoned => 'Abandonado',
+  };
+
+  String _shortDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+
   Future<void> _showGratitude(
-    BuildContext context,
-    String initial, {
-    String? initialImagePath,
+    BuildContext context, {
+    GratitudeEntry? entry,
   }) async {
-    final text = TextEditingController(text: initial);
-    String? localImagePath = initialImagePath;
+    final text = TextEditingController(text: entry?.text ?? '');
+    String? localImagePath = entry?.localImagePath;
+    var saving = false;
     await app_ui.showLumeSheet(
       context,
-      title: 'Gratidão de hoje',
+      title: entry == null ? 'Gratidão de hoje' : 'Editar gratidão',
       child: StatefulBuilder(
         builder: (context, setSheetState) => Column(
           children: [
             if (localImagePath != null) ...[
-              _LocalPhotoPreview(path: localImagePath!),
+              GestureDetector(
+                onTap: () => showLumePhotoViewer(
+                  context,
+                  path: localImagePath!,
+                  semanticLabel: 'Foto de gratidão',
+                ),
+                child: _LocalPhotoPreview(path: localImagePath!),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: saving
+                      ? null
+                      : () => setSheetState(() => localImagePath = null),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Remover foto'),
+                ),
+              ),
               const SizedBox(height: 8),
             ],
             OutlinedButton.icon(
-              onPressed: () async {
-                final path = await AppScope.read(
-                  context,
-                ).pickLocalPhoto(LocalPhotoKind.gratitude);
-                if (path != null && context.mounted) {
-                  setSheetState(() => localImagePath = path);
-                }
-              },
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final path = await AppScope.read(
+                        context,
+                      ).pickLocalPhoto(LocalPhotoKind.gratitude);
+                      if (path != null && context.mounted) {
+                        setSheetState(() => localImagePath = path);
+                      }
+                    },
               icon: const Icon(Icons.add_photo_alternate_outlined),
               label: Text(
                 localImagePath == null ? 'Adicionar foto' : 'Trocar foto',
@@ -177,7 +283,7 @@ class CornerScreen extends StatelessWidget {
             const SizedBox(height: 8),
             TextField(
               controller: text,
-              autofocus: true,
+              autofocus: entry == null,
               maxLines: 5,
               maxLength: 1000,
               decoration: const InputDecoration(
@@ -189,23 +295,57 @@ class CornerScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () async {
-                  if (text.text.trim().isEmpty && localImagePath == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Escreva algo ou adicione uma foto.'),
-                      ),
-                    );
-                    return;
-                  }
-                  await AppScope.read(
-                    context,
-                  ).saveGratitude(text.text, localImagePath: localImagePath);
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: const Text('Guardar'),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        if (text.text.trim().isEmpty &&
+                            (localImagePath == null ||
+                                localImagePath!.isEmpty)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Escreva algo ou adicione uma foto.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        setSheetState(() => saving = true);
+                        try {
+                          await AppScope.read(context).saveGratitude(
+                            text.text,
+                            date: entry == null
+                                ? null
+                                : DateTime.tryParse(entry.localDate),
+                            localImagePath: localImagePath,
+                          );
+                          if (context.mounted) Navigator.pop(context);
+                        } on ArgumentError catch (error) {
+                          if (!context.mounted) return;
+                          setSheetState(() => saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                error.message?.toString() ??
+                                    'Confira os campos.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: Text(saving ? 'Salvando…' : 'Guardar'),
               ),
             ),
+            if (entry != null) ...[
+              const SizedBox(height: 4),
+              TextButton.icon(
+                onPressed: saving
+                    ? null
+                    : () => _deleteGratitude(context, entry),
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Excluir entrada'),
+              ),
+            ],
           ],
         ),
       ),
@@ -213,33 +353,91 @@ class CornerScreen extends StatelessWidget {
     text.dispose();
   }
 
-  Future<void> _showBook(BuildContext context) async {
-    final title = TextEditingController();
-    final author = TextEditingController();
-    final review = TextEditingController();
-    var status = BookStatus.wantToRead;
-    int? rating;
-    String? localCoverPath;
+  Future<void> _deleteGratitude(
+    BuildContext context,
+    GratitudeEntry entry,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir esta gratidão?'),
+        content: const Text(
+          'O texto e a foto associados a este dia serão removidos do app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirmed != true) return;
+    final controller = AppScope.read(context);
+    await controller.removeGratitude(entry.localDate);
+    if (context.mounted) Navigator.pop(context);
+  }
+
+  Future<void> _showBook(BuildContext context, {BookEntry? existing}) async {
+    final title = TextEditingController(text: existing?.title ?? '');
+    final author = TextEditingController(text: existing?.author ?? '');
+    final review = TextEditingController(text: existing?.review ?? '');
+    var status = existing?.status ?? BookStatus.wantToRead;
+    int? rating = existing?.rating;
+    String? localCoverPath = existing?.localCoverPath;
+    var removeCover = false;
+    var startedOn = existing?.startedOn;
+    var finishedOn = existing?.finishedOn;
+    var saving = false;
 
     await app_ui.showLumeSheet(
       context,
-      title: 'Adicionar livro',
+      title: existing == null ? 'Adicionar livro' : 'Editar livro',
       child: StatefulBuilder(
         builder: (context, setSheetState) => Column(
           children: [
             if (localCoverPath != null) ...[
-              _LocalPhotoPreview(path: localCoverPath!, isCover: true),
+              GestureDetector(
+                onTap: () => showLumePhotoViewer(
+                  context,
+                  path: localCoverPath!,
+                  semanticLabel: 'Capa de ${title.text}',
+                ),
+                child: _LocalPhotoPreview(path: localCoverPath!, isCover: true),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: saving
+                      ? null
+                      : () => setSheetState(() {
+                          localCoverPath = null;
+                          removeCover = true;
+                        }),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Remover capa'),
+                ),
+              ),
               const SizedBox(height: 8),
             ],
             OutlinedButton.icon(
-              onPressed: () async {
-                final path = await AppScope.read(
-                  context,
-                ).pickLocalPhoto(LocalPhotoKind.bookCover);
-                if (path != null && context.mounted) {
-                  setSheetState(() => localCoverPath = path);
-                }
-              },
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final path = await AppScope.read(
+                        context,
+                      ).pickLocalPhoto(LocalPhotoKind.bookCover);
+                      if (path != null && context.mounted) {
+                        setSheetState(() {
+                          localCoverPath = path;
+                          removeCover = false;
+                        });
+                      }
+                    },
               icon: const Icon(Icons.photo_camera_back_outlined),
               label: Text(
                 localCoverPath == null ? 'Adicionar capa' : 'Trocar capa',
@@ -248,7 +446,7 @@ class CornerScreen extends StatelessWidget {
             const SizedBox(height: 8),
             TextField(
               controller: title,
-              autofocus: true,
+              autofocus: existing == null,
               decoration: const InputDecoration(labelText: 'Título'),
             ),
             const SizedBox(height: 12),
@@ -275,8 +473,64 @@ class CornerScreen extends StatelessWidget {
                   child: Text('Abandonado'),
                 ),
               ],
-              onChanged: (value) =>
-                  setSheetState(() => status = value ?? BookStatus.wantToRead),
+              onChanged: (value) => setSheetState(() {
+                status = value ?? BookStatus.wantToRead;
+                if (status == BookStatus.read && finishedOn == null) {
+                  finishedOn = DateTime.now();
+                }
+              }),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                              initialDate: startedOn ?? DateTime.now(),
+                            );
+                            if (picked != null && context.mounted) {
+                              setSheetState(() => startedOn = picked);
+                            }
+                          },
+                    icon: const Icon(Icons.play_arrow_outlined),
+                    label: Text(
+                      startedOn == null
+                          ? 'Início'
+                          : 'Início ${_shortDate(startedOn!)}',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                              initialDate: finishedOn ?? DateTime.now(),
+                            );
+                            if (picked != null && context.mounted) {
+                              setSheetState(() => finishedOn = picked);
+                            }
+                          },
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: Text(
+                      finishedOn == null
+                          ? 'Conclusão'
+                          : 'Fim ${_shortDate(finishedOn!)}',
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
@@ -302,26 +556,80 @@ class CornerScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () async {
-                  if (title.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Informe o título.')),
-                    );
-                    return;
-                  }
-                  await AppScope.read(context).addBook(
-                    title: title.text,
-                    author: author.text,
-                    status: status,
-                    rating: rating,
-                    review: review.text,
-                    localCoverPath: localCoverPath,
-                  );
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: const Text('Salvar livro'),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        if (title.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Informe o título.')),
+                          );
+                          return;
+                        }
+                        if (startedOn != null &&
+                            finishedOn != null &&
+                            finishedOn!.isBefore(startedOn!)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'A conclusão não pode ser anterior ao início.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        setSheetState(() => saving = true);
+                        try {
+                          final controller = AppScope.read(context);
+                          if (existing == null) {
+                            await controller.addBook(
+                              title: title.text,
+                              author: author.text,
+                              status: status,
+                              rating: rating,
+                              review: review.text,
+                              localCoverPath: localCoverPath,
+                              startedOn: startedOn,
+                              finishedOn: finishedOn,
+                            );
+                          } else {
+                            await controller.updateBook(
+                              id: existing.id,
+                              title: title.text,
+                              author: author.text,
+                              status: status,
+                              rating: rating,
+                              review: review.text,
+                              startedOn: startedOn,
+                              finishedOn: finishedOn,
+                              localCoverPath: localCoverPath,
+                              clearLocalCoverPath: removeCover,
+                            );
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        } on ArgumentError catch (error) {
+                          if (!context.mounted) return;
+                          setSheetState(() => saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                error.message?.toString() ??
+                                    'Confira os campos.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: Text(saving ? 'Salvando…' : 'Salvar livro'),
               ),
             ),
+            if (existing != null) ...[
+              const SizedBox(height: 4),
+              TextButton.icon(
+                onPressed: saving ? null : () => _deleteBook(context, existing),
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Excluir livro'),
+              ),
+            ],
           ],
         ),
       ),
@@ -332,7 +640,30 @@ class CornerScreen extends StatelessWidget {
   }
 
   Future<void> _deleteBook(BuildContext context, BookEntry book) async {
-    await AppScope.read(context).removeBook(book.id);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir livro?'),
+        content: Text(
+          book.localCoverPath == null
+              ? '“${book.title}” será removido da biblioteca.'
+              : '“${book.title}” e sua capa serão removidos da biblioteca.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirmed != true) return;
+    final controller = AppScope.read(context);
+    await controller.removeBook(book.id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
@@ -340,11 +671,49 @@ class CornerScreen extends StatelessWidget {
   }
 }
 
+class _MediaStatusCard extends StatelessWidget {
+  const _MediaStatusCard({required this.hasPendingMedia, this.onRetry});
+
+  final bool hasPendingMedia;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) => LumeCard(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          hasPendingMedia
+              ? Icons.cloud_upload_outlined
+              : Icons.photo_library_outlined,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            hasPendingMedia
+                ? 'As fotos ficam disponíveis offline e aguardam uma conexão para a cópia privada.'
+                : 'As fotos ficam disponíveis offline e são copiadas para a área privada quando você está conectada.',
+          ),
+        ),
+        if (onRetry != null)
+          TextButton(onPressed: onRetry, child: const Text('Tentar')),
+      ],
+    ),
+  );
+}
+
 class _BookRow extends StatelessWidget {
-  const _BookRow({required this.book, required this.onDelete});
+  const _BookRow({
+    required this.book,
+    required this.onEdit,
+    required this.onDelete,
+    this.onViewCover,
+  });
 
   final BookEntry book;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onViewCover;
 
   @override
   Widget build(BuildContext context) {
@@ -356,12 +725,16 @@ class _BookRow extends StatelessWidget {
     };
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      onTap: onEdit,
       leading: book.localCoverPath == null
           ? CircleAvatar(
               backgroundColor: context.lumeColors.calendar,
               child: const Icon(Icons.menu_book_outlined),
             )
-          : _LocalPhotoThumb(path: book.localCoverPath!, size: 48),
+          : GestureDetector(
+              onTap: onViewCover,
+              child: _LocalPhotoThumb(path: book.localCoverPath!, size: 48),
+            ),
       title: Text(book.title),
       subtitle: Text(
         [
@@ -370,10 +743,19 @@ class _BookRow extends StatelessWidget {
           if (book.rating != null) '★ ${book.rating}',
         ].join(' · '),
       ),
-      trailing: IconButton(
-        tooltip: 'Excluir livro',
-        onPressed: onDelete,
-        icon: const Icon(Icons.delete_outline),
+      trailing: PopupMenuButton<String>(
+        tooltip: 'Ações do livro',
+        onSelected: (value) {
+          if (value == 'edit') onEdit();
+          if (value == 'delete') onDelete();
+          if (value == 'cover') onViewCover?.call();
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem(value: 'edit', child: Text('Editar')),
+          if (onViewCover != null)
+            const PopupMenuItem(value: 'cover', child: Text('Ver capa')),
+          const PopupMenuItem(value: 'delete', child: Text('Excluir')),
+        ],
       ),
     );
   }

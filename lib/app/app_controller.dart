@@ -693,11 +693,30 @@ class AppController extends ChangeNotifier {
       throw ArgumentError('A gratidão precisa de texto ou foto');
     }
     final localDate = localDateFor(date ?? DateTime.now());
+    final previous = gratitudeEntries
+        .where((item) => item.localDate == localDate)
+        .firstOrNull;
+    final imageUnchanged = previous?.localImagePath == localImagePath;
+    if (previous != null && !imageUnchanged) {
+      for (final remotePath in previous.remoteImagePaths) {
+        _queuePhotoDeletion(
+          category: PhotoCategory.gratitude,
+          id: previous.localDate,
+          remotePath: remotePath,
+        );
+      }
+      await _deleteLocalPhoto(previous.localImagePath);
+    }
     final entry = GratitudeEntry(
       localDate: localDate,
       text: trimmed,
       localImagePath: localImagePath,
+      remoteImagePaths: imageUnchanged
+          ? previous?.remoteImagePaths ?? const []
+          : const [],
       mediaSyncState: localImagePath == null || localImagePath.isEmpty
+          ? MediaSyncState.uploaded
+          : imageUnchanged && previous?.remoteImagePaths.isNotEmpty == true
           ? MediaSyncState.uploaded
           : MediaSyncState.pending,
       syncState: SyncState.pending,
@@ -708,6 +727,25 @@ class AppController extends ChangeNotifier {
     ];
     await _commit();
     _queuePhotoSync();
+  }
+
+  Future<void> removeGratitude(String localDate) async {
+    final existing = gratitudeEntries
+        .where((item) => item.localDate == localDate)
+        .firstOrNull;
+    if (existing == null) return;
+    gratitudeEntries = gratitudeEntries
+        .where((item) => item.localDate != localDate)
+        .toList();
+    await _commit();
+    for (final remotePath in existing.remoteImagePaths) {
+      _queuePhotoDeletion(
+        category: PhotoCategory.gratitude,
+        id: existing.localDate,
+        remotePath: remotePath,
+      );
+    }
+    await _deleteLocalPhoto(existing.localImagePath);
   }
 
   Future<void> addBook({
@@ -758,6 +796,8 @@ class AppController extends ChangeNotifier {
     int? rating,
     String? review,
     String? isbn,
+    String? localCoverPath,
+    bool clearLocalCoverPath = false,
   }) async {
     if (title.trim().isEmpty) throw ArgumentError('Título obrigatório');
     if (rating != null && (rating < 1 || rating > 5)) {
@@ -765,6 +805,21 @@ class AppController extends ChangeNotifier {
     }
     final existing = books.where((item) => item.id == id).firstOrNull;
     if (existing == null) throw ArgumentError('Livro não encontrado');
+    final nextCoverPath = clearLocalCoverPath
+        ? null
+        : localCoverPath ?? existing.localCoverPath;
+    final coverChanged = nextCoverPath != existing.localCoverPath;
+    if (coverChanged) {
+      final remotePath = existing.remoteCoverPath;
+      if (remotePath != null) {
+        _queuePhotoDeletion(
+          category: PhotoCategory.bookCover,
+          id: existing.id,
+          remotePath: remotePath,
+        );
+      }
+      await _deleteLocalPhoto(existing.localCoverPath);
+    }
     books = books
         .map(
           (item) => item.id == id
@@ -783,6 +838,14 @@ class AppController extends ChangeNotifier {
                   clearReview: review?.trim().isEmpty != false,
                   isbn: isbn?.trim(),
                   clearIsbn: isbn?.trim().isEmpty != false,
+                  localCoverPath: nextCoverPath,
+                  clearLocalCoverPath: coverChanged && nextCoverPath == null,
+                  clearRemoteCoverPath: coverChanged,
+                  mediaSyncState: coverChanged
+                      ? nextCoverPath == null
+                            ? MediaSyncState.removed
+                            : MediaSyncState.pending
+                      : null,
                 )
               : item,
         )
@@ -792,8 +855,19 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> removeBook(String id) async {
+    final existing = books.where((book) => book.id == id).firstOrNull;
     books = books.where((book) => book.id != id).toList();
     await _commit();
+    if (existing == null) return;
+    final remotePath = existing.remoteCoverPath;
+    if (remotePath != null) {
+      _queuePhotoDeletion(
+        category: PhotoCategory.bookCover,
+        id: existing.id,
+        remotePath: remotePath,
+      );
+    }
+    await _deleteLocalPhoto(existing.localCoverPath);
   }
 
   Future<void> addWishlistItem({
@@ -839,8 +913,19 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> removeWishlistItem(String id) async {
+    final existing = wishlistItems.where((item) => item.id == id).firstOrNull;
     wishlistItems = wishlistItems.where((item) => item.id != id).toList();
     await _commit();
+    if (existing == null) return;
+    final remotePath = existing.remoteImagePath;
+    if (remotePath != null) {
+      _queuePhotoDeletion(
+        category: PhotoCategory.wishlist,
+        id: existing.id,
+        remotePath: remotePath,
+      );
+    }
+    await _deleteLocalPhoto(existing.localImagePath);
   }
 
   Future<void> updateWishlistItem({
@@ -860,6 +945,17 @@ class AppController extends ChangeNotifier {
     final existing = wishlistItems.where((item) => item.id == id).firstOrNull;
     if (existing == null) throw ArgumentError('Desejo não encontrado');
     final changedImage = localImagePath != existing.localImagePath;
+    if (changedImage) {
+      final remotePath = existing.remoteImagePath;
+      if (remotePath != null) {
+        _queuePhotoDeletion(
+          category: PhotoCategory.wishlist,
+          id: existing.id,
+          remotePath: remotePath,
+        );
+      }
+      await _deleteLocalPhoto(existing.localImagePath);
+    }
     wishlistItems = wishlistItems
         .map(
           (item) => item.id == id
@@ -874,7 +970,12 @@ class AppController extends ChangeNotifier {
                   clearNote: note?.trim().isEmpty != false,
                   localImagePath: localImagePath,
                   clearLocalImagePath: localImagePath == null,
-                  mediaSyncState: changedImage ? MediaSyncState.pending : null,
+                  clearRemoteImagePath: changedImage,
+                  mediaSyncState: changedImage
+                      ? localImagePath == null
+                            ? MediaSyncState.removed
+                            : MediaSyncState.pending
+                      : null,
                 )
               : item,
         )
@@ -1038,6 +1139,37 @@ class AppController extends ChangeNotifier {
       return;
     }
     _photoSyncQueue = _photoSyncQueue.then((_) => _syncPendingPhotos());
+  }
+
+  void _queuePhotoDeletion({
+    required PhotoCategory category,
+    required String id,
+    required String remotePath,
+  }) {
+    final storage = _photoStorage;
+    final uid = _authGateway?.userId;
+    if (!signedIn || storage == null || uid == null || uid.isEmpty) return;
+    _photoSyncQueue = _photoSyncQueue.then((_) async {
+      try {
+        await storage.delete(
+          uid: uid,
+          category: category,
+          id: id,
+          fileName: remotePath,
+        );
+      } catch (_) {
+        // A cleanup failure is recoverable by the backend account cleanup job.
+      }
+    });
+  }
+
+  Future<void> _deleteLocalPhoto(String? path) async {
+    if (path == null || path.isEmpty) return;
+    try {
+      await _photoService.deleteStored(path);
+    } catch (_) {
+      // The domain record is already gone; a missing local file is harmless.
+    }
   }
 
   Future<void> _syncPendingPhotos() async {

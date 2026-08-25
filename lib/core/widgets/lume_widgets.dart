@@ -2,6 +2,7 @@ export 'lume_actions.dart';
 export 'lume_card.dart';
 export 'lume_navigation.dart';
 export 'lume_motion.dart';
+export 'lume_photo_viewer.dart';
 export 'lume_progress.dart';
 export 'lume_scaffold.dart';
 export 'lume_states.dart';

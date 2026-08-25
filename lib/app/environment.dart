@@ -16,6 +16,11 @@ abstract final class LumeBuildConfig {
     'LUME_ENABLE_LINK_EXTRACTION',
     defaultValue: false,
   );
+  static const linkExtractionEndpoint = String.fromEnvironment(
+    'LUME_LINK_EXTRACTION_ENDPOINT',
+    defaultValue:
+        'https://us-central1-lume-13125.cloudfunctions.net/extractLinkMetadata',
+  );
 
   static LumeEnvironment get environment => switch (rawEnvironment) {
     'prod' => LumeEnvironment.prod,

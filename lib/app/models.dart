@@ -16,6 +16,8 @@ enum ExerciseIntensity { light, moderate, intense }
 
 enum MediaSyncState { local, pending, uploaded, failed, removed }
 
+enum LinkMetadataSource { jsonLd, openGraph, manual }
+
 const defaultShoppingListId = 'default';
 const defaultShoppingListName = 'Compras';
 
@@ -679,12 +681,16 @@ class WishlistItem {
     required this.originalUrl,
     required this.title,
     required this.siteHost,
+    this.canonicalUrl,
+    this.imageUrl,
     this.priceMinor,
     this.currency = 'BRL',
     this.localImagePath,
     this.remoteImagePath,
     this.status = WishlistStatus.wanted,
     this.note,
+    this.metadataSource = LinkMetadataSource.manual,
+    this.metadataFetchedAt,
     this.mediaSyncState = MediaSyncState.local,
     this.syncState = SyncState.synced,
   });
@@ -693,12 +699,16 @@ class WishlistItem {
   final String originalUrl;
   final String title;
   final String siteHost;
+  final String? canonicalUrl;
+  final String? imageUrl;
   final int? priceMinor;
   final String? currency;
   final String? localImagePath;
   final String? remoteImagePath;
   final WishlistStatus status;
   final String? note;
+  final LinkMetadataSource metadataSource;
+  final DateTime? metadataFetchedAt;
   final MediaSyncState mediaSyncState;
   final SyncState syncState;
 
@@ -706,12 +716,18 @@ class WishlistItem {
     String? originalUrl,
     String? title,
     String? siteHost,
+    String? canonicalUrl,
+    bool clearCanonicalUrl = false,
+    String? imageUrl,
+    bool clearImageUrl = false,
     int? priceMinor,
     bool clearPrice = false,
     String? currency,
     WishlistStatus? status,
     String? note,
     bool clearNote = false,
+    LinkMetadataSource? metadataSource,
+    DateTime? metadataFetchedAt,
     String? localImagePath,
     bool clearLocalImagePath = false,
     String? remoteImagePath,
@@ -722,10 +738,14 @@ class WishlistItem {
     originalUrl: originalUrl ?? this.originalUrl,
     title: title ?? this.title,
     siteHost: siteHost ?? this.siteHost,
+    canonicalUrl: clearCanonicalUrl ? null : canonicalUrl ?? this.canonicalUrl,
+    imageUrl: clearImageUrl ? null : imageUrl ?? this.imageUrl,
     priceMinor: clearPrice ? null : priceMinor ?? this.priceMinor,
     currency: clearPrice ? null : currency ?? this.currency,
     status: status ?? this.status,
     note: clearNote ? null : note ?? this.note,
+    metadataSource: metadataSource ?? this.metadataSource,
+    metadataFetchedAt: metadataFetchedAt ?? this.metadataFetchedAt,
     localImagePath: clearLocalImagePath
         ? null
         : localImagePath ?? this.localImagePath,
@@ -741,10 +761,16 @@ class WishlistItem {
     'originalUrl': originalUrl,
     'title': title,
     'siteHost': siteHost,
+    if (canonicalUrl != null && canonicalUrl!.isNotEmpty)
+      'canonicalUrl': canonicalUrl,
+    if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
     if (priceMinor != null) 'priceMinor': priceMinor,
     if (currency != null) 'currency': currency,
     'status': status.name,
     if (note != null && note!.isNotEmpty) 'note': note,
+    'metadataSource': metadataSource.name,
+    if (metadataFetchedAt != null)
+      'metadataFetchedAt': metadataFetchedAt!.toIso8601String(),
     if (localImagePath != null && localImagePath!.isNotEmpty)
       'localImagePath': localImagePath,
     if (remoteImagePath != null && remoteImagePath!.isNotEmpty)
@@ -758,6 +784,10 @@ class WishlistItem {
     originalUrl: _string(map, 'originalUrl'),
     title: _string(map, 'title', 'Sem título'),
     siteHost: _string(map, 'siteHost'),
+    canonicalUrl: map['canonicalUrl'] is String
+        ? map['canonicalUrl'] as String
+        : null,
+    imageUrl: map['imageUrl'] is String ? map['imageUrl'] as String : null,
     priceMinor: map['priceMinor'] is num
         ? (map['priceMinor'] as num).toInt()
         : null,
@@ -767,6 +797,11 @@ class WishlistItem {
       orElse: () => WishlistStatus.wanted,
     ),
     note: map['note'] is String ? map['note'] as String : null,
+    metadataSource: LinkMetadataSource.values.firstWhere(
+      (value) => value.name == _string(map, 'metadataSource'),
+      orElse: () => LinkMetadataSource.manual,
+    ),
+    metadataFetchedAt: _optionalDate(map, 'metadataFetchedAt'),
     localImagePath: map['localImagePath'] is String
         ? map['localImagePath'] as String
         : null,

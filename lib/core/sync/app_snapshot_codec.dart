@@ -224,10 +224,16 @@ class AppSnapshotCodec {
           'originalUrl': item.originalUrl,
           'title': item.title,
           'siteHost': item.siteHost,
+          if (_nonEmpty(item.canonicalUrl) != null)
+            'canonicalUrl': item.canonicalUrl,
+          if (_nonEmpty(item.imageUrl) != null) 'imageUrl': item.imageUrl,
           if (item.priceMinor != null) 'priceMinor': item.priceMinor,
           if (_nonEmpty(item.currency) != null) 'currency': item.currency,
           'status': item.status.name,
           if (_nonEmpty(item.note) != null) 'note': item.note,
+          'metadataSource': item.metadataSource.name,
+          if (item.metadataFetchedAt != null)
+            'metadataFetchedAt': timestampFromDate(item.metadataFetchedAt!),
           if (_nonEmpty(item.remoteImagePath) != null)
             'image': {'storagePath': item.remoteImagePath},
         },
@@ -609,6 +615,8 @@ class AppSnapshotCodec {
     if (!_validId(entry.key) || originalUrl == null) return null;
     final title = _nonEmpty(data['title']) ?? 'Sem título';
     final siteHost = _nonEmpty(data['siteHost']) ?? '';
+    final canonicalUrl = _safeHttpUrl(data['canonicalUrl']);
+    final imageUrl = _safeHttpUrl(data['imageUrl']);
     final priceMinor = _nonNegativeInt(data['priceMinor']);
     final currency = _nonEmpty(data['currency']);
     final note = _nonEmpty(data['note']);
@@ -619,10 +627,17 @@ class AppSnapshotCodec {
       'originalUrl': originalUrl,
       'title': title,
       'siteHost': siteHost,
+      ..._optionalField('canonicalUrl', canonicalUrl),
+      ..._optionalField('imageUrl', imageUrl),
       ..._optionalField('priceMinor', priceMinor),
       ..._optionalField('currency', currency),
       'status': data['status'],
       ..._optionalField('note', note),
+      'metadataSource': _metadataSourceToDomain(data['metadataSource']),
+      ..._optionalField(
+        'metadataFetchedAt',
+        isoFromFirestore(data['metadataFetchedAt']),
+      ),
       ..._optionalField('remoteImagePath', imagePath),
     });
   }
@@ -753,6 +768,25 @@ class AppSnapshotCodec {
     'adjustment' => 'adjustment',
     _ => 'expense',
   };
+
+  static String _metadataSourceToDomain(Object? value) => switch (value) {
+    'jsonLd' || 'json_ld' => 'jsonLd',
+    'openGraph' || 'open_graph' => 'openGraph',
+    _ => 'manual',
+  };
+
+  static String? _safeHttpUrl(Object? raw) {
+    if (raw is! String) return null;
+    final uri = Uri.tryParse(raw.trim());
+    if (uri == null ||
+        (uri.scheme != 'http' && uri.scheme != 'https') ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        (uri.port != 0 && uri.port != 80 && uri.port != 443)) {
+      return null;
+    }
+    return uri.toString();
+  }
 
   static String _localDate(Object? raw, String isoDate) {
     final value = _nonEmpty(raw);

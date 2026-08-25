@@ -7,6 +7,7 @@ import '../core/auth/auth_gateway.dart';
 import '../core/biometrics/biometric_gateway.dart';
 import '../core/calendar/calendar_gateway.dart';
 import '../core/export/export_service.dart';
+import '../core/links/link_metadata.dart';
 import '../core/notifications/lume_notification_gateway.dart';
 import '../core/notifications/notification_rules.dart';
 import '../core/photos/local_photo_service.dart';
@@ -28,6 +29,7 @@ class AppController extends ChangeNotifier {
     LumeNotificationGateway? notificationGateway,
     PhotoStorageGateway? photoStorage,
     ExportService? exportService,
+    LinkMetadataGateway? linkMetadataGateway,
     RemoteSnapshotStoreFactory? remoteStoreFactory,
     ShareIntentService? shareIntentService,
   }) : _store = store ?? LocalStore(),
@@ -38,6 +40,7 @@ class AppController extends ChangeNotifier {
        _notificationGateway = notificationGateway,
        _photoStorage = photoStorage,
        _exportService = exportService ?? ExportService(),
+       _linkMetadataGateway = linkMetadataGateway,
        _remoteStoreFactory = remoteStoreFactory,
        _shareIntentService = shareIntentService;
 
@@ -49,6 +52,7 @@ class AppController extends ChangeNotifier {
   final LumeNotificationGateway? _notificationGateway;
   final PhotoStorageGateway? _photoStorage;
   final ExportService _exportService;
+  final LinkMetadataGateway? _linkMetadataGateway;
   final RemoteSnapshotStoreFactory? _remoteStoreFactory;
   final ShareIntentService? _shareIntentService;
   RemoteSnapshotStore? _remoteStore;
@@ -75,6 +79,15 @@ class AppController extends ChangeNotifier {
   String? calendarSyncToken;
   DateTime? calendarLastSyncedAt;
   Uri? pendingSharedUrl;
+
+  bool get linkExtractionAvailable => _linkMetadataGateway != null;
+
+  Future<LinkMetadata?> extractWishlistMetadata(String rawUrl) async {
+    final gateway = _linkMetadataGateway;
+    if (gateway == null) return null;
+    final uri = _validatedWishlistUri(rawUrl);
+    return gateway.extract(uri);
+  }
 
   /// Consumes the one-shot native share payload, if the current platform has
   /// the iOS Share Extension installed and configured.
@@ -961,16 +974,25 @@ class AppController extends ChangeNotifier {
   Future<void> addWishlistItem({
     required String originalUrl,
     required String title,
+    String? canonicalUrl,
+    String? imageUrl,
     int? priceMinor,
+    String? currency,
     String? note,
     String? localImagePath,
     WishlistStatus status = WishlistStatus.wanted,
+    LinkMetadataSource metadataSource = LinkMetadataSource.manual,
+    DateTime? metadataFetchedAt,
   }) async {
     final uri = _validatedWishlistUri(originalUrl);
     final normalizedTitle = title.trim().isEmpty ? uri.host : title.trim();
     if (normalizedTitle.isEmpty) throw ArgumentError('Nome obrigatório');
     if (priceMinor != null && priceMinor < 0) {
       throw ArgumentError('Preço não pode ser negativo');
+    }
+    if (priceMinor != null &&
+        (currency == null || !RegExp(r'^[A-Za-z]{3}$').hasMatch(currency))) {
+      throw ArgumentError('A moeda precisa ter três letras');
     }
     wishlistItems = [
       ...wishlistItems,
@@ -979,10 +1001,14 @@ class AppController extends ChangeNotifier {
         originalUrl: uri.toString(),
         title: normalizedTitle,
         siteHost: uri.host,
+        canonicalUrl: canonicalUrl,
+        imageUrl: imageUrl,
         priceMinor: priceMinor,
-        currency: priceMinor == null ? null : 'BRL',
+        currency: priceMinor == null ? null : currency!.toUpperCase(),
         status: status,
         note: note?.trim().isEmpty == true ? null : note?.trim(),
+        metadataSource: metadataSource,
+        metadataFetchedAt: metadataFetchedAt,
         localImagePath: localImagePath,
         mediaSyncState: localImagePath == null || localImagePath.isEmpty
             ? MediaSyncState.uploaded
@@ -1021,16 +1047,25 @@ class AppController extends ChangeNotifier {
     required String id,
     required String originalUrl,
     required String title,
+    String? canonicalUrl,
+    String? imageUrl,
     int? priceMinor,
+    String? currency,
     String? note,
     String? localImagePath,
     WishlistStatus? status,
+    LinkMetadataSource? metadataSource,
+    DateTime? metadataFetchedAt,
   }) async {
     final uri = _validatedWishlistUri(originalUrl);
     final normalizedTitle = title.trim().isEmpty ? uri.host : title.trim();
     if (normalizedTitle.isEmpty) throw ArgumentError('Nome obrigatório');
     if (priceMinor != null && priceMinor < 0) {
       throw ArgumentError('Preço não pode ser negativo');
+    }
+    if (priceMinor != null &&
+        (currency == null || !RegExp(r'^[A-Za-z]{3}$').hasMatch(currency))) {
+      throw ArgumentError('A moeda precisa ter três letras');
     }
     final existing = wishlistItems.where((item) => item.id == id).firstOrNull;
     if (existing == null) throw ArgumentError('Desejo não encontrado');
@@ -1053,11 +1088,18 @@ class AppController extends ChangeNotifier {
                   originalUrl: uri.toString(),
                   title: normalizedTitle,
                   siteHost: uri.host,
+                  canonicalUrl: canonicalUrl,
+                  clearCanonicalUrl: canonicalUrl == null,
+                  imageUrl: imageUrl,
+                  clearImageUrl: imageUrl == null,
                   priceMinor: priceMinor,
+                  currency: currency?.toUpperCase(),
                   clearPrice: priceMinor == null,
                   status: status,
                   note: note?.trim(),
                   clearNote: note?.trim().isEmpty != false,
+                  metadataSource: metadataSource,
+                  metadataFetchedAt: metadataFetchedAt,
                   localImagePath: localImagePath,
                   clearLocalImagePath: localImagePath == null,
                   clearRemoteImagePath: changedImage,

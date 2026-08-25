@@ -14,6 +14,7 @@ import 'core/notifications/lume_notification_gateway.dart';
 import 'core/photos/firebase_photo_storage.dart';
 import 'core/share/share_intent_service.dart';
 import 'core/sync/firestore_snapshot_store.dart';
+import 'core/links/link_metadata.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,16 @@ Future<void> main() async {
     notificationGateway: LumeNotificationGateway(),
     photoStorage: firebaseReady ? FirebasePhotoStorage() : null,
     shareIntentService: const ShareIntentService(),
+    linkMetadataGateway:
+        firebaseReady &&
+            authGateway != null &&
+            LumeBuildConfig.enableLinkExtraction &&
+            LumeBuildConfig.linkExtractionEndpoint.isNotEmpty
+        ? FunctionLinkMetadataGateway(
+            endpoint: LumeBuildConfig.linkExtractionEndpoint,
+            authGateway: authGateway,
+          )
+        : null,
     remoteStoreFactory: firebaseReady
         ? (uid) => FirestoreSnapshotStore(
             uid: uid,

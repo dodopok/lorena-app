@@ -49,3 +49,7 @@ app.*.map.json
 *.p8
 client_secret*.json
 serviceAccount*.json
+
+# Firebase Functions build output and dependencies
+functions/node_modules/
+functions/lib/

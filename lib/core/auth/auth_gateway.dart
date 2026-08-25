@@ -11,6 +11,8 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 abstract interface class AuthGateway {
   String? get userId;
 
+  Future<String?> getIdToken();
+
   Future<bool> hasSession();
 
   Future<void> signInWithApple();
@@ -27,6 +29,9 @@ class LocalAuthGateway implements AuthGateway {
 
   @override
   String? get userId => null;
+
+  @override
+  Future<String?> getIdToken() async => null;
 
   @override
   Future<bool> hasSession() async => false;
@@ -62,6 +67,10 @@ class FirebaseAppleAuthGateway implements AuthGateway {
 
   @override
   String? get userId => _auth.currentUser?.uid;
+
+  @override
+  Future<String?> getIdToken() =>
+      _auth.currentUser?.getIdToken() ?? Future<String?>.value();
 
   @override
   Future<bool> hasSession() async => _auth.currentUser != null;

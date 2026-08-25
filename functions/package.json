@@ -1,0 +1,19 @@
+{
+  "name": "lume-functions",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test lib/extractor.test.js"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-functions": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

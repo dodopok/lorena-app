@@ -123,20 +123,73 @@ service cloud.firestore {
       }
 
       match /shopping_lists/{id} {
-        allow read, write: if owner(uid);
+        allow read: if owner(uid);
+        allow create, update: if owner(uid)
+          && request.resource.data.keys().hasOnly([
+            'name', 'archivedAt', 'createdAt', 'updatedAt', 'schemaVersion'
+          ])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 80
+          && (!('archivedAt' in request.resource.data)
+              || request.resource.data.archivedAt is timestamp)
+          && validAuditFields();
+        allow delete: if owner(uid);
         match /items/{itemId} {
-          allow read, write: if owner(uid);
+          allow read: if owner(uid);
+          allow create, update: if owner(uid)
+            && request.resource.data.keys().hasOnly([
+              'listId', 'name', 'quantity', 'note', 'estimatedPriceMinor',
+              'currency', 'isChecked', 'position', 'checkedAt', 'createdAt',
+              'updatedAt', 'schemaVersion'
+            ])
+            && request.resource.data.listId == id
+            && request.resource.data.name is string
+            && request.resource.data.name.size() > 0
+            && request.resource.data.name.size() <= 160
+            && request.resource.data.quantity is string
+            && request.resource.data.isChecked is bool
+            && request.resource.data.position is int
+            && request.resource.data.position >= 0
+            && (!('estimatedPriceMinor' in request.resource.data)
+                || (request.resource.data.estimatedPriceMinor is int
+                    && request.resource.data.estimatedPriceMinor >= 0))
+            && (!('currency' in request.resource.data)
+                || (request.resource.data.currency is string
+                    && request.resource.data.currency.size() == 3))
+            && (!('checkedAt' in request.resource.data)
+                || request.resource.data.checkedAt is timestamp)
+            && validAuditFields();
+          allow delete: if owner(uid);
         }
       }
 
       match /wishlist_items/{id} {
         allow read: if owner(uid);
         allow create, update: if owner(uid)
+          && request.resource.data.keys().hasOnly([
+            'originalUrl', 'canonicalUrl', 'siteHost', 'title', 'imageUrl',
+            'image', 'priceMinor', 'currency', 'status', 'note',
+            'metadataSource', 'metadataFetchedAt', 'createdAt', 'updatedAt',
+            'schemaVersion'
+          ])
           && request.resource.data.originalUrl is string
           && request.resource.data.originalUrl.matches('https://.*|http://.*')
+          && request.resource.data.title is string
+          && request.resource.data.siteHost is string
+          && request.resource.data.status in ['wanted', 'purchased', 'archived']
           && (!('priceMinor' in request.resource.data)
               || (request.resource.data.priceMinor is int
                   && request.resource.data.priceMinor >= 0))
+          && (!('currency' in request.resource.data)
+              || (request.resource.data.currency is string
+                  && request.resource.data.currency.size() == 3))
+          && (!('canonicalUrl' in request.resource.data)
+              || request.resource.data.canonicalUrl.matches('https://.*|http://.*'))
+          && (!('imageUrl' in request.resource.data)
+              || request.resource.data.imageUrl.matches('https://.*|http://.*'))
+          && (!('metadataFetchedAt' in request.resource.data)
+              || request.resource.data.metadataFetchedAt is timestamp)
           && validAuditFields();
         allow delete: if owner(uid);
       }

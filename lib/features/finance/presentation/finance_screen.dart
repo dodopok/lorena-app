@@ -9,6 +9,7 @@ import '../../../app/models.dart';
 import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
 import '../../../core/photos/local_photo_service.dart';
+import '../../../core/links/link_metadata.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class FinanceScreen extends StatefulWidget {
@@ -873,7 +874,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
     final note = TextEditingController(text: existing?.note ?? '');
     String? localImagePath = existing?.localImagePath;
+    String? canonicalUrl = existing?.canonicalUrl;
+    String? imageUrl = existing?.imageUrl;
+    String? metadataCurrency = existing?.currency;
+    var metadataSource = existing?.metadataSource ?? LinkMetadataSource.manual;
+    DateTime? metadataFetchedAt = existing?.metadataFetchedAt;
     var status = existing?.status ?? WishlistStatus.wanted;
+    var extracting = false;
+    final controller = AppScope.read(context);
     await app_ui.showLumeSheet(
       context,
       title: existing == null ? 'Salvar desejo' : 'Editar desejo',
@@ -910,6 +918,80 @@ class _FinanceScreenState extends State<FinanceScreen> {
                     'O link fica salvo mesmo se a extração não estiver disponível.',
               ),
             ),
+            if (controller.linkExtractionAvailable) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: extracting
+                      ? null
+                      : () async {
+                          setSheetState(() => extracting = true);
+                          try {
+                            final metadata = await controller
+                                .extractWishlistMetadata(url.text);
+                            if (!context.mounted) return;
+                            if (metadata == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Não encontramos dados; preencha manualmente.',
+                                  ),
+                                ),
+                              );
+                            } else {
+                              setSheetState(() {
+                                canonicalUrl = metadata.canonicalUrl;
+                                imageUrl = metadata.imageUrl;
+                                metadataSource = metadata.source;
+                                metadataFetchedAt =
+                                    metadata.fetchedAt ?? DateTime.now();
+                                metadataCurrency = metadata.currency;
+                                if (title.text.trim().isEmpty ||
+                                    title.text.trim() ==
+                                        (sharedUri?.host ?? '')) {
+                                  title.text = metadata.title ?? title.text;
+                                }
+                                if (price.text.trim().isEmpty &&
+                                    metadata.priceMinor != null) {
+                                  price.text = (metadata.priceMinor! / 100)
+                                      .toStringAsFixed(2)
+                                      .replaceAll('.', ',');
+                                }
+                                url.text = metadata.canonicalUrl;
+                              });
+                              if (metadata.warnings.isNotEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(metadata.warnings.first),
+                                  ),
+                                );
+                              }
+                            }
+                          } on LinkMetadataException catch (error) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(error.message)),
+                              );
+                            }
+                          } finally {
+                            if (context.mounted) {
+                              setSheetState(() => extracting = false);
+                            }
+                          }
+                        },
+                  icon: extracting
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_outlined),
+                  label: Text(
+                    extracting ? 'Preenchendo…' : 'Preencher automaticamente',
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: title,
@@ -971,25 +1053,38 @@ class _FinanceScreenState extends State<FinanceScreen> {
                     return;
                   }
                   try {
-                    final controller = AppScope.read(context);
                     if (existing == null) {
                       await controller.addWishlistItem(
                         originalUrl: url.text,
                         title: title.text,
+                        canonicalUrl: canonicalUrl,
+                        imageUrl: imageUrl,
                         priceMinor: priceMinor,
+                        currency: priceMinor == null
+                            ? null
+                            : metadataCurrency ?? 'BRL',
                         note: note.text,
                         localImagePath: localImagePath,
                         status: status,
+                        metadataSource: metadataSource,
+                        metadataFetchedAt: metadataFetchedAt,
                       );
                     } else {
                       await controller.updateWishlistItem(
                         id: existing.id,
                         originalUrl: url.text,
                         title: title.text,
+                        canonicalUrl: canonicalUrl,
+                        imageUrl: imageUrl,
                         priceMinor: priceMinor,
+                        currency: priceMinor == null
+                            ? null
+                            : metadataCurrency ?? 'BRL',
                         note: note.text,
                         localImagePath: localImagePath,
                         status: status,
+                        metadataSource: metadataSource,
+                        metadataFetchedAt: metadataFetchedAt,
                       );
                     }
                   } on ArgumentError catch (error) {

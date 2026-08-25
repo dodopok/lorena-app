@@ -84,7 +84,7 @@ Estimativas abaixo são relativas e servem para ordem de grandeza. Um desenvolve
 - Biblioteca, capa, status, estrelas e resenha.
 - Histórico de gratidão com fotos.
 - Favoritos manuais com URL, nome, foto e preço.
-- Share Extension para receber links.
+- Share Extension para receber links — código nativo e abertura do editor de desejos implementados; falta App Group, assinatura e smoke test em aparelho.
 - Estados comprado/arquivado e totais conhecidos.
 
 **Tamanho:** L.
@@ -150,7 +150,7 @@ Priorizar somente com evidência de uso:
 - Face ID.
 - Fotos e thumbnails.
 - Filtros e resumos.
-- Share Extension.
+- Share Extension — implementação concluída; falta somente o gate Apple/App Group e a validação em aparelho real.
 
 ### P2 — refinamento
 

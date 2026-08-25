@@ -47,6 +47,10 @@ void main() {
     expect(LumeBuildConfig.enableCalendar, isTrue);
     expect(
       LumeBuildConfig.googleCalendarIosClientId,
+      '1018427269031-btmqjfbld86lqsfpr0aivec1vj8bbn8d.apps.googleusercontent.com',
+    );
+    expect(
+      LumeBuildConfig.googleCalendarWebClientId,
       '1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com',
     );
   });

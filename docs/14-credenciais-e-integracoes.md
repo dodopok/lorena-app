@@ -104,20 +104,22 @@ O Google OAuth é uma autorização para Agenda, não o login principal do Lume.
 
 - Projeto Google Cloud: `lume-app-506521` — **Lume App**.
 - Projeto Firebase: `lume-13125`; domínio de autenticação `lume-13125.firebaseapp.com`.
-- OAuth client iOS confirmado para a Agenda: `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`.
-- Reversed client ID registrado no target iOS: `com.googleusercontent.apps.1018427269031-d002niqglh23u9omq8urmee091gqotca`.
+- OAuth client iOS confirmado para a Agenda: `1018427269031-btmqjfbld86lqsfpr0aivec1vj8bbn8d.apps.googleusercontent.com`.
+- Reversed client ID registrado no target iOS: `com.googleusercontent.apps.1018427269031-btmqjfbld86lqsfpr0aivec1vj8bbn8d`.
+- OAuth client Web usado como `serverClientId`: `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`. Ele não deve ser usado como URL scheme no iOS.
 - OAuth client iOS presente no `GoogleService-Info.plist`: `980338934048-d1ijkl2g5e2o1u28bo2ihtnbfi04a5vk.apps.googleusercontent.com`, com reversed client ID `com.googleusercontent.apps.980338934048-d1ijkl2g5e2o1u28bo2ihtnbfi04a5vk`.
 - O client iOS acima foi gerado para o Firebase `lume-13125`; ele não deve ser presumido como client da Agenda no Google Cloud `lume-app-506521`.
-- O client da Agenda usa o bundle `com.dodopok.lume` e o reversed client ID acima no target iOS. A integração continua opt-in por build até a tela de consentimento, API e usuários de teste estarem revisados.
+- O client iOS da Agenda usa o bundle `com.dodopok.lume` e o reversed client ID acima no target iOS. O client Web é enviado somente como `serverClientId`, para que o token possa ser aceito pelo backend quando necessário.
 - O arquivo JSON de client secret recebido localmente contém material sensível: não copiar para o repositório, não embutir no Flutter e não compartilhar em tickets.
 
 ### Valores que devem existir
 
 - `GOOGLE_CLOUD_PROJECT_ID=lume-app-506521`, compartilhado por `dev` e `prod`;
 - `FIREBASE_PROJECT_ID=lume-13125`, compartilhado por `dev` e `prod`;
-- OAuth iOS client ID do projeto `lume-app-506521`, confirmado como `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`;
-- `REVERSED_CLIENT_ID`/URL scheme no target iOS correspondente;
-- OAuth Web client ID e secret somente se houver fluxo backend;
+- OAuth iOS client ID do projeto `lume-app-506521`: `1018427269031-btmqjfbld86lqsfpr0aivec1vj8bbn8d.apps.googleusercontent.com`;
+- OAuth Web client ID do mesmo projeto, usado somente como `serverClientId`: `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`;
+- `REVERSED_CLIENT_ID`/URL scheme do client iOS no target iOS correspondente;
+- OAuth Web client secret somente se houver fluxo backend;
 - lista de test users no modo `Testing`;
 - escopos aprovados e calendário(s) habilitado(s).
 
@@ -128,10 +130,13 @@ client também pode ser sobrescrito por `--dart-define`, por exemplo:
 ```text
 LUME_ENABLE_CALENDAR=false
 LUME_GOOGLE_IOS_CLIENT_ID=<client-id-ios-do-projeto-lume-app-506521>
+LUME_GOOGLE_WEB_CLIENT_ID=<client-id-web-do-projeto-lume-app-506521>
 ```
 
-O client iOS `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`
+O client iOS `1018427269031-btmqjfbld86lqsfpr0aivec1vj8bbn8d.apps.googleusercontent.com`
 está registrado para a Agenda e o URL scheme correspondente está no target iOS.
+O client Web `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`
+é usado apenas como `serverClientId`; ele não pode aparecer como custom scheme.
 A conexão só inicia quando a usuária toca em “Conectar Google Agenda”.
 
 ### Onde não armazenar

@@ -12,6 +12,11 @@ abstract final class LumeBuildConfig {
   static const googleCalendarIosClientId = String.fromEnvironment(
     'LUME_GOOGLE_IOS_CLIENT_ID',
     defaultValue:
+        '1018427269031-btmqjfbld86lqsfpr0aivec1vj8bbn8d.apps.googleusercontent.com',
+  );
+  static const googleCalendarWebClientId = String.fromEnvironment(
+    'LUME_GOOGLE_WEB_CLIENT_ID',
+    defaultValue:
         '1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com',
   );
   static const enableLinkExtraction = bool.fromEnvironment(

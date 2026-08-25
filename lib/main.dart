@@ -28,6 +28,7 @@ Future<void> main() async {
       ? GoogleCalendarGateway(
           signIn: GoogleSignIn(
             clientId: LumeBuildConfig.googleCalendarIosClientId,
+            serverClientId: LumeBuildConfig.googleCalendarWebClientId,
             scopes: const [
               'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
               'https://www.googleapis.com/auth/calendar.events.readonly',

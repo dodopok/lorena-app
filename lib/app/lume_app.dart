@@ -25,17 +25,18 @@ class LumeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScope(
       controller: controller,
-      child: AppPrivacyShield(
-        controller: controller,
-        biometricGateway: biometricGateway,
-        child: MaterialApp(
-          title: 'Lume',
-          debugShowCheckedModeBanner: false,
-          theme: LumeTheme.light(),
-          darkTheme: LumeTheme.dark(),
-          themeMode: ThemeMode.system,
-          home: const AppLaunchScreen(),
-          onGenerateRoute: _routes,
+      child: MaterialApp(
+        title: 'Lume',
+        debugShowCheckedModeBanner: false,
+        theme: LumeTheme.light(),
+        darkTheme: LumeTheme.dark(),
+        themeMode: ThemeMode.system,
+        home: const AppLaunchScreen(),
+        onGenerateRoute: _routes,
+        builder: (context, child) => AppPrivacyShield(
+          controller: controller,
+          biometricGateway: biometricGateway,
+          child: child ?? const SizedBox.shrink(),
         ),
       ),
     );

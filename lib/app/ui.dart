@@ -290,8 +290,23 @@ Future<void> showLumeSheet(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 20),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Fechar',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 child,
               ],
             ),
@@ -312,6 +327,7 @@ Future<void> _showLumeSheetAndSettle({
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: isScrollControlled,
+    useSafeArea: true,
     showDragHandle: showDragHandle,
     backgroundColor: backgroundColor,
     builder: builder,

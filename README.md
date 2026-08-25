@@ -88,7 +88,7 @@ Consulte o [roadmap detalhado](docs/08-roadmap.md) e os [critérios de aceite](d
 
 ## Estado do repositório
 
-O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, listas nomeadas, desejos manuais/extração opcional, livros, gratidão, configurações, motion respeitando Reduzir Movimento, exportação ZIP, exclusão com reautenticação, Storage privado, cobertura no app switcher, regras Firebase, índices, Functions e CI. Dados próprios usam persistência local como recuperação offline e Firebase compartilhado nos builds `dev`/`prod`; a Agenda mantém somente cache local e segue desligada até o OAuth iOS correto ser cadastrado. A extração permanece atrás de `LUME_ENABLE_LINK_EXTRACTION=true` até o deploy e os testes de segurança no projeto compartilhado.
+O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, listas nomeadas, desejos manuais/extração opcional, livros, gratidão, configurações, motion respeitando Reduzir Movimento, exportação ZIP, exclusão com reautenticação, Storage privado, cobertura no app switcher, regras Firebase, índices, Functions e CI. Dados próprios usam persistência local como recuperação offline e Firebase compartilhado nos builds `dev`/`prod`; a Agenda mantém somente cache local e segue desligada até o OAuth iOS correto ser cadastrado. A extração permanece atrás de `LUME_ENABLE_LINK_EXTRACTION=true` até o deploy e a validação integrada no projeto compartilhado.
 
 Para rodar localmente:
 
@@ -104,6 +104,7 @@ dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
 npm --prefix functions test
+npm --prefix firebase/rules-tests test
 flutter build ios --no-codesign
 ```
 

@@ -93,7 +93,7 @@ Estimativas abaixo são relativas e servem para ordem de grandeza. Um desenvolve
 
 **Resultado:** MVP 1.0 polido em TestFlight.
 
-- Cloud Function segura de extração — implementação, parser, limites e testes SSRF no repositório; falta deploy, Emulator Suite e configuração de billing/alertas.
+- Cloud Function segura de extração — implementação, parser, limites e testes SSRF no repositório; as Security Rules já têm cobertura no Emulator Suite; falta deploy, teste integrado da callable e configuração de billing/alertas.
 - JSON-LD/Open Graph e fallback manual — implementados; a flag permanece desligada até a validação operacional.
 - Testes com links reais de TikTok Shop e Mercado Livre.
 - Exportação completa e exclusão da conta.

@@ -119,7 +119,7 @@ Não executar JavaScript ou realizar login no MVP. TikTok Shop e lojas baseadas 
 
 ### Estado da implementação
 
-O repositório contém `functions/src/index.ts` e `functions/src/extractor.ts`, com callable autenticada `extractLinkMetadata`, parser JSON-LD/Open Graph, fallback manual, limite por usuário, limite de concorrência, timeout, limite de bytes, redirects limitados e resolução DNS fixada após validação. O cliente Flutter chama a função somente quando `LUME_ENABLE_LINK_EXTRACTION=true`. Deploy no projeto `lume-13125`, Emulator Suite, billing/alertas e testes com páginas reais continuam sendo gates operacionais antes de ativar a flag.
+O repositório contém `functions/src/index.ts` e `functions/src/extractor.ts`, com callable autenticada `extractLinkMetadata`, parser JSON-LD/Open Graph, fallback manual, limite por usuário, limite de concorrência, timeout, limite de bytes, redirects limitados e resolução DNS fixada após validação. O cliente Flutter chama a função somente quando `LUME_ENABLE_LINK_EXTRACTION=true`. A cobertura das Security Rules no Emulator Suite já está em `firebase/rules-tests`; deploy da Function no projeto `lume-13125`, teste integrado da callable, billing/alertas e testes com páginas reais continuam sendo gates operacionais antes de ativar a flag.
 
 ### Proteções contra SSRF e abuso
 

@@ -891,6 +891,20 @@ class _FinanceScreenState extends State<FinanceScreen> {
     Timer? metadataDebounce;
     var initialExtractionScheduled = false;
     final controller = AppScope.read(context);
+    var metadataAttempted =
+        existing != null ||
+        !controller.linkExtractionAvailable ||
+        !_isHttpUrl(url.text);
+
+    Future<void> pickWishlistPhoto(
+      BuildContext sheetContext,
+      StateSetter setSheetState,
+    ) async {
+      final path = await controller.pickLocalPhoto(LocalPhotoKind.wishlist);
+      if (path != null && sheetContext.mounted) {
+        setSheetState(() => localImagePath = path);
+      }
+    }
 
     Future<void> fillMetadata(
       BuildContext sheetContext,
@@ -900,6 +914,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
       if (!controller.linkExtractionAvailable || extracting) return;
       final rawUrl = url.text.trim();
       if (!_isHttpUrl(rawUrl)) {
+        if (sheetContext.mounted) {
+          setSheetState(() => metadataAttempted = true);
+        }
         if (showFeedback && sheetContext.mounted) {
           ScaffoldMessenger.of(sheetContext).showSnackBar(
             const SnackBar(content: Text('Cole uma URL http(s) válida.')),
@@ -911,7 +928,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
       metadataDebounce?.cancel();
       final requestId = ++metadataRequest;
       lastExtractedUrl = rawUrl;
-      setSheetState(() => extracting = true);
+      setSheetState(() {
+        extracting = true;
+        metadataAttempted = false;
+      });
       try {
         final metadata = await controller.extractWishlistMetadata(rawUrl);
         if (!sheetContext.mounted || requestId != metadataRequest) return;
@@ -963,7 +983,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
         }
       } finally {
         if (sheetContext.mounted && requestId == metadataRequest) {
-          setSheetState(() => extracting = false);
+          setSheetState(() {
+            extracting = false;
+            metadataAttempted = true;
+          });
         }
       }
     }
@@ -985,36 +1008,57 @@ class _FinanceScreenState extends State<FinanceScreen> {
           }
           return Column(
             children: [
-              if (imageUrl != null || localImagePath != null) ...[
-                _WishlistImageThumb(
-                  imageUrl: imageUrl,
-                  localImagePath: localImagePath,
-                  size: 72,
-                  onRemoteError: () {
-                    if (context.mounted) {
-                      setSheetState(() => imageUrl = null);
-                    }
-                  },
+              SizedBox(
+                width: 72,
+                height: 72,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: imageUrl != null || localImagePath != null
+                      ? _WishlistImageThumb(
+                          imageUrl: imageUrl,
+                          localImagePath: localImagePath,
+                          size: 72,
+                          onTap: imageUrl == null
+                              ? () => unawaited(
+                                  pickWishlistPhoto(context, setSheetState),
+                                )
+                              : null,
+                          onRemoteError: () {
+                            if (context.mounted) {
+                              setSheetState(() => imageUrl = null);
+                            }
+                          },
+                        )
+                      : !metadataAttempted
+                      ? const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Semantics(
+                          button: true,
+                          label: 'Adicionar imagem',
+                          child: Tooltip(
+                            message: 'Adicionar imagem',
+                            child: OutlinedButton(
+                              onPressed: () => unawaited(
+                                pickWishlistPhoto(context, setSheetState),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                              ),
+                              child: const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined),
+                                  SizedBox(height: 2),
+                                  Text('Foto'),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                 ),
-                const SizedBox(height: 8),
-              ],
-              if (imageUrl == null)
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final path = await AppScope.read(
-                      context,
-                    ).pickLocalPhoto(LocalPhotoKind.wishlist);
-                    if (path != null && context.mounted) {
-                      setSheetState(() => localImagePath = path);
-                    }
-                  },
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: Text(
-                    localImagePath == null
-                        ? 'Adicionar imagem'
-                        : 'Trocar imagem',
-                  ),
-                ),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: url,
@@ -1022,10 +1066,21 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 keyboardType: TextInputType.url,
                 onChanged: (value) {
                   metadataDebounce?.cancel();
-                  metadataRequest++;
-                  lastExtractedUrl = null;
-                  if (!controller.linkExtractionAvailable ||
-                      !_isHttpUrl(value)) {
+                  final validUrl = _isHttpUrl(value);
+                  setSheetState(() {
+                    metadataRequest++;
+                    lastExtractedUrl = null;
+                    metadataAttempted =
+                        !controller.linkExtractionAvailable || !validUrl;
+                    if (value.trim() != (canonicalUrl ?? '').trim()) {
+                      canonicalUrl = null;
+                      imageUrl = null;
+                      metadataCurrency = null;
+                      metadataSource = LinkMetadataSource.manual;
+                      metadataFetchedAt = null;
+                    }
+                  });
+                  if (!controller.linkExtractionAvailable || !validUrl) {
                     return;
                   }
                   metadataDebounce = Timer(
@@ -1503,12 +1558,14 @@ class _WishlistImageThumb extends StatefulWidget {
     this.imageUrl,
     this.localImagePath,
     this.size = 48,
+    this.onTap,
     this.onRemoteError,
   });
 
   final String? imageUrl;
   final String? localImagePath;
   final double size;
+  final VoidCallback? onTap;
   final VoidCallback? onRemoteError;
 
   @override
@@ -1540,7 +1597,7 @@ class _WishlistImageThumbState extends State<_WishlistImageThumb> {
   Widget build(BuildContext context) {
     final remote = widget.imageUrl?.trim();
     final local = widget.localImagePath?.trim();
-    return SizedBox(
+    final thumb = SizedBox(
       width: widget.size,
       height: widget.size,
       child: ClipRRect(
@@ -1564,6 +1621,17 @@ class _WishlistImageThumbState extends State<_WishlistImageThumb> {
             : local == null || local.isEmpty
             ? _WishlistImagePlaceholder(size: widget.size)
             : _LocalPhotoThumb(path: local, size: widget.size),
+      ),
+    );
+    final onTap = widget.onTap;
+    if (onTap == null) return thumb;
+    return Semantics(
+      button: true,
+      label: 'Trocar imagem',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: thumb,
       ),
     );
   }

@@ -159,34 +159,42 @@ class _AppPrivacyShieldState extends State<AppPrivacyShield>
         ColoredBox(
           color: LumeColors.background,
           child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Semantics(
-                  label: 'Conteúdo protegido',
-                  child: Icon(
-                    Icons.lock_outline,
-                    size: 48,
-                    color: LumeColors.brand,
-                  ),
-                ),
-                if (!_covered && _locked) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'Desbloqueie para entrar no Lume',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _authenticating ? null : _authenticate,
-                    icon: const Icon(Icons.face_outlined),
-                    label: Text(
-                      _authenticating ? 'Aguardando…' : 'Desbloquear',
+            child: _covered
+                ? Semantics(
+                    label: 'Conteúdo protegido',
+                    child: SizedBox.square(
+                      dimension: 32,
+                      child: CircularProgressIndicator(strokeWidth: 3),
                     ),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Semantics(
+                        label: 'Conteúdo protegido',
+                        child: Icon(
+                          Icons.lock_outline,
+                          size: 48,
+                          color: LumeColors.brand,
+                        ),
+                      ),
+                      if (_locked) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          'Desbloqueie para entrar no Lume',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: _authenticating ? null : _authenticate,
+                          icon: const Icon(Icons.face_outlined),
+                          label: Text(
+                            _authenticating ? 'Aguardando…' : 'Desbloquear',
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-            ),
           ),
         ),
     ],

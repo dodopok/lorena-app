@@ -49,11 +49,12 @@ Não prometer uma conexão permanente com Agenda até validar o fluxo no projeto
 Pipeline mínimo por pull request:
 
 1. format check;
-2. `flutter analyze`;
-3. testes unitários e de widgets;
-4. testes de Security Rules;
-5. build iOS sem assinatura quando aplicável;
-6. verificação de segredos/arquivos proibidos.
+2. `npm --prefix functions test`;
+3. `flutter analyze`;
+4. testes unitários e de widgets;
+5. testes de Security Rules;
+6. build iOS sem assinatura quando aplicável;
+7. verificação de segredos/arquivos proibidos.
 
 Pipeline de release:
 

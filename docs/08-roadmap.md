@@ -93,8 +93,8 @@ Estimativas abaixo são relativas e servem para ordem de grandeza. Um desenvolve
 
 **Resultado:** MVP 1.0 polido em TestFlight.
 
-- Cloud Function segura de extração.
-- JSON-LD/Open Graph e fallback manual.
+- Cloud Function segura de extração — implementação, parser, limites e testes SSRF no repositório; falta deploy, Emulator Suite e configuração de billing/alertas.
+- JSON-LD/Open Graph e fallback manual — implementados; a flag permanece desligada até a validação operacional.
 - Testes com links reais de TikTok Shop e Mercado Livre.
 - Exportação completa e exclusão da conta.
 - Política de privacidade e App Privacy.
@@ -126,7 +126,7 @@ Priorizar somente com evidência de uso:
 | Fotos | Storage Rules + fila de upload |
 | Agenda | OAuth Google + projeto Cloud + aparelho físico |
 | Share Extension | App Groups + projeto iOS assinado |
-| Extração de links | Functions + billing + controles SSRF |
+| Extração de links | Código/testes SSRF + deploy da Function + billing/alertas |
 | TestFlight | Apple Developer + assinatura + privacidade |
 | App Store/Unlisted | Review + OAuth pronto para produção |
 
@@ -145,7 +145,7 @@ Priorizar somente com evidência de uso:
 
 ### P1 — importante
 
-- Extração automática de links.
+- Extração automática de links — código cliente e Function implementados; falta ativação controlada e validação com páginas reais.
 - Lembretes configuráveis.
 - Face ID.
 - Fotos e thumbnails.

@@ -2,7 +2,7 @@
 
 Aplicativo pessoal para iPhone, planejado em Flutter, que reúne agenda, autocuidado, finanças, leituras, desejos e gratidão em um único espaço acolhedor.
 
-> **Status:** MVP funcional em alpha, com modo offline, motion system sem layout shifting, ícone nativo rosa, mídia privada, exportação/exclusão, Share Extension nativa e fluxos completos de Hoje, Bem-estar, Finanças e Cantinho. Ainda faltam validações em aparelho físico, o OAuth iOS correto da Agenda e a associação/assinatura do App Group da extensão descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
+> **Status:** MVP funcional em alpha, com modo offline, motion system sem layout shifting, ícone nativo rosa, mídia privada, exportação/exclusão, listas de compras nomeadas, undo para registros simples, Share Extension nativa e extração segura de links por Cloud Function. Ainda faltam validações em aparelho físico, deploy/configuração operacional da Function, OAuth iOS correto da Agenda e associação/assinatura do App Group descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
 
 ## Visão rápida
 
@@ -88,7 +88,7 @@ Consulte o [roadmap detalhado](docs/08-roadmap.md) e os [critérios de aceite](d
 
 ## Estado do repositório
 
-O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, compras, desejos manuais, livros, gratidão, configurações, motion respeitando Reduzir Movimento, exportação ZIP, exclusão com reautenticação, Storage privado, cobertura no app switcher, regras Firebase iniciais, índices e CI. Dados próprios usam persistência local como recuperação offline e Firebase compartilhado nos builds `dev`/`prod`; a Agenda mantém somente cache local e segue desligada até o OAuth iOS correto ser cadastrado.
+O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, listas nomeadas, desejos manuais/extração opcional, livros, gratidão, configurações, motion respeitando Reduzir Movimento, exportação ZIP, exclusão com reautenticação, Storage privado, cobertura no app switcher, regras Firebase, índices, Functions e CI. Dados próprios usam persistência local como recuperação offline e Firebase compartilhado nos builds `dev`/`prod`; a Agenda mantém somente cache local e segue desligada até o OAuth iOS correto ser cadastrado. A extração permanece atrás de `LUME_ENABLE_LINK_EXTRACTION=true` até o deploy e os testes de segurança no projeto compartilhado.
 
 Para rodar localmente:
 
@@ -103,6 +103,7 @@ Para validar a entrega:
 dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
+npm --prefix functions test
 flutter build ios --no-codesign
 ```
 

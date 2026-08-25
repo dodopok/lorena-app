@@ -117,6 +117,10 @@ Uma Cloud Function autenticada recebe a URL e executa:
 
 Não executar JavaScript ou realizar login no MVP. TikTok Shop e lojas baseadas em JavaScript podem cair no fallback manual.
 
+### Estado da implementação
+
+O repositório contém `functions/src/index.ts` e `functions/src/extractor.ts`, com callable autenticada `extractLinkMetadata`, parser JSON-LD/Open Graph, fallback manual, limite por usuário, limite de concorrência, timeout, limite de bytes, redirects limitados e resolução DNS fixada após validação. O cliente Flutter chama a função somente quando `LUME_ENABLE_LINK_EXTRACTION=true`. Deploy no projeto `lume-13125`, Emulator Suite, billing/alertas e testes com páginas reais continuam sendo gates operacionais antes de ativar a flag.
+
 ### Proteções contra SSRF e abuso
 
 - Aceitar apenas HTTP/HTTPS e preferir HTTPS.
@@ -190,4 +194,3 @@ O arquivo é gerado sob demanda, possui expiração curta no backend quando nece
 - Open Finance.
 - Rastreamento automático de preços.
 - Compartilhamento familiar.
-

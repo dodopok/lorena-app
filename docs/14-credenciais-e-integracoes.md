@@ -104,11 +104,11 @@ O Google OAuth é uma autorização para Agenda, não o login principal do Lume.
 
 - Projeto Google Cloud: `lume-app-506521` — **Lume App**.
 - Projeto Firebase: `lume-13125`; domínio de autenticação `lume-13125.firebaseapp.com`.
-- OAuth client ID informado: `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`.
+- OAuth client iOS confirmado para a Agenda: `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`.
+- Reversed client ID registrado no target iOS: `com.googleusercontent.apps.1018427269031-d002niqglh23u9omq8urmee091gqotca`.
 - OAuth client iOS presente no `GoogleService-Info.plist`: `980338934048-d1ijkl2g5e2o1u28bo2ihtnbfi04a5vk.apps.googleusercontent.com`, com reversed client ID `com.googleusercontent.apps.980338934048-d1ijkl2g5e2o1u28bo2ihtnbfi04a5vk`.
 - O client iOS acima foi gerado para o Firebase `lume-13125`; ele não deve ser presumido como client da Agenda no Google Cloud `lume-app-506521`.
-- Para ativar a Agenda, criar no projeto `lume-app-506521` um OAuth client **iOS** com bundle `com.dodopok.lume` e registrar seu client ID/reversed client ID no target. O client `101842...` recebido pode ser usado como Web/server client somente se os redirect URIs e o consent screen estiverem configurados para esse fluxo.
-- O tipo exato desse client (iOS/Web) e seus redirect URIs ainda devem ser conferidos no Google Cloud Console antes de ligá-lo ao build.
+- O client da Agenda usa o bundle `com.dodopok.lume` e o reversed client ID acima no target iOS. A integração continua opt-in por build até a tela de consentimento, API e usuários de teste estarem revisados.
 - O arquivo JSON de client secret recebido localmente contém material sensível: não copiar para o repositório, não embutir no Flutter e não compartilhar em tickets.
 
 ### Valores que devem existir
@@ -130,9 +130,9 @@ LUME_ENABLE_CALENDAR=true
 LUME_GOOGLE_IOS_CLIENT_ID=<client-id-ios-do-projeto-lume-app-506521>
 ```
 
-O client `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`
-continua documentado como recebido, mas não é ligado automaticamente ao app
-enquanto o tipo (iOS/Web) e os redirect URIs não forem confirmados.
+O client iOS `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`
+está registrado para a Agenda. O build ainda precisa receber `LUME_ENABLE_CALENDAR=true`
+e o mesmo client ID por `LUME_GOOGLE_IOS_CLIENT_ID` quando a integração for habilitada.
 
 ### Onde não armazenar
 

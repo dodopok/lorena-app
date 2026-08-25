@@ -42,6 +42,22 @@ class LumeApp extends StatelessWidget {
 
   Route<void>? _routes(RouteSettings settings) {
     final name = settings.name ?? '/welcome';
+    // Keep documented deep links on a safe authenticated destination even
+    // before a dedicated route-state coordinator is added. The destination
+    // screen remains the source of truth for validating the identifier.
+    if (name.startsWith('/app/calendar/event/')) {
+      return _page(
+        const AppShell(initialDestination: AppDestination.calendar),
+      );
+    }
+    if (name.startsWith('/app/finance/transaction/') ||
+        name.startsWith('/app/finance/wishlist/')) {
+      return _page(const AppShell(initialDestination: AppDestination.finance));
+    }
+    if (name.startsWith('/app/corner/books/') ||
+        name.startsWith('/app/corner/gratitude/')) {
+      return _page(const AppShell(initialDestination: AppDestination.corner));
+    }
     switch (name) {
       case '/welcome':
         return _page(const WelcomeScreen());
@@ -53,6 +69,10 @@ class LumeApp extends StatelessWidget {
       case '/app/today':
         return _page(const AppShell(initialDestination: AppDestination.today));
       case '/app/calendar':
+        return _page(
+          const AppShell(initialDestination: AppDestination.calendar),
+        );
+      case '/app/calendar/connect':
         return _page(
           const AppShell(initialDestination: AppDestination.calendar),
         );

@@ -22,10 +22,6 @@ class WellbeingScreen extends StatelessWidget {
             .toList()
           ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
     final waterTotal = water.fold(0, (total, item) => total + item.amountMl);
-    final pending =
-        water.any((item) => item.syncState == SyncState.pending) ||
-        bowel.any((item) => item.syncState == SyncState.pending) ||
-        exercise.any((item) => item.syncState == SyncState.pending);
 
     return app_ui.LumePage(
       title: 'Bem-estar',
@@ -33,10 +29,6 @@ class WellbeingScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (pending) ...[
-            const LumeSyncIndicator(state: LumeSyncState.pending),
-            const SizedBox(height: 12),
-          ],
           LumeProgressCard(
             label: 'Água de hoje',
             value: waterTotal,
@@ -656,7 +648,7 @@ class _WaterRow extends StatelessWidget {
     leading: const Icon(Icons.water_drop_outlined),
     title: Text('${log.amountMl} ml'),
     subtitle: Text(
-      '${log.occurredAt.hour.toString().padLeft(2, '0')}:${log.occurredAt.minute.toString().padLeft(2, '0')} · ${log.syncState == SyncState.pending ? 'pendente' : 'salvo'}',
+      '${log.occurredAt.hour.toString().padLeft(2, '0')}:${log.occurredAt.minute.toString().padLeft(2, '0')}',
     ),
     trailing: IconButton(
       tooltip: 'Excluir registro',

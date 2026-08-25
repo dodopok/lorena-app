@@ -23,18 +23,6 @@ class TodayScreen extends StatelessWidget {
             .toList()
           ..sort((a, b) => a.start.compareTo(b.start));
     final upcomingEvent = nextEvent.firstOrNull;
-    final pending =
-        controller
-            .waterFor(now)
-            .any((log) => log.syncState == SyncState.pending) ||
-        controller.bowelLogs.any((log) => log.syncState == SyncState.pending) ||
-        controller.exerciseLogs.any(
-          (log) => log.syncState == SyncState.pending,
-        ) ||
-        controller
-            .transactionsFor(currentPeriod)
-            .any((entry) => entry.syncState == SyncState.pending) ||
-        (gratitude?.syncState == SyncState.pending);
     final greeting = now.hour < 12
         ? 'Bom dia'
         : now.hour < 18
@@ -46,10 +34,6 @@ class TodayScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (pending) ...[
-            const LumeSyncIndicator(state: LumeSyncState.pending),
-            const SizedBox(height: 12),
-          ],
           LumeCard(
             tone: LumeCardTone.calendar,
             semanticLabel: 'Próximo compromisso',

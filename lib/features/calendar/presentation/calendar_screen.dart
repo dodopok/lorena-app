@@ -28,12 +28,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final integrationEnabled =
         LumeBuildConfig.enableCalendar &&
         LumeBuildConfig.googleCalendarIosClientId.isNotEmpty;
+    final periodStart = _view == CalendarView.month
+        ? DateTime(_selectedDate.year, _selectedDate.month)
+        : DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final periodEnd = _view == CalendarView.month
+        ? DateTime(_selectedDate.year, _selectedDate.month + 1)
+        : periodStart.add(const Duration(days: 1));
     final visibleEvents = controller.calendarEvents.where((event) {
-      if (_view == CalendarView.month) {
-        return event.start.year == _selectedDate.year &&
-            event.start.month == _selectedDate.month;
-      }
-      return _isSameDay(event.start, _selectedDate);
+      return event.start.isBefore(periodEnd) && event.end.isAfter(periodStart);
     }).toList()..sort(_compareEvents);
     return app_ui.LumePage(
       title: 'Agenda',
@@ -128,6 +130,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
               }),
             ),
             const SizedBox(height: 12),
+            if (_view == CalendarView.month) ...[
+              _MonthCalendar(
+                month: _selectedDate,
+                selectedDate: _selectedDate,
+                events: controller.calendarEvents,
+                eventColor: (colorId) => _eventDotColor(context, colorId),
+                onDateSelected: (date) => setState(() => _selectedDate = date),
+              ),
+              const SizedBox(height: 24),
+            ],
             LumeSectionHeader(
               title: _view == CalendarView.month
                   ? 'Eventos do mês'
@@ -223,9 +235,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     try {
       await AppScope.read(context).connectCalendar();
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agenda conectada.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Agenda conectada.')));
     } on CalendarGatewayException catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -628,10 +640,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _ => Theme.of(context).colorScheme.primary,
   };
 
-  bool _isSameDay(DateTime first, DateTime second) =>
-      first.year == second.year &&
-      first.month == second.month &&
-      first.day == second.day;
+  Color _eventDotColor(BuildContext context, String? colorId) =>
+      Color.lerp(_eventColor(context, colorId), context.lumeColors.text, 0.42)!;
 
   int _compareEvents(CalendarEvent first, CalendarEvent second) =>
       first.start.compareTo(second.start);
@@ -699,6 +709,169 @@ class _CalendarNavigator extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _MonthCalendar extends StatelessWidget {
+  const _MonthCalendar({
+    required this.month,
+    required this.selectedDate,
+    required this.events,
+    required this.eventColor,
+    required this.onDateSelected,
+  });
+
+  static const _weekdays = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
+
+  final DateTime month;
+  final DateTime selectedDate;
+  final List<CalendarEvent> events;
+  final Color Function(String? colorId) eventColor;
+  final ValueChanged<DateTime> onDateSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = context.lumeColors.border.withValues(alpha: 0.8);
+    return LumeCard(
+      tone: LumeCardTone.calendar,
+      padding: const EdgeInsets.all(10),
+      child: Table(
+        border: TableBorder(
+          horizontalInside: BorderSide(color: borderColor),
+          verticalInside: BorderSide(color: borderColor),
+        ),
+        children: [
+          TableRow(
+            children: [
+              for (final weekday in _weekdays)
+                SizedBox(
+                  height: 28,
+                  child: Center(
+                    child: Text(
+                      weekday,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context.lumeColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          for (final week in _weeks())
+            TableRow(
+              children: [for (final date in week) _dayCell(context, date)],
+            ),
+        ],
+      ),
+    );
+  }
+
+  List<List<DateTime?>> _weeks() {
+    final firstDay = DateTime(month.year, month.month, 1);
+    final leadingDays = firstDay.weekday - DateTime.monday;
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final cells = <DateTime?>[
+      ...List<DateTime?>.filled(leadingDays, null),
+      for (var day = 1; day <= daysInMonth; day++)
+        DateTime(month.year, month.month, day),
+    ];
+    while (cells.length % 7 != 0) {
+      cells.add(null);
+    }
+    return [
+      for (var index = 0; index < cells.length; index += 7)
+        cells.sublist(index, index + 7),
+    ];
+  }
+
+  Widget _dayCell(BuildContext context, DateTime? date) {
+    if (date == null) return const SizedBox(height: 68);
+
+    final dayEvents = _eventsForDay(date);
+    final isSelected = _isSameDay(date, selectedDate);
+    final isToday = _isSameDay(date, DateTime.now());
+    final colors = context.lumeColors;
+    final colorScheme = Theme.of(context).colorScheme;
+    final numberDecoration = BoxDecoration(
+      color: isSelected ? colorScheme.primary : Colors.transparent,
+      shape: BoxShape.circle,
+      border: isToday && !isSelected
+          ? Border.all(color: colorScheme.primary, width: 1.5)
+          : null,
+    );
+
+    return Semantics(
+      button: true,
+      label:
+          '${date.day}/${date.month}/${date.year}, ${dayEvents.length} ${dayEvents.length == 1 ? 'evento' : 'eventos'}',
+      child: InkWell(
+        onTap: () => onDateSelected(date),
+        child: SizedBox(
+          height: 68,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+            child: Column(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 30,
+                  height: 30,
+                  decoration: numberDecoration,
+                  child: Center(
+                    child: Text(
+                      '${date.day}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: isSelected ? colorScheme.onPrimary : colors.text,
+                        fontWeight: isToday || isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Wrap(
+                      spacing: 3,
+                      runSpacing: 3,
+                      children: [
+                        for (final event in dayEvents.take(4))
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: eventColor(event.colorId),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<CalendarEvent> _eventsForDay(DateTime date) {
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
+    return events
+        .where((event) => event.start.isBefore(end) && event.end.isAfter(start))
+        .toList()
+      ..sort((first, second) => first.start.compareTo(second.start));
+  }
+
+  bool _isSameDay(DateTime first, DateTime second) =>
+      first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
 }
 
 extension<T> on List<T> {

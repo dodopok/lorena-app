@@ -7,4 +7,3 @@ export 'lume_photo_viewer.dart';
 export 'lume_progress.dart';
 export 'lume_scaffold.dart';
 export 'lume_states.dart';
-export 'lume_sync_indicator.dart';

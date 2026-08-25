@@ -55,7 +55,7 @@ As rotas abaixo são nomes estáveis para deep links, testes e telemetria técni
 
 ### 1.3 Estado de tela
 
-Toda tela de leitura expõe um estado de visualização e um estado de sincronização. Os componentes visuais correspondentes estão especificados em [Componentes compartilhados](13-componentes-compartilhados.md).
+Toda tela de leitura expõe um estado de visualização. O domínio mantém o estado de sincronização para persistência e recuperação, mas a interface não exibe um indicador técnico permanente.
 
 ```text
 ViewState<T>
@@ -75,13 +75,13 @@ SyncState
 
 Regras:
 
-- `loading` aparece apenas antes de existir conteúdo; ao atualizar conteúdo existente, usar indicador discreto;
+- `loading` aparece apenas antes de existir conteúdo; ao atualizar conteúdo existente, preservar a geometria e evitar banners técnicos;
 - `empty` representa ausência válida de dados, não erro;
 - `error` sempre oferece uma ação recuperável quando o problema puder ser resolvido pela usuária;
 - dados próprios podem ser salvos em `offline` e ficam visíveis imediatamente;
-- cache da Agenda pode ser exibido com `offline`, mas eventos não devem parecer recém-sincronizados;
+- cache da Agenda pode ser exibido com `offline`, mas eventos não devem parecer recém-sincronizados nem exibir o horário da última atualização;
 - `saving` é um estado de operação e pode coexistir com `content`; o botão de confirmar fica protegido contra toque duplicado;
-- `pending` não bloqueia edição local, salvo mutações da Agenda no MVP, que exigem conexão;
+- `pending` não bloqueia edição local e não vira um status persistente na tela, salvo mutações da Agenda no MVP, que exigem conexão;
 - uma falha em um card não pode converter a tela inteira em erro quando os demais cards continuam utilizáveis.
 
 ### 1.4 Resultado de ações
@@ -91,7 +91,7 @@ Toda ação de escrita termina em um destes resultados:
 | Resultado | Comportamento |
 |---|---|
 | `saved` | Atualiza a tela e informa sucesso de forma breve. |
-| `savedOffline` | Atualiza a tela, marca sincronização pendente e não promete envio imediato. |
+| `savedOffline` | Atualiza a tela; a persistência local continua sem expor um status técnico ao usuário. |
 | `undone` | Reverte a mutação e atualiza agregados derivados. |
 | `failed` | Mantém dados/rascunho editável e oferece tentativa novamente. |
 | `conflict` | Não sobrescreve silenciosamente; mostra decisão necessária. |
@@ -155,7 +155,7 @@ Aceite: fechar e reabrir não perde os passos concluídos; valores inválidos n�
 | Item | Contrato |
 |---|---|
 | Rota | `/app` com destino filho |
-| Responsabilidade | Guardar autenticação, biometria, barra inferior, cobertura de background e indicador global de sincronização. |
+| Responsabilidade | Guardar autenticação, biometria, barra inferior e cobertura de background. |
 | Destinos | Hoje, Agenda, Bem-estar, Finanças e Cantinho. |
 | Entradas externas | Deep link de favorito, livro ou evento; resultado de reautenticação. |
 | Ações | Trocar destino; abrir configurações; bloquear/desbloquear; tratar logout. |
@@ -424,7 +424,7 @@ Aceite: entrada vazia é recusada; uma nova gravação no mesmo dia edita a exis
 
 Alterar a preferência padrão de mesada não modifica período fechado sem confirmação. Permissões negadas apontam para Ajustes e não ficam em loop de solicitação.
 
-Aceite: sair não exclui dados remotos; estado da Agenda mostra última sincronização; Face ID pode ser ativado/desativado; todos os controles têm label e valor atual.
+Aceite: sair não exclui dados remotos; o cache da Agenda permanece disponível conforme a conexão; Face ID pode ser ativado/desativado; todos os controles têm label e valor atual.
 
 ### S24 — Privacidade, exportação e exclusão
 

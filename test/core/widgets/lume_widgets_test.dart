@@ -7,7 +7,6 @@ import 'package:lume/core/widgets/lume_currency_input.dart';
 import 'package:lume/core/widgets/lume_navigation.dart';
 import 'package:lume/core/widgets/lume_progress.dart';
 import 'package:lume/core/widgets/lume_states.dart';
-import 'package:lume/core/widgets/lume_sync_indicator.dart';
 
 Widget _host(Widget child) => MaterialApp(
   theme: LumeTheme.light(),
@@ -108,7 +107,7 @@ void main() {
     expect(selected, LumeDestination.calendar);
   });
 
-  testWidgets('empty, error and sync states render only provided actions', (
+  testWidgets('empty and error states render only provided actions', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -129,11 +128,6 @@ void main() {
       ),
     );
     expect(find.text('Tentar novamente'), findsNothing);
-    await tester.pumpWidget(
-      _host(const LumeSyncIndicator(state: LumeSyncState.pending)),
-    );
-    expect(find.text('Sincronizando'), findsOneWidget);
-    expect(find.textContaining('Salvo neste aparelho'), findsNothing);
   });
 
   test(

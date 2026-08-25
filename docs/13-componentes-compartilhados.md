@@ -226,19 +226,7 @@ Recebe `title`, `description`, `errorKind`, `onRetry?`, `onOpenSettings?`, `isBl
 
 Mapear erros técnicos para mensagens humanas. Se `onRetry` for nulo, não renderizar botão vazio. Erros de permissão oferecem Ajustes; erro de Agenda pode permanecer dentro do card; não mostrar stack trace, token ou URL completa.
 
-### 4.13 `LumeSyncIndicator`
-
-Exibe `synced`, `pending`, `offline`, `conflict` ou `unavailable` com ícone e texto.
-
-- `pending`: “Salvo neste aparelho; sincronizando quando houver conexão”;
-- `offline`: “Sem conexão. Mostrando dados salvos em [data/hora]”;
-- `conflict`: “Este item mudou fora do app. Revisar”;
-- `synced`: pode ser discreto e não ocupar espaço permanente;
-- nunca afirmar “sincronizado” apenas porque a escrita local terminou.
-
-O indicador pode ser inline, no card ou em banner global. A escolha depende da superfície; a semântica deve permanecer igual.
-
-### 4.14 `LumeButton`
+### 4.13 `LumeButton`
 
 Variantes: `primary`, `tonal`, `secondary`, `text`, `destructive`, `icon`. Todas recebem `label`, `onPressed?`, `isLoading`, `isEnabled`, `leadingIcon?` e `semanticLabel?`.
 
@@ -248,7 +236,7 @@ Variantes: `primary`, `tonal`, `secondary`, `text`, `destructive`, `icon`. Todas
 - botão somente com ícone exige `semanticLabel`;
 - primary é reservado à ação principal da superfície; não usar vários primários concorrentes.
 
-### 4.15 Campos de formulário
+### 4.14 Campos de formulário
 
 Todos os campos seguem label persistente, valor, ajuda, erro, foco e estado disabled. Placeholder não substitui label.
 
@@ -263,17 +251,17 @@ Todos os campos seguem label persistente, valor, ajuda, erro, foco e estado disa
 
 Ao validar, focar o primeiro campo inválido e anunciar o erro. Não apagar o restante do formulário quando uma validação falhar.
 
-### 4.16 `LumeChoiceGroup`
+### 4.15 `LumeChoiceGroup`
 
 Para status de livro, tipo de transação, intensidade e modos de rollover. Recebe opções com `id`, `label`, `description?`, `isEnabled` e `selectedId`.
 
 Usar radio/segmented control quando há seleção única; chips quando a opção pode ser alternada ou filtrada. O valor selecionado é anunciado sem depender de cor. Não usar `ChoiceGroup` para ações que salvam imediatamente sem confirmação clara.
 
-### 4.17 `LumeRatingInput`
+### 4.16 `LumeRatingInput`
 
 Recebe `value?`, `max = 5`, `onChanged`, `readOnly?`. Cada estrela tem label “N de 5”; valor vazio é distinto de zero. Suportar toque e acessibilidade sem exigir arrastar.
 
-### 4.18 `LumePhotoPicker`
+### 4.17 `LumePhotoPicker`
 
 Recebe `items`, `maxItems?`, `onAdd`, `onRemove`, `onRetry`, `permissionState`.
 
@@ -284,13 +272,13 @@ Recebe `items`, `maxItems?`, `onAdd`, `onRemove`, `onRetry`, `permissionState`.
 - thumbnail possui descrição ou label “Foto [posição]”; botão de remover é separado;
 - nunca depende de nome original do arquivo.
 
-### 4.19 `LumeSheet`
+### 4.18 `LumeSheet`
 
 Usado para tarefas curtas. Recebe `title`, `child`, `primaryAction`, `secondaryAction?`, `isDirty`, `onDismiss`.
 
 Se `isDirty`, tentar fechar solicita confirmação ou preserva rascunho conforme o contrato da tela. O teclado não deve cobrir o botão principal; o conteúdo é rolável e a ação permanece alcançável em Dynamic Type grande.
 
-### 4.20 `LumeUndoBar`
+### 4.19 `LumeUndoBar`
 
 Recebe `message`, `onUndo`, `duration`, `onExpired?`. É usado para água, exclusões simples, marcar item e outras ações reversíveis.
 
@@ -299,17 +287,17 @@ Recebe `message`, `onUndo`, `duration`, `onExpired?`. É usado para água, exclu
 - expiração remove apenas a oportunidade de desfazer, não o dado;
 - várias operações precisam de `operationId` para não desfazer o item errado.
 
-### 4.21 `LumePermissionCallout`
+### 4.20 `LumePermissionCallout`
 
 Recebe `permission`, `title`, `description`, `onRequest`, `onOpenSettings`, `isPermanentlyDenied`.
 
 Explicar o benefício antes do sistema pedir acesso. Se negado, não repetir o prompt automaticamente; orientar Ajustes. Não renderizar um callout de permissão para dados que não exigem autorização do sistema.
 
-### 4.22 `LumeConfirmDialog`
+### 4.21 `LumeConfirmDialog`
 
 Recebe `title`, `description`, `confirmLabel`, `cancelLabel`, `isDestructive`, `onConfirm`. Usar para exclusão de período, evento recorrente, conta e limpeza de concluídos. O texto deve descrever consequência concreta e não usar culpa.
 
-### 4.23 `LumePhotoViewer`
+### 4.22 `LumePhotoViewer`
 
 Visualização em tela cheia para fotos de gratidão, livros e desejos. Recebe lista, índice inicial, labels e `onClose`. Deve suportar zoom padrão do sistema, VoiceOver para fechar/navegar e imagem placeholder quando o upload falhar. Não expõe URL interna do Storage.
 
@@ -327,7 +315,7 @@ Todo componente compartilhado precisa ser verificado em:
 - teclado apropriado para moeda, quantidade, duração e texto;
 - labels de unidade: ml, minutos, reais, data e horário.
 
-Progresso, estrelas, status de sincronização e thumbnails sempre têm uma representação textual/semântica. Componentes não podem exigir swipe, drag ou gesto fino para uma ação essencial.
+Progresso, estrelas, thumbnails e estados de erro sempre têm uma representação textual/semântica. Componentes não podem exigir swipe, drag ou gesto fino para uma ação essencial.
 
 ## 6. Testes de componentes
 

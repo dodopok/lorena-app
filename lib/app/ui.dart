@@ -135,53 +135,6 @@ class LumeSectionHeader extends StatelessWidget {
   );
 }
 
-class LumeSyncBadge extends StatelessWidget {
-  const LumeSyncBadge({required this.state, super.key});
-
-  final SyncBadgeState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final (icon, label, color) = switch (state) {
-      SyncBadgeState.synced => (
-        Icons.cloud_done_outlined,
-        'Sincronizado',
-        LumeColors.brandStrong,
-      ),
-      SyncBadgeState.pending => (
-        Icons.cloud_upload_outlined,
-        'Sincronizando',
-        LumeColors.brandStrong,
-      ),
-      SyncBadgeState.offline => (
-        Icons.cloud_off_outlined,
-        'Sem conexão',
-        LumeColors.textSecondary,
-      ),
-    };
-    return Semantics(
-      label: label,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: color),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: color),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-enum SyncBadgeState { synced, pending, offline }
-
 class LumeEmptyState extends StatelessWidget {
   const LumeEmptyState({
     required this.icon,

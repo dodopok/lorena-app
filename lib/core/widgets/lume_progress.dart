@@ -217,10 +217,24 @@ class LumeMoneySummaryCard extends StatelessWidget {
             ),
             if (details.isNotEmpty) ...[
               const SizedBox(height: LumeSpacing.lg),
-              Wrap(
-                spacing: LumeSpacing.xl,
-                runSpacing: LumeSpacing.sm,
-                children: details,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var index = 0; index < details.length; index++) ...[
+                    if (index > 0)
+                      Container(
+                        width: 1,
+                        height: 32,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: LumeSpacing.md,
+                        ),
+                        color: context.lumeColors.brandStrong.withValues(
+                          alpha: .18,
+                        ),
+                      ),
+                    Expanded(child: details[index]),
+                  ],
+                ],
               ),
             ],
           ],
@@ -239,11 +253,16 @@ class _Detail extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(label, style: Theme.of(context).textTheme.labelSmall),
-      Text(
-        value,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          value,
+          maxLines: 1,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
       ),
     ],
   );

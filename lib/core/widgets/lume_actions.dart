@@ -12,6 +12,7 @@ class LumeQuickAction extends StatelessWidget {
     this.isLoading = false,
     this.isEnabled = true,
     this.onPressed,
+    this.semanticLabel,
   });
 
   final IconData icon;
@@ -21,6 +22,7 @@ class LumeQuickAction extends StatelessWidget {
   final bool isLoading;
   final bool isEnabled;
   final VoidCallback? onPressed;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,9 @@ class LumeQuickAction extends StatelessWidget {
       LumeCardTone.danger => c.error.withValues(alpha: .10),
       LumeCardTone.neutral => c.surface,
     };
-    final semantic = [label, ?value, if (isLoading) 'Carregando'].join(', ');
+    final semantic =
+        semanticLabel ??
+        [label, ?value, if (isLoading) 'Carregando'].join(', ');
     return Semantics(
       button: true,
       enabled: isEnabled && !isLoading,

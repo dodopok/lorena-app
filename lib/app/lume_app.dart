@@ -11,6 +11,7 @@ import '../features/wellbeing/presentation/wellbeing_screen.dart';
 import 'app_controller.dart';
 import '../core/biometrics/biometric_gateway.dart';
 import '../core/widgets/lume_motion.dart';
+import '../core/widgets/lume_navigation.dart';
 import 'privacy_shield.dart';
 import 'theme.dart';
 
@@ -241,38 +242,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           child: KeyedSubtree(key: ValueKey(_destination), child: page),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _destination.index,
-        onDestinationSelected: (index) {
-          setState(() => _destination = AppDestination.values[index]);
+      bottomNavigationBar: LumeBottomNavigation(
+        currentDestination: LumeDestination.values[_destination.index],
+        onDestinationSelected: (destination) {
+          setState(
+            () => _destination = AppDestination.values[destination.index],
+          );
         },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today),
-            label: 'Hoje',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: 'Agenda',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.spa_outlined),
-            selectedIcon: Icon(Icons.spa),
-            label: 'Bem-estar',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet),
-            label: 'Finanças',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.auto_stories_outlined),
-            selectedIcon: Icon(Icons.auto_stories),
-            label: 'Cantinho',
-          ),
-        ],
       ),
     );
   }

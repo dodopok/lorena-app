@@ -43,17 +43,21 @@ class LumeCard extends StatelessWidget {
     final card = Material(
       color: _background(context),
       borderRadius: BorderRadius.circular(LumeRadii.card),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(LumeRadii.card),
         child: content,
       ),
     );
-    return Semantics(
-      button: onTap != null,
-      enabled: isEnabled,
-      label: semanticLabel,
-      child: Opacity(opacity: isEnabled ? 1 : .55, child: card),
+    return SizedBox(
+      width: double.infinity,
+      child: Semantics(
+        button: onTap != null,
+        enabled: isEnabled,
+        label: semanticLabel,
+        child: Opacity(opacity: isEnabled ? 1 : .55, child: card),
+      ),
     );
   }
 }

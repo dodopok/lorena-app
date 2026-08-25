@@ -30,6 +30,28 @@ void main() {
     },
   );
 
+  testWidgets('money summary stays readable at compact width', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        const SizedBox(
+          width: 320,
+          child: LumeMoneySummaryCard(
+            periodLabel: '08/2026',
+            balanceMinor: 120000,
+            currency: 'BRL',
+            incomeMinor: 120000,
+            expenseMinor: 0,
+            rolloverMinor: 0,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(tester.getSize(find.byType(LumeMoneySummaryCard)).width, 320);
+  });
+
   testWidgets('button loading state announces saving and prevents taps', (
     tester,
   ) async {

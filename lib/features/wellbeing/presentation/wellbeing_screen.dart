@@ -48,19 +48,30 @@ class WellbeingScreen extends StatelessWidget {
             onAction: () => _addCustomWater(context),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: controller.settings.quickWaterAmountsMl
-                .map(
-                  (amount) => LumeQuickAction(
+          Row(
+            children: [
+              for (
+                var index = 0;
+                index < controller.settings.quickWaterAmountsMl.take(3).length;
+                index++
+              ) ...[
+                if (index > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: LumeQuickAction(
                     icon: Icons.water_drop_outlined,
-                    label: '+$amount ml',
+                    label:
+                        '+${controller.settings.quickWaterAmountsMl[index]} ml',
+                    semanticLabel:
+                        'Adicionar ${controller.settings.quickWaterAmountsMl[index]} ml de água',
                     tone: LumeCardTone.wellbeing,
-                    onPressed: () => _quickWater(context, amount),
+                    onPressed: () => _quickWater(
+                      context,
+                      controller.settings.quickWaterAmountsMl[index],
+                    ),
                   ),
-                )
-                .toList(),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 24),
           LumeSectionHeader(

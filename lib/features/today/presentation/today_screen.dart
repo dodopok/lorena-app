@@ -106,18 +106,31 @@ class TodayScreen extends StatelessWidget {
             onAction: () => Navigator.of(context).pushNamed('/app/wellbeing'),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: controller.settings.quickWaterAmountsMl.map((amount) {
-              return LumeQuickAction(
-                icon: Icons.water_drop_outlined,
-                label: '+$amount ml',
-                value: 'Adicionar água',
-                tone: LumeCardTone.wellbeing,
-                onPressed: () => _addWater(context, controller, amount),
-              );
-            }).toList(),
+          Row(
+            children: [
+              for (
+                var index = 0;
+                index < controller.settings.quickWaterAmountsMl.take(3).length;
+                index++
+              ) ...[
+                if (index > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: LumeQuickAction(
+                    icon: Icons.water_drop_outlined,
+                    label:
+                        '+${controller.settings.quickWaterAmountsMl[index]} ml',
+                    semanticLabel:
+                        'Adicionar ${controller.settings.quickWaterAmountsMl[index]} ml de água',
+                    tone: LumeCardTone.wellbeing,
+                    onPressed: () => _addWater(
+                      context,
+                      controller,
+                      controller.settings.quickWaterAmountsMl[index],
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 24),
           const LumeSectionHeader(title: 'Ações rápidas'),

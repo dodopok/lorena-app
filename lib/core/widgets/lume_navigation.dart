@@ -39,11 +39,14 @@ class LumeBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.lumeColors;
-    return Material(
-      color: c.surface,
-      elevation: 1,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
       child: SafeArea(
         top: false,
+        minimum: const EdgeInsets.fromLTRB(4, 5, 4, 3),
         child: Row(
           children: [
             for (final item in _items)
@@ -89,42 +92,49 @@ class _DestinationButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minHeight: LumeSpacing.touchMinimum,
-          ),
+          constraints: const BoxConstraints(minHeight: 58),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: LumeSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedContainer(
-                  duration: motionDuration,
-                  curve: Curves.easeOutCubic,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: selected ? LumeSpacing.sm : 0,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? context.lumeColors.brandSoft
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(LumeRadii.pill),
-                  ),
-                  child: Icon(
-                    item.$3,
-                    color: selected
-                        ? context.lumeColors.brand
-                        : context.lumeColors.textSecondary,
+                SizedBox(
+                  width: 44,
+                  height: 28,
+                  child: AnimatedContainer(
+                    duration: motionDuration,
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? context.lumeColors.brandSoft
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(LumeRadii.pill),
+                    ),
+                    child: Icon(
+                      item.$3,
+                      color: selected
+                          ? context.lumeColors.brand
+                          : context.lumeColors.textSecondary,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  item.$2,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: selected
-                        ? context.lumeColors.brand
-                        : context.lumeColors.textSecondary,
-                    fontWeight: selected ? FontWeight.w700 : null,
+                const SizedBox(height: 3),
+                SizedBox(
+                  height: 15,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      item.$2,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontSize: 10.5,
+                        color: selected
+                            ? context.lumeColors.brand
+                            : context.lumeColors.textSecondary,
+                        fontWeight: selected ? FontWeight.w700 : null,
+                      ),
+                    ),
                   ),
                 ),
               ],

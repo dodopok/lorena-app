@@ -10,6 +10,7 @@ import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
 import '../../../core/photos/local_photo_service.dart';
 import '../../../core/links/link_metadata.dart';
+import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class FinanceScreen extends StatefulWidget {
@@ -147,20 +148,23 @@ class _FinanceScreenState extends State<FinanceScreen> {
           else
             LumeCard(
               child: Column(
-                children: entries
-                    .map(
-                      (entry) => _TransactionRow(
-                        entry: entry,
-                        controller: controller,
-                        onEdit: () => _showTransaction(
-                          context,
-                          entry.type,
-                          existing: entry,
-                        ),
-                        onDelete: () => _deleteTransaction(context, entry),
+                children: [
+                  for (var index = 0; index < entries.length; index++) ...[
+                    if (index > 0)
+                      Divider(height: 1, color: context.lumeColors.border),
+                    _TransactionRow(
+                      entry: entries[index],
+                      controller: controller,
+                      onEdit: () => _showTransaction(
+                        context,
+                        entries[index].type,
+                        existing: entries[index],
                       ),
-                    )
-                    .toList(),
+                      onDelete: () =>
+                          _deleteTransaction(context, entries[index]),
+                    ),
+                  ],
+                ],
               ),
             ),
           const SizedBox(height: 28),
@@ -183,7 +187,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
                         .map(
                           (list) => DropdownMenuItem<String>(
                             value: list.id,
-                            child: Text(list.name),
+                            child: Text(
+                              list.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         )
                         .toList(),
@@ -1210,48 +1218,80 @@ class _TransactionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isExpense = entry.type == TransactionType.expense;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: isExpense
-            ? app_theme.LumeColors.finance
-            : app_theme.LumeColors.wellbeing,
-        child: Icon(
-          isExpense ? Icons.arrow_downward : Icons.arrow_upward,
-          size: 18,
-        ),
-      ),
-      title: Text(entry.description),
-      subtitle: Text(
-        [
-          entry.category,
-          controller.formatDate(entry.occurredAt),
-          if (entry.note != null && entry.note!.isNotEmpty) entry.note!,
-        ].join(' · '),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    final amount =
+        '${isExpense ? '-' : '+'}${controller.formatMinor(entry.amountMinor)}';
+    final details = [
+      entry.category,
+      controller.formatDate(entry.occurredAt),
+      if (entry.note != null && entry.note!.isNotEmpty) entry.note!,
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            '${isExpense ? '-' : '+'}${controller.formatMinor(entry.amountMinor)}',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: isExpense
-                  ? Theme.of(context).colorScheme.error
-                  : app_theme.LumeColors.brandStrong,
+          CircleAvatar(
+            radius: 19,
+            backgroundColor: isExpense
+                ? app_theme.LumeColors.finance
+                : app_theme.LumeColors.wellbeing,
+            child: Icon(
+              isExpense ? Icons.arrow_downward : Icons.arrow_upward,
+              size: 18,
             ),
           ),
-          IconButton(
-            tooltip: 'Editar lançamento',
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  details,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.lumeColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            tooltip: 'Excluir lançamento',
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                amount,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: isExpense
+                      ? Theme.of(context).colorScheme.error
+                      : app_theme.LumeColors.brandStrong,
+                ),
+              ),
+              PopupMenuButton<String>(
+                tooltip: 'Ações do lançamento',
+                padding: EdgeInsets.zero,
+                iconSize: 20,
+                onSelected: (value) {
+                  if (value == 'edit') onEdit();
+                  if (value == 'delete') onDelete();
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'edit', child: Text('Editar')),
+                  PopupMenuItem(value: 'delete', child: Text('Excluir')),
+                ],
+              ),
+            ],
           ),
         ],
       ),

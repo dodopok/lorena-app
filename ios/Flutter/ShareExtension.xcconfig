@@ -1,0 +1,3 @@
+// Keep the Share Extension's version metadata in sync with Flutter builds
+// without inheriting the Runner's application/plugin linker settings.
+#include "Generated.xcconfig"

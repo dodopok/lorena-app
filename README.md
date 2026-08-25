@@ -2,7 +2,7 @@
 
 Aplicativo pessoal para iPhone, planejado em Flutter, que reúne agenda, autocuidado, finanças, leituras, desejos e gratidão em um único espaço acolhedor.
 
-> **Status:** alpha funcional com modo offline, ícone nativo rosa e fundações Apple/Firebase/Google/Storage. O nome público é “Lume”; ainda faltam validações em aparelho físico e as configurações de console descritas em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
+> **Status:** MVP funcional em alpha, com modo offline, motion system sem layout shifting, ícone nativo rosa, mídia privada, exportação/exclusão e fluxos completos de Hoje, Bem-estar, Finanças e Cantinho. Ainda faltam validações em aparelho físico, o OAuth iOS correto da Agenda e a configuração nativa de App Groups/Share Extension descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
 
 ## Visão rápida
 
@@ -82,13 +82,13 @@ O [plano completo do produto](docs/README.md) é a fonte de verdade para escopo,
 3. **Bem-estar:** evacuações, exercícios, fotos e lembretes locais opcionais.
 4. **Finanças:** mesada, lançamentos, rollover, saldo e lista de compras.
 5. **Google Agenda:** calendários, cache, sincronização incremental e edição de eventos.
-6. **Cantinho e lançamento:** livros, favoritos, Share Extension, extração segura de links, portabilidade e TestFlight.
+6. **Cantinho e lançamento:** livros, favoritos, portabilidade, Share Extension, extração segura de links e TestFlight.
 
 Consulte o [roadmap detalhado](docs/08-roadmap.md) e os [critérios de aceite](docs/10-backlog-aceite.md) antes de iniciar uma entrega.
 
 ## Estado do repositório
 
-O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, compras, desejos manuais, livros, gratidão, configurações, exportação local, cobertura no app switcher, regras Firebase iniciais, índices e CI. A persistência local usa `SharedPreferences` como fonte de desenvolvimento; os contratos de domínio e as regras de segurança já estão isolados para a futura troca por Firebase/SQLite/Storage.
+O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, compras, desejos manuais, livros, gratidão, configurações, motion respeitando Reduzir Movimento, exportação ZIP, exclusão com reautenticação, Storage privado, cobertura no app switcher, regras Firebase iniciais, índices e CI. Dados próprios usam persistência local como recuperação offline e Firebase compartilhado nos builds `dev`/`prod`; a Agenda mantém somente cache local e segue desligada até o OAuth iOS correto ser cadastrado.
 
 Para rodar localmente:
 

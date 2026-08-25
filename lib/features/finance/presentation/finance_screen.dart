@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
 import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
+import '../../../core/photos/local_photo_service.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class FinanceScreen extends StatelessWidget {
@@ -19,6 +23,8 @@ class FinanceScreen extends StatelessWidget {
     final wishlist = controller.wishlistItems
         .where((item) => item.status != WishlistStatus.archived)
         .toList();
+    final shopping = [...controller.shoppingItems]
+      ..sort((a, b) => a.position.compareTo(b.position));
     return app_ui.LumePage(
       title: 'Finanças',
       subtitle: 'Seu dinheiro com clareza e sem julgamento',
@@ -104,42 +110,44 @@ class FinanceScreen extends StatelessWidget {
           const SizedBox(height: 8),
           LumeCard(
             tone: LumeCardTone.finance,
-            child: controller.shoppingItems.isEmpty
+            child: shopping.isEmpty
                 ? const Text(
                     'Uma lista simples para não precisar guardar tudo na cabeça.',
                   )
                 : Column(
                     children: [
-                      ...controller.shoppingItems.map(
-                        (item) => CheckboxListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: item.isChecked,
-                          onChanged: (_) =>
-                              controller.toggleShoppingItem(item.id),
-                          title: Text(
-                            item.name,
-                            style: TextStyle(
-                              decoration: item.isChecked
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
-                          ),
-                          subtitle: item.quantity == '1'
-                              ? null
-                              : Text('Quantidade: ${item.quantity}'),
-                          secondary: IconButton(
-                            tooltip: 'Excluir item',
-                            onPressed: () =>
+                      ReorderableListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: shopping.length,
+                        onReorder: (oldIndex, newIndex) {
+                          if (newIndex > oldIndex) newIndex--;
+                          final reordered = [...shopping];
+                          final item = reordered.removeAt(oldIndex);
+                          reordered.insert(newIndex, item);
+                          controller.reorderShoppingItems(
+                            reordered.map((item) => item.id).toList(),
+                          );
+                        },
+                        itemBuilder: (context, index) {
+                          final item = shopping[index];
+                          return _ShoppingRow(
+                            key: ValueKey(item.id),
+                            item: item,
+                            controller: controller,
+                            onToggle: () =>
+                                controller.toggleShoppingItem(item.id),
+                            onEdit: () =>
+                                _showShoppingItem(context, existing: item),
+                            onDelete: () =>
                                 controller.removeShoppingItem(item.id),
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                      if (controller.shoppingItems.any(
-                        (item) => item.isChecked,
-                      ))
+                      if (shopping.any((item) => item.isChecked))
                         TextButton.icon(
-                          onPressed: controller.clearCompletedShoppingItems,
+                          onPressed: () =>
+                              _clearCompletedShopping(context, controller),
                           icon: const Icon(Icons.cleaning_services_outlined),
                           label: const Text('Limpar concluídos'),
                         ),
@@ -177,6 +185,8 @@ class FinanceScreen extends StatelessWidget {
                     controller: controller,
                     onStatusChanged: (status) =>
                         controller.updateWishlistStatus(item.id, status),
+                    onEdit: () => _showWishlist(context, existing: item),
+                    onOpen: () => _openWishlist(context, item),
                     onDelete: () => controller.removeWishlistItem(item.id),
                   );
                 }).toList(),
@@ -307,12 +317,23 @@ class FinanceScreen extends StatelessWidget {
     category.dispose();
   }
 
-  Future<void> _showShoppingItem(BuildContext context) async {
-    final name = TextEditingController();
-    final quantity = TextEditingController(text: '1');
+  Future<void> _showShoppingItem(
+    BuildContext context, {
+    ShoppingItem? existing,
+  }) async {
+    final name = TextEditingController(text: existing?.name ?? '');
+    final quantity = TextEditingController(text: existing?.quantity ?? '1');
+    final note = TextEditingController(text: existing?.note ?? '');
+    final price = TextEditingController(
+      text: existing?.estimatedPriceMinor == null
+          ? ''
+          : (existing!.estimatedPriceMinor! / 100)
+                .toStringAsFixed(2)
+                .replaceAll('.', ','),
+    );
     await app_ui.showLumeSheet(
       context,
-      title: 'Adicionar item',
+      title: existing == null ? 'Adicionar item' : 'Editar item',
       child: Column(
         children: [
           TextField(
@@ -326,6 +347,23 @@ class FinanceScreen extends StatelessWidget {
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(labelText: 'Quantidade'),
           ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: price,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Preço estimado (opcional)',
+              prefixText: r'R$ ',
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: note,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'Observação (opcional)',
+            ),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -337,12 +375,36 @@ class FinanceScreen extends StatelessWidget {
                   );
                   return;
                 }
-                await AppScope.read(
-                  context,
-                ).addShoppingItem(name.text, quantity: quantity.text);
+                final priceMinor = price.text.trim().isEmpty
+                    ? null
+                    : _parseMoney(price.text);
+                if (price.text.trim().isNotEmpty &&
+                    (priceMinor == null || priceMinor < 0)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Confira o preço.')),
+                  );
+                  return;
+                }
+                final controller = AppScope.read(context);
+                if (existing == null) {
+                  await controller.addShoppingItem(
+                    name.text,
+                    quantity: quantity.text,
+                    note: note.text,
+                    estimatedPriceMinor: priceMinor,
+                  );
+                } else {
+                  await controller.updateShoppingItem(
+                    id: existing.id,
+                    name: name.text,
+                    quantity: quantity.text,
+                    note: note.text,
+                    estimatedPriceMinor: priceMinor,
+                  );
+                }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Adicionar'),
+              child: Text(existing == null ? 'Adicionar' : 'Salvar'),
             ),
           ),
         ],
@@ -350,6 +412,34 @@ class FinanceScreen extends StatelessWidget {
     );
     name.dispose();
     quantity.dispose();
+    note.dispose();
+    price.dispose();
+  }
+
+  Future<void> _clearCompletedShopping(
+    BuildContext context,
+    AppController controller,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Limpar concluídos?'),
+        content: const Text(
+          'Os itens marcados como comprados serão removidos desta lista.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Limpar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await controller.clearCompletedShoppingItems();
   }
 
   void _showCategoryInfo(BuildContext context) => showDialog<void>(
@@ -368,94 +458,176 @@ class FinanceScreen extends StatelessWidget {
     ),
   );
 
-  Future<void> _showWishlist(BuildContext context) async {
-    final url = TextEditingController();
-    final title = TextEditingController();
-    final price = TextEditingController();
-    final note = TextEditingController();
+  Future<void> _showWishlist(
+    BuildContext context, {
+    WishlistItem? existing,
+  }) async {
+    final url = TextEditingController(text: existing?.originalUrl ?? '');
+    final title = TextEditingController(text: existing?.title ?? '');
+    final price = TextEditingController(
+      text: existing?.priceMinor == null
+          ? ''
+          : (existing!.priceMinor! / 100)
+                .toStringAsFixed(2)
+                .replaceAll('.', ','),
+    );
+    final note = TextEditingController(text: existing?.note ?? '');
+    String? localImagePath = existing?.localImagePath;
+    var status = existing?.status ?? WishlistStatus.wanted;
     await app_ui.showLumeSheet(
       context,
-      title: 'Salvar desejo',
-      child: Column(
-        children: [
-          TextField(
-            controller: url,
-            autofocus: true,
-            keyboardType: TextInputType.url,
-            decoration: const InputDecoration(
-              labelText: 'Link do produto',
-              hintText: 'https://…',
-              helperText:
-                  'O link fica salvo mesmo se a extração não estiver disponível.',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: title,
-            decoration: const InputDecoration(labelText: 'Nome do produto'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: price,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Preço (opcional)',
-              prefixText: r'R$ ',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: note,
-            maxLines: 2,
-            decoration: const InputDecoration(
-              labelText: 'Observação (opcional)',
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
+      title: existing == null ? 'Salvar desejo' : 'Editar desejo',
+      child: StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          children: [
+            if (localImagePath != null) ...[
+              _LocalPhotoThumb(path: localImagePath!, size: 64),
+              const SizedBox(height: 8),
+            ],
+            OutlinedButton.icon(
               onPressed: () async {
-                final priceMinor = price.text.trim().isEmpty
-                    ? null
-                    : _parseMoney(price.text);
-                if (price.text.trim().isNotEmpty &&
-                    (priceMinor == null || priceMinor < 0)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Confira o preço.')),
-                  );
-                  return;
+                final path = await AppScope.read(
+                  context,
+                ).pickLocalPhoto(LocalPhotoKind.wishlist);
+                if (path != null && context.mounted) {
+                  setSheetState(() => localImagePath = path);
                 }
-                try {
-                  await AppScope.read(context).addWishlistItem(
-                    originalUrl: url.text,
-                    title: title.text,
-                    priceMinor: priceMinor,
-                    note: note.text,
-                  );
-                } on ArgumentError catch (error) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        error.message?.toString() ?? 'Confira os campos.',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Salvar desejo'),
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(
+                localImagePath == null ? 'Adicionar imagem' : 'Trocar imagem',
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            TextField(
+              controller: url,
+              autofocus: existing == null,
+              keyboardType: TextInputType.url,
+              decoration: const InputDecoration(
+                labelText: 'Link do produto',
+                hintText: 'https://…',
+                helperText:
+                    'O link fica salvo mesmo se a extração não estiver disponível.',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: title,
+              decoration: const InputDecoration(labelText: 'Nome do produto'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: price,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Preço (opcional)',
+                prefixText: r'R$ ',
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<WishlistStatus>(
+              initialValue: status,
+              decoration: const InputDecoration(labelText: 'Status'),
+              items: const [
+                DropdownMenuItem(
+                  value: WishlistStatus.wanted,
+                  child: Text('Desejado'),
+                ),
+                DropdownMenuItem(
+                  value: WishlistStatus.purchased,
+                  child: Text('Comprado'),
+                ),
+                DropdownMenuItem(
+                  value: WishlistStatus.archived,
+                  child: Text('Arquivado'),
+                ),
+              ],
+              onChanged: (value) =>
+                  setSheetState(() => status = value ?? WishlistStatus.wanted),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: note,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Observação (opcional)',
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () async {
+                  final priceMinor = price.text.trim().isEmpty
+                      ? null
+                      : _parseMoney(price.text);
+                  if (price.text.trim().isNotEmpty &&
+                      (priceMinor == null || priceMinor < 0)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Confira o preço.')),
+                    );
+                    return;
+                  }
+                  try {
+                    final controller = AppScope.read(context);
+                    if (existing == null) {
+                      await controller.addWishlistItem(
+                        originalUrl: url.text,
+                        title: title.text,
+                        priceMinor: priceMinor,
+                        note: note.text,
+                        localImagePath: localImagePath,
+                        status: status,
+                      );
+                    } else {
+                      await controller.updateWishlistItem(
+                        id: existing.id,
+                        originalUrl: url.text,
+                        title: title.text,
+                        priceMinor: priceMinor,
+                        note: note.text,
+                        localImagePath: localImagePath,
+                        status: status,
+                      );
+                    }
+                  } on ArgumentError catch (error) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          error.message?.toString() ?? 'Confira os campos.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                },
+                child: Text(existing == null ? 'Salvar desejo' : 'Salvar'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
     url.dispose();
     title.dispose();
     price.dispose();
     note.dispose();
+  }
+
+  Future<void> _openWishlist(BuildContext context, WishlistItem item) async {
+    final opened = await launchUrl(
+      Uri.parse(item.originalUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir este link.')),
+      );
+    }
   }
 
   Future<void> _deleteTransaction(
@@ -535,17 +707,71 @@ class _TransactionRow extends StatelessWidget {
   }
 }
 
+class _ShoppingRow extends StatelessWidget {
+  const _ShoppingRow({
+    super.key,
+    required this.item,
+    required this.controller,
+    required this.onToggle,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final ShoppingItem item;
+  final AppController controller;
+  final VoidCallback onToggle;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    contentPadding: EdgeInsets.zero,
+    leading: Checkbox(value: item.isChecked, onChanged: (_) => onToggle()),
+    title: Text(
+      item.name,
+      style: TextStyle(
+        decoration: item.isChecked ? TextDecoration.lineThrough : null,
+      ),
+    ),
+    subtitle: Text(
+      [
+        if (item.quantity != '1') 'Quantidade: ${item.quantity}',
+        if (item.note != null && item.note!.isNotEmpty) item.note!,
+        if (item.estimatedPriceMinor != null)
+          controller.formatMinor(item.estimatedPriceMinor!),
+      ].join(' · '),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    ),
+    trailing: PopupMenuButton<String>(
+      tooltip: 'Ações do item',
+      onSelected: (value) {
+        if (value == 'edit') onEdit();
+        if (value == 'delete') onDelete();
+      },
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: 'edit', child: Text('Editar')),
+        PopupMenuItem(value: 'delete', child: Text('Excluir')),
+      ],
+    ),
+  );
+}
+
 class _WishlistRow extends StatelessWidget {
   const _WishlistRow({
     required this.item,
     required this.controller,
     required this.onStatusChanged,
+    required this.onEdit,
+    required this.onOpen,
     required this.onDelete,
   });
 
   final WishlistItem item;
   final AppController controller;
   final ValueChanged<WishlistStatus> onStatusChanged;
+  final VoidCallback onEdit;
+  final VoidCallback onOpen;
   final VoidCallback onDelete;
 
   @override
@@ -557,10 +783,13 @@ class _WishlistRow extends StatelessWidget {
     };
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: app_theme.LumeColors.brandSoft,
-        child: const Icon(Icons.favorite_border),
-      ),
+      onTap: onOpen,
+      leading: item.localImagePath == null
+          ? CircleAvatar(
+              backgroundColor: app_theme.LumeColors.brandSoft,
+              child: const Icon(Icons.favorite_border),
+            )
+          : _LocalPhotoThumb(path: item.localImagePath!),
       title: Text(item.title),
       subtitle: Text(
         [
@@ -573,6 +802,10 @@ class _WishlistRow extends StatelessWidget {
         tooltip: 'Ações do desejo',
         onSelected: (value) {
           switch (value) {
+            case 'edit':
+              onEdit();
+            case 'open':
+              onOpen();
             case 'purchased':
               onStatusChanged(WishlistStatus.purchased);
             case 'wanted':
@@ -584,6 +817,8 @@ class _WishlistRow extends StatelessWidget {
           }
         },
         itemBuilder: (context) => const [
+          PopupMenuItem(value: 'open', child: Text('Abrir link')),
+          PopupMenuItem(value: 'edit', child: Text('Editar')),
           PopupMenuItem(value: 'wanted', child: Text('Marcar desejado')),
           PopupMenuItem(value: 'purchased', child: Text('Marcar comprado')),
           PopupMenuItem(value: 'archived', child: Text('Arquivar')),
@@ -592,4 +827,26 @@ class _WishlistRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LocalPhotoThumb extends StatelessWidget {
+  const _LocalPhotoThumb({required this.path, this.size = 48});
+
+  final String path;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(10),
+    child: Image.file(
+      File(path),
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => CircleAvatar(
+        backgroundColor: app_theme.LumeColors.brandSoft,
+        child: const Icon(Icons.broken_image_outlined),
+      ),
+    ),
+  );
 }

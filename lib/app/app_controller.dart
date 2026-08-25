@@ -804,13 +804,7 @@ class AppController extends ChangeNotifier {
     String? localImagePath,
     WishlistStatus status = WishlistStatus.wanted,
   }) async {
-    final uri = Uri.tryParse(originalUrl.trim());
-    if (uri == null ||
-        (uri.scheme != 'http' && uri.scheme != 'https') ||
-        uri.host.isEmpty ||
-        uri.userInfo.isNotEmpty) {
-      throw ArgumentError('Informe uma URL http(s) válida e segura');
-    }
+    final uri = _validatedWishlistUri(originalUrl);
     if (title.trim().isEmpty) throw ArgumentError('Nome obrigatório');
     if (priceMinor != null && priceMinor < 0) {
       throw ArgumentError('Preço não pode ser negativo');
@@ -849,16 +843,109 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> addShoppingItem(String name, {String quantity = '1'}) async {
+  Future<void> updateWishlistItem({
+    required String id,
+    required String originalUrl,
+    required String title,
+    int? priceMinor,
+    String? note,
+    String? localImagePath,
+    WishlistStatus? status,
+  }) async {
+    final uri = _validatedWishlistUri(originalUrl);
+    if (title.trim().isEmpty) throw ArgumentError('Nome obrigatório');
+    if (priceMinor != null && priceMinor < 0) {
+      throw ArgumentError('Preço não pode ser negativo');
+    }
+    final existing = wishlistItems.where((item) => item.id == id).firstOrNull;
+    if (existing == null) throw ArgumentError('Desejo não encontrado');
+    final changedImage = localImagePath != existing.localImagePath;
+    wishlistItems = wishlistItems
+        .map(
+          (item) => item.id == id
+              ? existing.copyWith(
+                  originalUrl: uri.toString(),
+                  title: title.trim(),
+                  siteHost: uri.host,
+                  priceMinor: priceMinor,
+                  clearPrice: priceMinor == null,
+                  status: status,
+                  note: note?.trim(),
+                  clearNote: note?.trim().isEmpty != false,
+                  localImagePath: localImagePath,
+                  clearLocalImagePath: localImagePath == null,
+                  mediaSyncState: changedImage ? MediaSyncState.pending : null,
+                )
+              : item,
+        )
+        .toList();
+    await _commit();
+    _queuePhotoSync();
+  }
+
+  Future<void> addShoppingItem(
+    String name, {
+    String quantity = '1',
+    String? note,
+    int? estimatedPriceMinor,
+  }) async {
     if (name.trim().isEmpty) throw ArgumentError('Item obrigatório');
+    if (estimatedPriceMinor != null && estimatedPriceMinor < 0) {
+      throw ArgumentError('Preço não pode ser negativo');
+    }
     shoppingItems = [
       ...shoppingItems,
       ShoppingItem(
         id: _id('shopping'),
         name: name.trim(),
         quantity: quantity.trim().isEmpty ? '1' : quantity.trim(),
+        note: note?.trim().isEmpty == true ? null : note?.trim(),
+        estimatedPriceMinor: estimatedPriceMinor,
         position: shoppingItems.length,
       ),
+    ];
+    await _commit();
+  }
+
+  Future<void> updateShoppingItem({
+    required String id,
+    required String name,
+    String quantity = '1',
+    String? note,
+    int? estimatedPriceMinor,
+  }) async {
+    if (name.trim().isEmpty) throw ArgumentError('Item obrigatório');
+    if (estimatedPriceMinor != null && estimatedPriceMinor < 0) {
+      throw ArgumentError('Preço não pode ser negativo');
+    }
+    final existing = shoppingItems.where((item) => item.id == id).firstOrNull;
+    if (existing == null) throw ArgumentError('Item não encontrado');
+    shoppingItems = shoppingItems
+        .map(
+          (item) => item.id == id
+              ? existing.copyWith(
+                  name: name.trim(),
+                  quantity: quantity.trim().isEmpty ? '1' : quantity.trim(),
+                  note: note?.trim(),
+                  clearNote: note?.trim().isEmpty != false,
+                  estimatedPriceMinor: estimatedPriceMinor,
+                  clearEstimatedPrice: estimatedPriceMinor == null,
+                )
+              : item,
+        )
+        .toList();
+    await _commit();
+  }
+
+  Future<void> reorderShoppingItems(List<String> orderedIds) async {
+    final byId = {for (final item in shoppingItems) item.id: item};
+    if (byId.length != orderedIds.length ||
+        orderedIds.any((id) => !byId.containsKey(id))) {
+      throw ArgumentError('A ordem da lista de compras é inválida');
+    }
+    shoppingItems = [
+      for (var index = 0; index < orderedIds.length; index++)
+        byId[orderedIds[index]]!.copyWith(position: index),
     ];
     await _commit();
   }
@@ -880,13 +967,35 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> removeShoppingItem(String id) async {
-    shoppingItems = shoppingItems.where((item) => item.id != id).toList();
+    shoppingItems = [
+      for (var index = 0; index < shoppingItems.length; index++)
+        if (shoppingItems[index].id != id)
+          shoppingItems[index].copyWith(position: index),
+    ];
     await _commit();
   }
 
   Future<void> clearCompletedShoppingItems() async {
-    shoppingItems = shoppingItems.where((item) => !item.isChecked).toList();
+    shoppingItems = [
+      for (final item in shoppingItems.where((item) => !item.isChecked))
+        item.copyWith(position: 0),
+    ];
+    shoppingItems = [
+      for (var index = 0; index < shoppingItems.length; index++)
+        shoppingItems[index].copyWith(position: index),
+    ];
     await _commit();
+  }
+
+  Uri _validatedWishlistUri(String raw) {
+    final uri = Uri.tryParse(raw.trim());
+    if (uri == null ||
+        (uri.scheme != 'http' && uri.scheme != 'https') ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty) {
+      throw ArgumentError('Informe uma URL http(s) válida e segura');
+    }
+    return uri;
   }
 
   void _ensureAllowanceForPeriod(String period) {

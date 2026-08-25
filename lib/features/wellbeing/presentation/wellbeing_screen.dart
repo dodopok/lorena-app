@@ -112,11 +112,29 @@ class WellbeingScreen extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.schedule),
                     title: Text(controller.formatTime(log.occurredAt)),
-                    subtitle: log.note == null ? null : Text(log.note!),
-                    trailing: IconButton(
-                      tooltip: 'Excluir registro',
-                      onPressed: () => _deleteBowel(context, log),
-                      icon: const Icon(Icons.delete_outline),
+                    subtitle: Text(
+                      [
+                        if (log.bristolType != null)
+                          'Escala ${log.bristolType}',
+                        if (log.comfort != null) _comfortLabel(log.comfort!),
+                        if (log.note != null && log.note!.isNotEmpty) log.note!,
+                      ].join(' · '),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: PopupMenuButton<String>(
+                      tooltip: 'Ações do registro',
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _showBowel(context, initial: log);
+                        } else if (value == 'delete') {
+                          _deleteBowel(context, log);
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(value: 'edit', child: Text('Editar')),
+                        PopupMenuItem(value: 'delete', child: Text('Excluir')),
+                      ],
                     ),
                   );
                 }).toList(),
@@ -148,12 +166,29 @@ class WellbeingScreen extends StatelessWidget {
                       leading: const Icon(Icons.directions_walk_outlined),
                       title: Text(log.activityType),
                       subtitle: Text(
-                        '${log.durationMinutes} min · ${controller.formatDate(log.occurredAt)}',
+                        [
+                          '${log.durationMinutes} min',
+                          controller.formatDate(log.occurredAt),
+                          if (log.intensity != null)
+                            _intensityLabel(log.intensity!),
+                        ].join(' · '),
                       ),
-                      trailing: IconButton(
-                        tooltip: 'Excluir sessão',
-                        onPressed: () => _deleteExercise(context, log),
-                        icon: const Icon(Icons.delete_outline),
+                      trailing: PopupMenuButton<String>(
+                        tooltip: 'Ações da sessão',
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showExercise(context, initial: log);
+                          } else if (value == 'delete') {
+                            _deleteExercise(context, log);
+                          }
+                        },
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: 'edit', child: Text('Editar')),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Excluir'),
+                          ),
+                        ],
                       ),
                     );
                   }),
@@ -238,37 +273,153 @@ class WellbeingScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showBowel(BuildContext context) async {
-    final note = TextEditingController();
+  Future<void> _showBowel(BuildContext context, {BowelLog? initial}) async {
+    final note = TextEditingController(text: initial?.note ?? '');
+    var bristolType = initial?.bristolType;
+    var comfort = initial?.comfort;
+    var occurredAt = initial?.occurredAt ?? DateTime.now();
+    var saving = false;
+    final controller = AppScope.read(context);
     await app_ui.showLumeSheet(
       context,
-      title: 'Registrar evacuação',
-      child: Column(
-        children: [
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text('O horário atual será usado. Observação é opcional.'),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: note,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Observação (opcional)',
+      title: initial == null ? 'Registrar evacuação' : 'Editar evacuação',
+      child: StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Classificações são opcionais e não representam diagnóstico.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () async {
-                await AppScope.read(context).addBowel(note: note.text);
-                if (context.mounted) Navigator.pop(context);
-              },
-              child: const Text('Salvar'),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          firstDate: DateTime.now().subtract(
+                            const Duration(days: 365),
+                          ),
+                          lastDate: DateTime.now(),
+                          initialDate: occurredAt,
+                        );
+                        if (date == null || !context.mounted) return;
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(occurredAt),
+                        );
+                        if (time == null || !context.mounted) return;
+                        setSheetState(
+                          () => occurredAt = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          ),
+                        );
+                      },
+                icon: const Icon(Icons.schedule_outlined),
+                label: Text(
+                  '${controller.formatDate(occurredAt)} · ${controller.formatTime(occurredAt)}',
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: bristolType,
+              decoration: const InputDecoration(
+                labelText: 'Escala de Bristol (opcional)',
+              ),
+              items: [
+                for (var value = 1; value <= 7; value++)
+                  DropdownMenuItem(value: value, child: Text('$value')),
+              ],
+              onChanged: saving
+                  ? null
+                  : (value) => setSheetState(() => bristolType = value),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<BowelComfort>(
+              initialValue: comfort,
+              decoration: const InputDecoration(
+                labelText: 'Conforto (opcional)',
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: BowelComfort.comfortable,
+                  child: Text('Confortável'),
+                ),
+                DropdownMenuItem(
+                  value: BowelComfort.neutral,
+                  child: Text('Neutro'),
+                ),
+                DropdownMenuItem(
+                  value: BowelComfort.uncomfortable,
+                  child: Text('Desconfortável'),
+                ),
+              ],
+              onChanged: saving
+                  ? null
+                  : (value) => setSheetState(() => comfort = value),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: note,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Observação (opcional)',
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        setSheetState(() => saving = true);
+                        try {
+                          if (initial == null) {
+                            await controller.addBowel(
+                              note: note.text,
+                              bristolType: bristolType,
+                              comfort: comfort,
+                              at: occurredAt,
+                            );
+                          } else {
+                            await controller.updateBowel(
+                              id: initial.id,
+                              at: occurredAt,
+                              bristolType: bristolType,
+                              comfort: comfort,
+                              note: note.text,
+                            );
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        } on ArgumentError catch (error) {
+                          if (!context.mounted) return;
+                          setSheetState(() => saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                error.message?.toString() ??
+                                    'Confira os campos.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: Text(saving ? 'Salvando…' : 'Salvar'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
     note.dispose();
@@ -287,66 +438,181 @@ class WellbeingScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showExercise(BuildContext context) async {
-    final type = TextEditingController(text: 'Caminhada');
-    final duration = TextEditingController();
-    final note = TextEditingController();
+  Future<void> _showExercise(
+    BuildContext context, {
+    ExerciseLog? initial,
+  }) async {
+    final type = TextEditingController(
+      text: initial?.activityType ?? 'Caminhada',
+    );
+    final duration = TextEditingController(
+      text: initial == null ? '' : '${initial.durationMinutes}',
+    );
+    final note = TextEditingController(text: initial?.note ?? '');
+    var intensity = initial?.intensity;
+    var occurredAt = initial?.occurredAt ?? DateTime.now();
+    var saving = false;
+    final controller = AppScope.read(context);
     await app_ui.showLumeSheet(
       context,
-      title: 'Novo exercício',
-      child: Column(
-        children: [
-          TextField(
-            controller: type,
-            decoration: const InputDecoration(labelText: 'Atividade'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: duration,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Duração',
-              suffixText: 'minutos',
+      title: initial == null ? 'Novo exercício' : 'Editar exercício',
+      child: StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          children: [
+            TextField(
+              controller: type,
+              decoration: const InputDecoration(labelText: 'Atividade'),
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: note,
-            decoration: const InputDecoration(
-              labelText: 'Observação (opcional)',
+            const SizedBox(height: 12),
+            TextField(
+              controller: duration,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Duração',
+                suffixText: 'minutos',
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () async {
-                final minutes = int.tryParse(duration.text);
-                if (minutes == null || minutes <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Informe uma duração positiva.'),
-                    ),
-                  );
-                  return;
-                }
-                await AppScope.read(context).addExercise(
-                  activityType: type.text,
-                  durationMinutes: minutes,
-                  note: note.text,
-                );
-                if (context.mounted) Navigator.pop(context);
-              },
-              child: const Text('Salvar'),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<ExerciseIntensity>(
+              initialValue: intensity,
+              decoration: const InputDecoration(
+                labelText: 'Intensidade (opcional)',
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: ExerciseIntensity.light,
+                  child: Text('Leve'),
+                ),
+                DropdownMenuItem(
+                  value: ExerciseIntensity.moderate,
+                  child: Text('Moderada'),
+                ),
+                DropdownMenuItem(
+                  value: ExerciseIntensity.intense,
+                  child: Text('Intensa'),
+                ),
+              ],
+              onChanged: saving
+                  ? null
+                  : (value) => setSheetState(() => intensity = value),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          firstDate: DateTime.now().subtract(
+                            const Duration(days: 365),
+                          ),
+                          lastDate: DateTime.now(),
+                          initialDate: occurredAt,
+                        );
+                        if (date == null || !context.mounted) return;
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(occurredAt),
+                        );
+                        if (time == null || !context.mounted) return;
+                        setSheetState(
+                          () => occurredAt = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          ),
+                        );
+                      },
+                icon: const Icon(Icons.schedule_outlined),
+                label: Text(
+                  '${controller.formatDate(occurredAt)} · ${controller.formatTime(occurredAt)}',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: note,
+              decoration: const InputDecoration(
+                labelText: 'Observação (opcional)',
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final minutes = int.tryParse(duration.text);
+                        if (minutes == null || minutes <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Informe uma duração positiva.'),
+                            ),
+                          );
+                          return;
+                        }
+                        setSheetState(() => saving = true);
+                        try {
+                          if (initial == null) {
+                            await controller.addExercise(
+                              activityType: type.text,
+                              durationMinutes: minutes,
+                              intensity: intensity,
+                              note: note.text,
+                              at: occurredAt,
+                            );
+                          } else {
+                            await controller.updateExercise(
+                              id: initial.id,
+                              activityType: type.text,
+                              durationMinutes: minutes,
+                              at: occurredAt,
+                              intensity: intensity,
+                              note: note.text,
+                            );
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        } on ArgumentError catch (error) {
+                          if (!context.mounted) return;
+                          setSheetState(() => saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                error.message?.toString() ??
+                                    'Confira os campos.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: Text(saving ? 'Salvando…' : 'Salvar'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
     type.dispose();
     duration.dispose();
     note.dispose();
   }
+
+  String _comfortLabel(BowelComfort comfort) => switch (comfort) {
+    BowelComfort.comfortable => 'Confortável',
+    BowelComfort.neutral => 'Neutro',
+    BowelComfort.uncomfortable => 'Desconfortável',
+  };
+
+  String _intensityLabel(ExerciseIntensity intensity) => switch (intensity) {
+    ExerciseIntensity.light => 'Leve',
+    ExerciseIntensity.moderate => 'Moderada',
+    ExerciseIntensity.intense => 'Intensa',
+  };
 
   Future<void> _deleteExercise(BuildContext context, ExerciseLog log) async {
     final controller = AppScope.read(context);

@@ -699,6 +699,7 @@ class WishlistItem {
   final SyncState syncState;
 
   WishlistItem copyWith({
+    String? originalUrl,
     String? title,
     String? siteHost,
     int? priceMinor,
@@ -706,6 +707,7 @@ class WishlistItem {
     String? currency,
     WishlistStatus? status,
     String? note,
+    bool clearNote = false,
     String? localImagePath,
     bool clearLocalImagePath = false,
     String? remoteImagePath,
@@ -713,13 +715,13 @@ class WishlistItem {
     MediaSyncState? mediaSyncState,
   }) => WishlistItem(
     id: id,
-    originalUrl: originalUrl,
+    originalUrl: originalUrl ?? this.originalUrl,
     title: title ?? this.title,
     siteHost: siteHost ?? this.siteHost,
     priceMinor: clearPrice ? null : priceMinor ?? this.priceMinor,
     currency: clearPrice ? null : currency ?? this.currency,
     status: status ?? this.status,
-    note: note ?? this.note,
+    note: clearNote ? null : note ?? this.note,
     localImagePath: clearLocalImagePath
         ? null
         : localImagePath ?? this.localImagePath,
@@ -803,6 +805,7 @@ class ShoppingItem {
     String? name,
     String? quantity,
     String? note,
+    bool clearNote = false,
     bool? isChecked,
     int? estimatedPriceMinor,
     bool clearEstimatedPrice = false,
@@ -813,7 +816,7 @@ class ShoppingItem {
     id: id,
     name: name ?? this.name,
     quantity: quantity ?? this.quantity,
-    note: note ?? this.note,
+    note: clearNote ? null : note ?? this.note,
     isChecked: isChecked ?? this.isChecked,
     estimatedPriceMinor: clearEstimatedPrice
         ? null

@@ -50,6 +50,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       )
                     : const Icon(Icons.refresh),
               ),
+              IconButton(
+                tooltip: 'Desconectar Agenda',
+                onPressed: _busy ? null : () => _disconnect(context),
+                icon: const Icon(Icons.link_off),
+              ),
             ]
           : null,
       child: Column(
@@ -107,40 +112,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             )
           else ...[
-            LumeSyncIndicator(
-              state: LumeSyncState.synced,
-              updatedAt: controller.calendarLastSyncedAt,
-            ),
-            if (controller.calendarLastSyncedAt != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Atualizada às ${_time(controller.calendarLastSyncedAt!)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            LumeCard(
-              tone: LumeCardTone.calendar,
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle_outline),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Calendário primário selecionado. O cache local continua visível sem internet.',
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Desconectar Agenda',
-                    onPressed: _busy ? null : () => _disconnect(context),
-                    icon: const Icon(Icons.link_off),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
             _CalendarNavigator(
               view: _view,
               selectedDate: _selectedDate,
@@ -188,21 +159,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               ),
           ],
-          const SizedBox(height: 24),
-          LumeCard(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.info_outline),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Eventos do Google ficam no Google. O Lume mantém apenas o cache local necessário para exibir a Agenda offline e não envia esses eventos para o Firebase.',
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -268,7 +224,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       await AppScope.read(context).connectCalendar();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agenda conectada e sincronizada.')),
+        const SnackBar(content: Text('Agenda conectada.')),
       );
     } on CalendarGatewayException catch (error) {
       if (!context.mounted) return;

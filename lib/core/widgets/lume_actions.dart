@@ -27,7 +27,7 @@ class LumeQuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.lumeColors;
-    final bg = switch (tone) {
+    final toneColor = switch (tone) {
       LumeCardTone.wellbeing => c.wellbeing,
       LumeCardTone.finance => c.finance,
       LumeCardTone.calendar => c.calendar,
@@ -35,6 +35,12 @@ class LumeQuickAction extends StatelessWidget {
       LumeCardTone.danger => c.error.withValues(alpha: .10),
       LumeCardTone.neutral => c.surface,
     };
+    final bg = tone == LumeCardTone.neutral
+        ? c.surface
+        : Color.alphaBlend(toneColor.withValues(alpha: .48), c.surface);
+    final border = tone == LumeCardTone.neutral
+        ? c.border
+        : Color.alphaBlend(toneColor.withValues(alpha: .70), c.border);
     final semantic =
         semanticLabel ??
         [label, ?value, if (isLoading) 'Carregando'].join(', ');
@@ -44,7 +50,11 @@ class LumeQuickAction extends StatelessWidget {
       label: semantic,
       child: Material(
         color: bg,
-        borderRadius: BorderRadius.circular(LumeRadii.control),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(LumeRadii.control),
+          side: BorderSide(color: border),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: isEnabled && !isLoading ? onPressed : null,
           borderRadius: BorderRadius.circular(LumeRadii.control),

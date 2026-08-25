@@ -309,12 +309,14 @@ class LumeQuickAction extends StatelessWidget {
   );
 }
 
+const _lumeSheetDismissSettleDuration = Duration(milliseconds: 250);
+
 Future<void> showLumeSheet(
   BuildContext context, {
   required String title,
   required Widget child,
 }) {
-  return showModalBottomSheet<void>(
+  return _showLumeSheetAndSettle(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
@@ -339,4 +341,23 @@ Future<void> showLumeSheet(
       ),
     ),
   );
+}
+
+Future<void> _showLumeSheetAndSettle({
+  required BuildContext context,
+  required bool isScrollControlled,
+  required bool showDragHandle,
+  required Color backgroundColor,
+  required WidgetBuilder builder,
+}) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: isScrollControlled,
+    showDragHandle: showDragHandle,
+    backgroundColor: backgroundColor,
+    builder: builder,
+  );
+  // showModalBottomSheet completes when the route is popped, before the
+  // reverse animation has fully removed the sheet's editable children.
+  await Future<void>.delayed(_lumeSheetDismissSettleDuration);
 }

@@ -33,24 +33,24 @@ O widget de feature adapta entidade de domínio para o modelo visual e decide qu
 
 ## 2. Tokens de design
 
-Widgets usam tokens semânticos, nunca hexadecimais espalhados pelo código. Os valores abaixo são a base inicial; contraste e leitura em dispositivo físico são gates antes do TestFlight.
+Widgets usam tokens semânticos, nunca hexadecimais espalhados pelo código. Os valores abaixo são a base atual; contraste e leitura em dispositivo físico são gates antes do TestFlight.
 
 ### 2.1 Cor
 
-| Token | Valor inicial | Uso |
+| Token | Valor atual | Uso |
 |---|---|---|
-| `color.background` | `#FFF8FB` | Fundo geral |
-| `color.surface` | `#FFFFFF` | Cards, campos e sheets |
-| `color.brand` | `#C94F7C` | Ação primária e seleção |
-| `color.brandSoft` | `#F4C5D6` | Progresso, fundo tonal e estados suaves |
-| `color.brandStrong` | `#7A294B` | Ênfase e texto sobre rosa claro |
-| `color.calendar` | `#DCCCF4` | Agenda e livros quando usado como tom de superfície |
-| `color.wellbeing` | `#C8E7D3` | Bem-estar e sucesso |
-| `color.finance` | `#FFEBC8` | Finanças e destaques |
-| `color.text` | `#372A30` | Texto principal |
-| `color.textSecondary` | `#6E5A63` | Metadados e ajuda |
-| `color.border` | derivada da superfície | Divisores e campos |
-| `color.error` | `#B3261E` | Erros reais e ações destrutivas |
+| `color.background` | `#FAF8F7` | Fundo geral |
+| `color.surface` | `#FFFEFC` | Cards, campos e sheets |
+| `color.brand` | `#A44266` | Ação primária e seleção |
+| `color.brandSoft` | `#F3E7EC` | Progresso, fundo tonal e estados suaves |
+| `color.brandStrong` | `#6F2947` | Ênfase e texto sobre rosa claro |
+| `color.calendar` | `#EEEAF4` | Agenda e livros quando usado como tom de superfície |
+| `color.wellbeing` | `#E6EFE9` | Bem-estar e sucesso |
+| `color.finance` | `#F4EBDD` | Finanças e destaques |
+| `color.text` | `#2E272A` | Texto principal |
+| `color.textSecondary` | `#756B70` | Metadados e ajuda |
+| `color.border` | `#E6DEE1` | Divisores e campos |
+| `color.error` | `#B53D3B` | Erros reais e ações destrutivas |
 | `color.onBrand` | definida por contraste | Texto/ícone sobre ação primária |
 
 Regras:
@@ -82,7 +82,7 @@ Não criar valores intermediários sem necessidade. Listas usam espaçamento con
 
 | Família | Tokens |
 |---|---|
-| Cantos | `radius.control = 12`, `radius.card = 20`, `radius.sheet = 24`, `radius.pill = 999` |
+| Cantos | `radius.control = 10`, `radius.card = 16`, `radius.sheet = 20`, `radius.pill = 999` |
 | Elevação | `elevation.none`, `elevation.card`, `elevation.modal`; sombras discretas |
 | Título | `type.title`, legível em Dynamic Type, sem truncar informação essencial |
 | Corpo | `type.body`, `type.bodyEmphasis`, `type.caption` |

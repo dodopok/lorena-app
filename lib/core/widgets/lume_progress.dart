@@ -175,7 +175,17 @@ class LumeMoneySummaryCard extends StatelessWidget {
         currency.toUpperCase() == 'BRL' || currency.toUpperCase() == 'EUR'
         ? ','
         : '.';
-    return '${negative ? '-' : ''}$symbol $whole$decimal$cents';
+    return '${negative ? '-' : ''}$symbol ${_groupWhole(whole)}$decimal$cents';
+  }
+
+  String _groupWhole(int value) {
+    final raw = value.toString();
+    final result = StringBuffer();
+    for (var index = 0; index < raw.length; index++) {
+      if (index > 0 && (raw.length - index) % 3 == 0) result.write('.');
+      result.write(raw[index]);
+    }
+    return result.toString();
   }
 
   @override

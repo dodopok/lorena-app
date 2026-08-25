@@ -4,10 +4,10 @@ import 'package:lume/core/theme/lume_theme.dart';
 
 void main() {
   test('exposes semantic light and dark tokens', () {
-    expect(LumeColors.light.background, const Color(0xFFFFF8FB));
-    expect(LumeColors.light.brand, const Color(0xFFC94F7C));
-    expect(LumeColors.dark.background, const Color(0xFF21181D));
-    expect(LumeColors.dark.text, const Color(0xFFFFF1F5));
+    expect(LumeColors.light.background, const Color(0xFFFAF8F7));
+    expect(LumeColors.light.brand, const Color(0xFFA44266));
+    expect(LumeColors.dark.background, const Color(0xFF1B1819));
+    expect(LumeColors.dark.text, const Color(0xFFF7EFF1));
   });
 
   testWidgets('installs the semantic extension in both themes', (tester) async {

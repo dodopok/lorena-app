@@ -36,34 +36,34 @@ class LumeColors extends ThemeExtension<LumeColors> {
   final Color onSoft;
 
   static const light = LumeColors(
-    background: Color(0xFFFFF8FB),
-    surface: Color(0xFFFFFFFF),
-    brand: Color(0xFFC94F7C),
-    brandSoft: Color(0xFFF4C5D6),
-    brandStrong: Color(0xFF7A294B),
-    calendar: Color(0xFFDCCCF4),
-    wellbeing: Color(0xFFC8E7D3),
-    finance: Color(0xFFFFEBC8),
-    text: Color(0xFF372A30),
-    textSecondary: Color(0xFF6E5A63),
-    border: Color(0xFFE9DDE2),
-    error: Color(0xFFB3261E),
+    background: Color(0xFFFAF8F7),
+    surface: Color(0xFFFFFEFC),
+    brand: Color(0xFFA44266),
+    brandSoft: Color(0xFFF3E7EC),
+    brandStrong: Color(0xFF6F2947),
+    calendar: Color(0xFFEEEAF4),
+    wellbeing: Color(0xFFE6EFE9),
+    finance: Color(0xFFF4EBDD),
+    text: Color(0xFF2E272A),
+    textSecondary: Color(0xFF756B70),
+    border: Color(0xFFE6DEE1),
+    error: Color(0xFFB53D3B),
     onBrand: Color(0xFFFFFFFF),
     onSoft: Color(0xFF7A294B),
   );
 
   static const dark = LumeColors(
-    background: Color(0xFF21181D),
-    surface: Color(0xFF2D2228),
-    brand: Color(0xFFE486A9),
-    brandSoft: Color(0xFF633144),
-    brandStrong: Color(0xFFFFC1D6),
-    calendar: Color(0xFF44375A),
-    wellbeing: Color(0xFF294737),
-    finance: Color(0xFF554329),
-    text: Color(0xFFFFF1F5),
-    textSecondary: Color(0xFFD5BBC5),
-    border: Color(0xFF493740),
+    background: Color(0xFF1B1819),
+    surface: Color(0xFF262122),
+    brand: Color(0xFFD783A2),
+    brandSoft: Color(0xFF4B2C39),
+    brandStrong: Color(0xFFF1B6CA),
+    calendar: Color(0xFF37323E),
+    wellbeing: Color(0xFF283B31),
+    finance: Color(0xFF44372A),
+    text: Color(0xFFF7EFF1),
+    textSecondary: Color(0xFFC9B8BE),
+    border: Color(0xFF403638),
     error: Color(0xFFFFB4AB),
     onBrand: Color(0xFF4B102A),
     onSoft: Color(0xFFFFC1D6),
@@ -139,9 +139,9 @@ class LumeSpacing {
 
 class LumeRadii {
   const LumeRadii._();
-  static const control = 12.0;
-  static const card = 20.0;
-  static const sheet = 24.0;
+  static const control = 10.0;
+  static const card = 16.0;
+  static const sheet = 20.0;
   static const pill = 999.0;
 }
 

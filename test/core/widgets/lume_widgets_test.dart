@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lume/core/theme/lume_theme.dart';
 import 'package:lume/core/widgets/lume_actions.dart';
+import 'package:lume/core/widgets/lume_card.dart';
 import 'package:lume/core/widgets/lume_navigation.dart';
 import 'package:lume/core/widgets/lume_progress.dart';
 import 'package:lume/core/widgets/lume_states.dart';
@@ -51,6 +52,29 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(tester.getSize(find.byType(LumeMoneySummaryCard)).width, 320);
   });
+
+  testWidgets(
+    'professional tonal surfaces render without Material assertions',
+    (tester) async {
+      await tester.pumpWidget(
+        _host(
+          Column(
+            children: [
+              LumeCard(tone: LumeCardTone.finance, child: const Text('Resumo')),
+              LumeQuickAction(
+                tone: LumeCardTone.wellbeing,
+                icon: Icons.water_drop_outlined,
+                label: 'Água',
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('button loading state announces saving and prevents taps', (
     tester,

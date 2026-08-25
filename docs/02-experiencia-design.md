@@ -89,17 +89,17 @@ O conteúdo deve caber em cards claros, sem transformar a tela em um painel dens
 
 | Papel | Cor | Uso |
 |---|---|---|
-| Fundo | `#FFF8FB` | Fundo geral |
-| Superfície | `#FFFFFF` | Cards e sheets |
-| Rosa principal | `#C94F7C` | Botões e seleção |
-| Rosa suave | `#F4C5D6` | Fundos e progresso |
-| Rosa profundo | `#7A294B` | Ênfase e texto sobre rosa claro |
-| Lavanda | `#DCCCF4` | Livros e agenda |
-| Menta | `#C8E7D3` | Bem-estar e sucesso |
-| Creme | `#FFEBC8` | Finanças e destaques |
-| Texto | `#372A30` | Texto principal |
-| Texto secundário | `#6E5A63` | Metadados |
-| Erro | `#B3261E` | Erros reais, nunca ausência de hábito |
+| Fundo | `#FAF8F7` | Fundo geral |
+| Superfície | `#FFFEFC` | Cards e sheets |
+| Rosa principal | `#A44266` | Botões e seleção |
+| Rosa suave | `#F3E7EC` | Fundos e progresso |
+| Rosa profundo | `#6F2947` | Ênfase e texto sobre rosa claro |
+| Lavanda | `#EEEAF4` | Livros e agenda |
+| Menta | `#E6EFE9` | Bem-estar e sucesso |
+| Creme | `#F4EBDD` | Finanças e destaques |
+| Texto | `#2E272A` | Texto principal |
+| Texto secundário | `#756B70` | Metadados |
+| Erro | `#B53D3B` | Erros reais, nunca ausência de hábito |
 
 As combinações finais precisam ser validadas com contraste WCAG. Rosa claro não deve ser usado como cor de texto sobre branco.
 

@@ -21,7 +21,7 @@ class LumeCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isEnabled;
 
-  Color _background(BuildContext context) {
+  Color _toneColor(BuildContext context) {
     final c = context.lumeColors;
     return switch (tone) {
       LumeCardTone.neutral => c.surface,
@@ -33,6 +33,22 @@ class LumeCard extends StatelessWidget {
     };
   }
 
+  Color _background(BuildContext context) {
+    final c = context.lumeColors;
+    final toneColor = _toneColor(context);
+    return tone == LumeCardTone.neutral
+        ? c.surface
+        : Color.alphaBlend(toneColor.withValues(alpha: .52), c.surface);
+  }
+
+  Color _border(BuildContext context) {
+    final c = context.lumeColors;
+    final toneColor = _toneColor(context);
+    return tone == LumeCardTone.neutral
+        ? c.border
+        : Color.alphaBlend(toneColor.withValues(alpha: .72), c.border);
+  }
+
   @override
   Widget build(BuildContext context) {
     final enabled = isEnabled && onTap != null;
@@ -42,7 +58,10 @@ class LumeCard extends StatelessWidget {
     );
     final card = Material(
       color: _background(context),
-      borderRadius: BorderRadius.circular(LumeRadii.card),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(LumeRadii.card),
+        side: BorderSide(color: _border(context)),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: enabled ? onTap : null,
@@ -86,7 +105,13 @@ class LumeSectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: .1,
+                ),
+              ),
               if (subtitle != null) ...[
                 const SizedBox(height: LumeSpacing.xs),
                 Text(
@@ -100,7 +125,15 @@ class LumeSectionHeader extends StatelessWidget {
           ),
         ),
         if (actionLabel != null && onAction != null)
-          TextButton(onPressed: onAction, child: Text(actionLabel!)),
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(44, 36),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(actionLabel!),
+          ),
       ],
     );
   }

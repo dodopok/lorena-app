@@ -19,6 +19,10 @@ jobs:
         working-directory: functions
       - run: npm test
         working-directory: functions
+      - run: npm ci
+        working-directory: firebase/rules-tests
+      - run: npm test
+        working-directory: firebase/rules-tests
       - uses: subosito/flutter-action@v2
         with:
           channel: stable

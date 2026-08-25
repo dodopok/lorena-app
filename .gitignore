@@ -53,3 +53,4 @@ serviceAccount*.json
 # Firebase Functions build output and dependencies
 functions/node_modules/
 functions/lib/
+firebase/rules-tests/node_modules/

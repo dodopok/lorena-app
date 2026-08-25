@@ -10,6 +10,7 @@ void main() {
           'id': 'event-1',
           'calendarId': 'work',
           'etag': '"v1"',
+          'htmlLink': 'https://calendar.google.com/event?eid=1',
           'summary': 'Consulta',
           'description': 'Levar documentos',
           'colorId': '5',
@@ -38,6 +39,7 @@ void main() {
     expect(events.first.description, 'Levar documentos');
     expect(events.first.colorId, '5');
     expect(events.first.etag, '"v1"');
+    expect(events.first.htmlLink, 'https://calendar.google.com/event?eid=1');
     expect(events.first.recurrence, ['RRULE:FREQ=WEEKLY;COUNT=2']);
     expect(events.first.reminderMinutes, [30]);
     expect(events.first.isAllDay, isFalse);

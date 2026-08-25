@@ -60,10 +60,19 @@ class ExportService {
     _addText(
       archive,
       'shopping/lists.json',
-      _prettyJson({
-        'name': 'Compras',
-        'items': snapshot.shoppingItems.map(_shoppingItem).toList(),
-      }),
+      _prettyJson([
+        for (final list in snapshot.shoppingLists)
+          {
+            'id': list.id,
+            'name': list.name,
+            if (list.archivedAt != null)
+              'archivedAt': list.archivedAt!.toIso8601String(),
+            'items': snapshot.shoppingItems
+                .where((item) => item.listId == list.id)
+                .map(_shoppingItem)
+                .toList(),
+          },
+      ]),
     );
     _addText(
       archive,
@@ -154,6 +163,7 @@ class ExportService {
 
   Map<String, dynamic> _shoppingItem(ShoppingItem item) => {
     'id': item.id,
+    'listId': item.listId,
     'name': item.name,
     'quantity': item.quantity,
     if (item.note != null && item.note!.isNotEmpty) 'note': item.note,

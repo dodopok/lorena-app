@@ -67,6 +67,10 @@ class AppController extends ChangeNotifier {
   List<BookEntry> books = [];
   List<WishlistItem> wishlistItems = [];
   List<ShoppingItem> shoppingItems = [];
+  List<ShoppingListEntry> shoppingLists = const [
+    ShoppingListEntry(id: defaultShoppingListId, name: defaultShoppingListName),
+  ];
+  String activeShoppingListId = defaultShoppingListId;
   List<CalendarEvent> calendarEvents = [];
   String? calendarSyncToken;
   DateTime? calendarLastSyncedAt;
@@ -105,7 +109,15 @@ class AppController extends ChangeNotifier {
       gratitudeEntries = snapshot.gratitudeEntries;
       books = snapshot.books;
       wishlistItems = snapshot.wishlistItems;
-      shoppingItems = snapshot.shoppingItems;
+      shoppingItems = _normalizeShoppingItems(snapshot.shoppingItems);
+      shoppingLists = _normalizeShoppingLists(
+        snapshot.shoppingLists,
+        shoppingItems,
+      );
+      activeShoppingListId =
+          shoppingLists.any((list) => list.id == snapshot.activeShoppingListId)
+          ? snapshot.activeShoppingListId
+          : defaultShoppingListId;
       calendarEvents = snapshot.calendarEvents;
       calendarSyncToken = snapshot.calendarSyncToken;
       calendarLastSyncedAt = snapshot.calendarLastSyncedAt;
@@ -232,6 +244,8 @@ class AppController extends ChangeNotifier {
     books: books,
     wishlistItems: wishlistItems,
     shoppingItems: shoppingItems,
+    shoppingLists: shoppingLists,
+    activeShoppingListId: activeShoppingListId,
   ).encode();
 
   Future<ExportBundle> createExport() => _exportService.create(_snapshot());
@@ -291,6 +305,13 @@ class AppController extends ChangeNotifier {
     books = [];
     wishlistItems = [];
     shoppingItems = [];
+    shoppingLists = const [
+      ShoppingListEntry(
+        id: defaultShoppingListId,
+        name: defaultShoppingListName,
+      ),
+    ];
+    activeShoppingListId = defaultShoppingListId;
     await _photoService.clearStoredPhotos();
     await _store.clear();
     notifyListeners();
@@ -506,8 +527,17 @@ class AppController extends ChangeNotifier {
     return id;
   }
 
-  Future<void> removeWater(String id) async {
+  Future<WaterLog?> removeWater(String id) async {
+    final removed = waterLogs.where((log) => log.id == id).firstOrNull;
+    if (removed == null) return null;
     waterLogs = waterLogs.where((log) => log.id != id).toList();
+    await _commit();
+    return removed;
+  }
+
+  Future<void> restoreWater(WaterLog log) async {
+    if (waterLogs.any((item) => item.id == log.id)) return;
+    waterLogs = [...waterLogs, log];
     await _commit();
   }
 
@@ -569,8 +599,17 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> removeBowel(String id) async {
+  Future<BowelLog?> removeBowel(String id) async {
+    final removed = bowelLogs.where((log) => log.id == id).firstOrNull;
+    if (removed == null) return null;
     bowelLogs = bowelLogs.where((log) => log.id != id).toList();
+    await _commit();
+    return removed;
+  }
+
+  Future<void> restoreBowel(BowelLog log) async {
+    if (bowelLogs.any((item) => item.id == log.id)) return;
+    bowelLogs = [...bowelLogs, log];
     await _commit();
   }
 
@@ -633,8 +672,17 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> removeExercise(String id) async {
+  Future<ExerciseLog?> removeExercise(String id) async {
+    final removed = exerciseLogs.where((log) => log.id == id).firstOrNull;
+    if (removed == null) return null;
     exerciseLogs = exerciseLogs.where((log) => log.id != id).toList();
+    await _commit();
+    return removed;
+  }
+
+  Future<void> restoreExercise(ExerciseLog log) async {
+    if (exerciseLogs.any((item) => item.id == log.id)) return;
+    exerciseLogs = [...exerciseLogs, log];
     await _commit();
   }
 
@@ -665,8 +713,17 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> removeTransaction(String id) async {
+  Future<TransactionEntry?> removeTransaction(String id) async {
+    final removed = transactions.where((entry) => entry.id == id).firstOrNull;
+    if (removed == null) return null;
     transactions = transactions.where((entry) => entry.id != id).toList();
+    await _commit();
+    return removed;
+  }
+
+  Future<void> restoreTransaction(TransactionEntry entry) async {
+    if (transactions.any((item) => item.id == entry.id)) return;
+    transactions = [...transactions, entry];
     await _commit();
   }
 
@@ -1017,8 +1074,101 @@ class AppController extends ChangeNotifier {
     _queuePhotoSync();
   }
 
+  List<ShoppingItem> shoppingItemsFor([String? listId]) {
+    final selectedId = listId ?? activeShoppingListId;
+    return shoppingItems.where((item) => item.listId == selectedId).toList()
+      ..sort((a, b) {
+        final byPosition = a.position.compareTo(b.position);
+        return byPosition == 0 ? a.id.compareTo(b.id) : byPosition;
+      });
+  }
+
+  ShoppingListEntry get activeShoppingList => shoppingLists.firstWhere(
+    (list) => list.id == activeShoppingListId,
+    orElse: () => const ShoppingListEntry(
+      id: defaultShoppingListId,
+      name: defaultShoppingListName,
+    ),
+  );
+
+  Future<void> selectShoppingList(String id) async {
+    if (!shoppingLists.any((list) => list.id == id)) {
+      throw ArgumentError('Lista de compras não encontrada');
+    }
+    if (activeShoppingListId == id) return;
+    activeShoppingListId = id;
+    await _commit();
+  }
+
+  Future<String> addShoppingList(String name) async {
+    final normalized = name.trim();
+    if (normalized.isEmpty) throw ArgumentError('Nome da lista obrigatório');
+    if (shoppingLists.any(
+      (list) => list.name.toLowerCase() == normalized.toLowerCase(),
+    )) {
+      throw ArgumentError('Já existe uma lista com esse nome');
+    }
+    final id = _id('shopping-list');
+    final now = DateTime.now().toUtc();
+    shoppingLists = [
+      ...shoppingLists,
+      ShoppingListEntry(
+        id: id,
+        name: normalized,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+    activeShoppingListId = id;
+    await _commit();
+    return id;
+  }
+
+  Future<void> renameShoppingList(String id, String name) async {
+    final normalized = name.trim();
+    if (normalized.isEmpty) throw ArgumentError('Nome da lista obrigatório');
+    if (shoppingLists.any(
+      (list) =>
+          list.id != id && list.name.toLowerCase() == normalized.toLowerCase(),
+    )) {
+      throw ArgumentError('Já existe uma lista com esse nome');
+    }
+    final existing = shoppingLists.where((list) => list.id == id).firstOrNull;
+    if (existing == null) {
+      throw ArgumentError('Lista de compras não encontrada');
+    }
+    shoppingLists = shoppingLists
+        .map(
+          (list) => list.id == id
+              ? list.copyWith(
+                  name: normalized,
+                  updatedAt: DateTime.now().toUtc(),
+                )
+              : list,
+        )
+        .toList();
+    await _commit();
+  }
+
+  Future<void> removeShoppingList(String id) async {
+    if (id == defaultShoppingListId) {
+      throw ArgumentError('A lista Compras não pode ser excluída');
+    }
+    if (shoppingLists.length <= 1) {
+      throw ArgumentError('Mantenha pelo menos uma lista de compras');
+    }
+    if (!shoppingLists.any((list) => list.id == id)) return;
+    shoppingLists = shoppingLists.where((list) => list.id != id).toList();
+    shoppingItems = shoppingItems.where((item) => item.listId != id).toList();
+    if (activeShoppingListId == id) {
+      activeShoppingListId = shoppingLists.first.id;
+    }
+    await _commit();
+  }
+
   Future<void> addShoppingItem(
     String name, {
+    String? listId,
     String quantity = '1',
     String? note,
     int? estimatedPriceMinor,
@@ -1027,15 +1177,21 @@ class AppController extends ChangeNotifier {
     if (estimatedPriceMinor != null && estimatedPriceMinor < 0) {
       throw ArgumentError('Preço não pode ser negativo');
     }
+    final selectedListId = listId ?? activeShoppingListId;
+    if (!shoppingLists.any((list) => list.id == selectedListId)) {
+      throw ArgumentError('Lista de compras não encontrada');
+    }
+    final listItems = shoppingItemsFor(selectedListId);
     shoppingItems = [
       ...shoppingItems,
       ShoppingItem(
         id: _id('shopping'),
         name: name.trim(),
+        listId: selectedListId,
         quantity: quantity.trim().isEmpty ? '1' : quantity.trim(),
         note: note?.trim().isEmpty == true ? null : note?.trim(),
         estimatedPriceMinor: estimatedPriceMinor,
-        position: shoppingItems.length,
+        position: listItems.length,
       ),
     ];
     await _commit();
@@ -1071,15 +1227,25 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> reorderShoppingItems(List<String> orderedIds) async {
-    final byId = {for (final item in shoppingItems) item.id: item};
+  Future<void> reorderShoppingItems(
+    List<String> orderedIds, {
+    String? listId,
+  }) async {
+    final selectedListId = listId ?? activeShoppingListId;
+    final listItems = shoppingItemsFor(selectedListId);
+    final byId = {for (final item in listItems) item.id: item};
     if (byId.length != orderedIds.length ||
         orderedIds.any((id) => !byId.containsKey(id))) {
       throw ArgumentError('A ordem da lista de compras é inválida');
     }
-    shoppingItems = [
+    final reordered = [
       for (var index = 0; index < orderedIds.length; index++)
         byId[orderedIds[index]]!.copyWith(position: index),
+    ];
+    final ids = reordered.map((item) => item.id).toSet();
+    shoppingItems = [
+      ...shoppingItems.where((item) => !ids.contains(item.id)),
+      ...reordered,
     ];
     await _commit();
   }
@@ -1100,23 +1266,37 @@ class AppController extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> removeShoppingItem(String id) async {
-    shoppingItems = [
-      for (var index = 0; index < shoppingItems.length; index++)
-        if (shoppingItems[index].id != id)
-          shoppingItems[index].copyWith(position: index),
-    ];
+  Future<ShoppingItem?> removeShoppingItem(String id) async {
+    final removed = shoppingItems.where((item) => item.id == id).firstOrNull;
+    if (removed == null) return null;
+    shoppingItems = [...shoppingItems.where((item) => item.id != id)];
+    _reindexShoppingList(removed.listId);
     await _commit();
+    return removed;
   }
 
-  Future<void> clearCompletedShoppingItems() async {
+  Future<List<ShoppingItem>> clearCompletedShoppingItems({
+    String? listId,
+  }) async {
+    final selectedListId = listId ?? activeShoppingListId;
+    final removed = shoppingItemsFor(
+      selectedListId,
+    ).where((item) => item.isChecked).toList();
     shoppingItems = [
-      for (final item in shoppingItems.where((item) => !item.isChecked))
-        item.copyWith(position: 0),
+      ...shoppingItems.where(
+        (item) => item.listId != selectedListId || !item.isChecked,
+      ),
     ];
+    _reindexShoppingList(selectedListId);
+    await _commit();
+    return removed;
+  }
+
+  Future<void> restoreShoppingItems(Iterable<ShoppingItem> items) async {
+    final existingIds = shoppingItems.map((item) => item.id).toSet();
     shoppingItems = [
-      for (var index = 0; index < shoppingItems.length; index++)
-        shoppingItems[index].copyWith(position: index),
+      ...shoppingItems,
+      ...items.where((item) => !existingIds.contains(item.id)),
     ];
     await _commit();
   }
@@ -1411,6 +1591,8 @@ class AppController extends ChangeNotifier {
     books: books,
     wishlistItems: wishlistItems,
     shoppingItems: shoppingItems,
+    shoppingLists: shoppingLists,
+    activeShoppingListId: activeShoppingListId,
     calendarEvents: calendarEvents,
     calendarSyncToken: calendarSyncToken,
     calendarLastSyncedAt: calendarLastSyncedAt,
@@ -1426,9 +1608,72 @@ class AppController extends ChangeNotifier {
     gratitudeEntries = snapshot.gratitudeEntries;
     books = snapshot.books;
     wishlistItems = snapshot.wishlistItems;
-    shoppingItems = snapshot.shoppingItems;
+    shoppingItems = _normalizeShoppingItems(snapshot.shoppingItems);
+    shoppingLists = _normalizeShoppingLists(
+      snapshot.shoppingLists,
+      shoppingItems,
+    );
+    if (!shoppingLists.any((list) => list.id == activeShoppingListId)) {
+      activeShoppingListId = defaultShoppingListId;
+    }
     // Calendar events and sync tokens are deliberately local-only. Firestore
     // snapshots do not contain this integration's cache.
+  }
+
+  List<ShoppingItem> _normalizeShoppingItems(List<ShoppingItem> items) => [
+    for (final item in items)
+      item.copyWith(
+        listId: item.listId.trim().isEmpty
+            ? defaultShoppingListId
+            : item.listId,
+      ),
+  ];
+
+  List<ShoppingListEntry> _normalizeShoppingLists(
+    List<ShoppingListEntry> lists,
+    List<ShoppingItem> items,
+  ) {
+    final normalized = lists
+        .where(
+          (list) => list.id.trim().isNotEmpty && list.name.trim().isNotEmpty,
+        )
+        .toList();
+    if (!normalized.any((list) => list.id == defaultShoppingListId)) {
+      normalized.insert(
+        0,
+        const ShoppingListEntry(
+          id: defaultShoppingListId,
+          name: defaultShoppingListName,
+        ),
+      );
+    }
+    final knownIds = normalized.map((list) => list.id).toSet();
+    for (final item in items) {
+      if (!knownIds.contains(item.listId)) {
+        normalized.add(
+          ShoppingListEntry(
+            id: item.listId,
+            name: item.listId == defaultShoppingListId
+                ? defaultShoppingListName
+                : 'Lista ${normalized.length}',
+          ),
+        );
+        knownIds.add(item.listId);
+      }
+    }
+    return normalized;
+  }
+
+  void _reindexShoppingList(String listId) {
+    final ordered = shoppingItemsFor(listId);
+    final positions = <String, int>{
+      for (var index = 0; index < ordered.length; index++)
+        ordered[index].id: index,
+    };
+    shoppingItems = [
+      for (final item in shoppingItems)
+        item.copyWith(position: positions[item.id] ?? item.position),
+    ];
   }
 
   void _ensureRemoteStore() {

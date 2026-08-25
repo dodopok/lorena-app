@@ -56,8 +56,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final wishlist = controller.wishlistItems
         .where((item) => item.status != WishlistStatus.archived)
         .toList();
-    final shopping = [...controller.shoppingItems]
-      ..sort((a, b) => a.position.compareTo(b.position));
+    final shoppingLists = controller.shoppingLists
+        .where((list) => !list.isArchived)
+        .toList();
+    final activeShoppingList = controller.activeShoppingList;
+    final shopping = controller.shoppingItemsFor(activeShoppingList.id);
     return app_ui.LumePage(
       title: 'Finanças',
       subtitle: 'Seu dinheiro com clareza e sem julgamento',
@@ -162,8 +165,62 @@ class _FinanceScreenState extends State<FinanceScreen> {
           const SizedBox(height: 28),
           LumeSectionHeader(
             title: 'Lista de compras',
-            actionLabel: 'Adicionar',
+            actionLabel: 'Adicionar item',
             onAction: () => _showShoppingItem(context),
+          ),
+          const SizedBox(height: 8),
+          LumeCard(
+            tone: LumeCardTone.finance,
+            child: Row(
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: activeShoppingList.id,
+                    isExpanded: true,
+                    underline: const SizedBox.shrink(),
+                    items: shoppingLists
+                        .map(
+                          (list) => DropdownMenuItem<String>(
+                            value: list.id,
+                            child: Text(list.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        AppScope.read(context).selectShoppingList(value);
+                      }
+                    },
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Nova lista',
+                  onPressed: () => _showShoppingList(context),
+                  icon: const Icon(Icons.playlist_add),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: 'Opções da lista',
+                  onSelected: (value) {
+                    if (value == 'rename') {
+                      _showShoppingList(context, existing: activeShoppingList);
+                    } else if (value == 'delete') {
+                      _deleteShoppingList(context, activeShoppingList);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'rename',
+                      child: Text('Renomear lista'),
+                    ),
+                    if (activeShoppingList.id != defaultShoppingListId)
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Excluir lista'),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           LumeCard(
@@ -510,6 +567,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 if (existing == null) {
                   await controller.addShoppingItem(
                     name.text,
+                    listId: controller.activeShoppingListId,
                     quantity: quantity.text,
                     note: note.text,
                     estimatedPriceMinor: priceMinor,
@@ -537,6 +595,112 @@ class _FinanceScreenState extends State<FinanceScreen> {
     price.dispose();
   }
 
+  Future<void> _showShoppingList(
+    BuildContext context, {
+    ShoppingListEntry? existing,
+  }) async {
+    final name = TextEditingController(text: existing?.name ?? '');
+    var saving = false;
+    await app_ui.showLumeSheet(
+      context,
+      title: existing == null ? 'Nova lista' : 'Renomear lista',
+      child: StatefulBuilder(
+        builder: (context, setSheetState) => Column(
+          children: [
+            TextField(
+              controller: name,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Nome da lista'),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        if (name.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Informe um nome para a lista.'),
+                            ),
+                          );
+                          return;
+                        }
+                        setSheetState(() => saving = true);
+                        try {
+                          final controller = AppScope.read(context);
+                          if (existing == null) {
+                            await controller.addShoppingList(name.text);
+                          } else {
+                            await controller.renameShoppingList(
+                              existing.id,
+                              name.text,
+                            );
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        } on ArgumentError catch (error) {
+                          if (!context.mounted) return;
+                          setSheetState(() => saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                error.message?.toString() ??
+                                    'Confira o nome da lista.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: Text(saving ? 'Salvando…' : 'Salvar lista'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    name.dispose();
+  }
+
+  Future<void> _deleteShoppingList(
+    BuildContext context,
+    ShoppingListEntry list,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir lista?'),
+        content: Text(
+          'A lista “${list.name}” e seus itens serão removidos deste aparelho e da conta.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await AppScope.read(context).removeShoppingList(list.id);
+    } on ArgumentError catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error.message?.toString() ?? 'Não foi possível excluir a lista.',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _clearCompletedShopping(
     BuildContext context,
     AppController controller,
@@ -560,7 +724,20 @@ class _FinanceScreenState extends State<FinanceScreen> {
         ],
       ),
     );
-    if (confirmed == true) await controller.clearCompletedShoppingItems();
+    if (confirmed != true) return;
+    final removed = await controller.clearCompletedShoppingItems(
+      listId: controller.activeShoppingListId,
+    );
+    if (!context.mounted || removed.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${removed.length} item(ns) removido(s).'),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => controller.restoreShoppingItems(removed),
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteShoppingItem(
@@ -573,7 +750,18 @@ class _FinanceScreenState extends State<FinanceScreen> {
       content: '“${item.name}” será removido da lista de compras.',
     );
     if (!context.mounted || !confirmed) return;
-    await AppScope.read(context).removeShoppingItem(item.id);
+    final controller = AppScope.read(context);
+    final removed = await controller.removeShoppingItem(item.id);
+    if (!context.mounted || removed == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item.name} removido.'),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => controller.restoreShoppingItems([removed]),
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteWishlist(BuildContext context, WishlistItem item) async {
@@ -853,11 +1041,19 @@ class _FinanceScreenState extends State<FinanceScreen> {
           '“${entry.description}” será removido e o resumo será recalculado.',
     );
     if (!context.mounted || !confirmed) return;
-    await AppScope.read(context).removeTransaction(entry.id);
+    final controller = AppScope.read(context);
+    final removed = await controller.removeTransaction(entry.id);
+    if (removed == null) return;
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('${entry.description} removido.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${entry.description} removido.'),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => controller.restoreTransaction(removed),
+        ),
+      ),
+    );
   }
 
   int? _parseMoney(String raw) {

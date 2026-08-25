@@ -533,6 +533,7 @@ CalendarEvent? parseCalendarEvent(Map<String, dynamic> item) {
         : null,
     colorId: item['colorId'] is String ? item['colorId'] as String : null,
     etag: item['etag'] is String ? item['etag'] as String : null,
+    htmlLink: item['htmlLink'] is String ? item['htmlLink'] as String : null,
     recurrence: item['recurrence'] is List
         ? (item['recurrence'] as List).whereType<String>().toList()
         : const [],

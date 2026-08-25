@@ -16,6 +16,9 @@ enum ExerciseIntensity { light, moderate, intense }
 
 enum MediaSyncState { local, pending, uploaded, failed, removed }
 
+const defaultShoppingListId = 'default';
+const defaultShoppingListName = 'Compras';
+
 String _string(Map<String, dynamic> map, String key, [String fallback = '']) =>
     map[key] is String ? map[key] as String : fallback;
 
@@ -781,10 +784,60 @@ class WishlistItem {
   );
 }
 
+class ShoppingListEntry {
+  const ShoppingListEntry({
+    required this.id,
+    required this.name,
+    this.createdAt,
+    this.updatedAt,
+    this.archivedAt,
+  });
+
+  final String id;
+  final String name;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final DateTime? archivedAt;
+
+  bool get isArchived => archivedAt != null;
+
+  ShoppingListEntry copyWith({
+    String? name,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? archivedAt,
+    bool clearArchivedAt = false,
+  }) => ShoppingListEntry(
+    id: id,
+    name: name ?? this.name,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    archivedAt: clearArchivedAt ? null : archivedAt ?? this.archivedAt,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+    if (archivedAt != null) 'archivedAt': archivedAt!.toIso8601String(),
+  };
+
+  factory ShoppingListEntry.fromJson(Map<String, dynamic> map) =>
+      ShoppingListEntry(
+        id: _string(map, 'id', defaultShoppingListId),
+        name: _string(map, 'name', defaultShoppingListName),
+        createdAt: _optionalDate(map, 'createdAt'),
+        updatedAt: _optionalDate(map, 'updatedAt'),
+        archivedAt: _optionalDate(map, 'archivedAt'),
+      );
+}
+
 class ShoppingItem {
   const ShoppingItem({
     required this.id,
     required this.name,
+    this.listId = defaultShoppingListId,
     this.quantity = '1',
     this.note,
     this.isChecked = false,
@@ -795,6 +848,7 @@ class ShoppingItem {
 
   final String id;
   final String name;
+  final String listId;
   final String quantity;
   final String? note;
   final bool isChecked;
@@ -803,6 +857,7 @@ class ShoppingItem {
   final DateTime? checkedAt;
 
   ShoppingItem copyWith({
+    String? listId,
     String? name,
     String? quantity,
     String? note,
@@ -816,6 +871,7 @@ class ShoppingItem {
   }) => ShoppingItem(
     id: id,
     name: name ?? this.name,
+    listId: listId ?? this.listId,
     quantity: quantity ?? this.quantity,
     note: clearNote ? null : note ?? this.note,
     isChecked: isChecked ?? this.isChecked,
@@ -829,6 +885,7 @@ class ShoppingItem {
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
+    'listId': listId,
     'quantity': quantity,
     if (note != null && note!.isNotEmpty) 'note': note,
     'isChecked': isChecked,
@@ -840,6 +897,7 @@ class ShoppingItem {
   factory ShoppingItem.fromJson(Map<String, dynamic> map) => ShoppingItem(
     id: _string(map, 'id'),
     name: _string(map, 'name'),
+    listId: _string(map, 'listId', defaultShoppingListId),
     quantity: _string(map, 'quantity', '1'),
     note: map['note'] is String ? map['note'] as String : null,
     isChecked: map['isChecked'] == true,
@@ -862,6 +920,7 @@ class CalendarEvent {
     this.description,
     this.colorId,
     this.etag,
+    this.htmlLink,
     this.recurrence = const [],
     this.reminderMinutes = const [],
   });
@@ -875,6 +934,7 @@ class CalendarEvent {
   final String? description;
   final String? colorId;
   final String? etag;
+  final String? htmlLink;
   final List<String> recurrence;
   final List<int> reminderMinutes;
 
@@ -890,6 +950,7 @@ class CalendarEvent {
     String? colorId,
     bool clearColorId = false,
     String? etag,
+    String? htmlLink,
     List<String>? recurrence,
     List<int>? reminderMinutes,
   }) => CalendarEvent(
@@ -902,6 +963,7 @@ class CalendarEvent {
     description: clearDescription ? null : description ?? this.description,
     colorId: clearColorId ? null : colorId ?? this.colorId,
     etag: etag ?? this.etag,
+    htmlLink: htmlLink ?? this.htmlLink,
     recurrence: recurrence ?? this.recurrence,
     reminderMinutes: reminderMinutes ?? this.reminderMinutes,
   );
@@ -917,6 +979,7 @@ class CalendarEvent {
       'description': description,
     if (colorId != null && colorId!.isNotEmpty) 'colorId': colorId,
     if (etag != null && etag!.isNotEmpty) 'etag': etag,
+    if (htmlLink != null && htmlLink!.isNotEmpty) 'htmlLink': htmlLink,
     if (recurrence.isNotEmpty) 'recurrence': recurrence,
     if (reminderMinutes.isNotEmpty) 'reminderMinutes': reminderMinutes,
   };
@@ -933,6 +996,7 @@ class CalendarEvent {
         : null,
     colorId: map['colorId'] is String ? map['colorId'] as String : null,
     etag: map['etag'] is String ? map['etag'] as String : null,
+    htmlLink: map['htmlLink'] is String ? map['htmlLink'] as String : null,
     recurrence: map['recurrence'] is List
         ? (map['recurrence'] as List).whereType<String>().toList()
         : const [],
@@ -958,6 +1022,13 @@ class AppSnapshot {
     required this.books,
     required this.wishlistItems,
     required this.shoppingItems,
+    this.shoppingLists = const [
+      ShoppingListEntry(
+        id: defaultShoppingListId,
+        name: defaultShoppingListName,
+      ),
+    ],
+    this.activeShoppingListId = defaultShoppingListId,
     this.calendarEvents = const [],
     this.calendarSyncToken,
     this.calendarLastSyncedAt,
@@ -973,6 +1044,8 @@ class AppSnapshot {
   final List<BookEntry> books;
   final List<WishlistItem> wishlistItems;
   final List<ShoppingItem> shoppingItems;
+  final List<ShoppingListEntry> shoppingLists;
+  final String activeShoppingListId;
   final List<CalendarEvent> calendarEvents;
 
   /// Calendar integration state is local-only. It is deliberately not part
@@ -992,6 +1065,8 @@ class AppSnapshot {
     'books': books.map((item) => item.toJson()).toList(),
     'wishlistItems': wishlistItems.map((item) => item.toJson()).toList(),
     'shoppingItems': shoppingItems.map((item) => item.toJson()).toList(),
+    'shoppingLists': shoppingLists.map((item) => item.toJson()).toList(),
+    'activeShoppingListId': activeShoppingListId,
     'calendarEvents': calendarEvents.map((item) => item.toJson()).toList(),
     if (calendarSyncToken != null) 'calendarSyncToken': calendarSyncToken,
     if (calendarLastSyncedAt != null)
@@ -1000,27 +1075,43 @@ class AppSnapshot {
 
   String encode() => jsonEncode(toJson());
 
-  factory AppSnapshot.fromJson(Map<String, dynamic> map) => AppSnapshot(
-    signedIn: map['signedIn'] == true,
-    settings: UserSettings.fromJson(
-      map['settings'] is Map
-          ? Map<String, dynamic>.from(map['settings'] as Map)
-          : const {},
-    ),
-    waterLogs: _list(map, 'waterLogs', WaterLog.fromJson),
-    bowelLogs: _list(map, 'bowelLogs', BowelLog.fromJson),
-    exerciseLogs: _list(map, 'exerciseLogs', ExerciseLog.fromJson),
-    transactions: _list(map, 'transactions', TransactionEntry.fromJson),
-    gratitudeEntries: _list(map, 'gratitudeEntries', GratitudeEntry.fromJson),
-    books: _list(map, 'books', BookEntry.fromJson),
-    wishlistItems: _list(map, 'wishlistItems', WishlistItem.fromJson),
-    shoppingItems: _list(map, 'shoppingItems', ShoppingItem.fromJson),
-    calendarEvents: _list(map, 'calendarEvents', CalendarEvent.fromJson),
-    calendarSyncToken: map['calendarSyncToken'] is String
-        ? map['calendarSyncToken'] as String
-        : null,
-    calendarLastSyncedAt: _optionalDate(map, 'calendarLastSyncedAt'),
-  );
+  factory AppSnapshot.fromJson(Map<String, dynamic> map) {
+    final parsedLists = _list(map, 'shoppingLists', ShoppingListEntry.fromJson);
+    return AppSnapshot(
+      signedIn: map['signedIn'] == true,
+      settings: UserSettings.fromJson(
+        map['settings'] is Map
+            ? Map<String, dynamic>.from(map['settings'] as Map)
+            : const {},
+      ),
+      waterLogs: _list(map, 'waterLogs', WaterLog.fromJson),
+      bowelLogs: _list(map, 'bowelLogs', BowelLog.fromJson),
+      exerciseLogs: _list(map, 'exerciseLogs', ExerciseLog.fromJson),
+      transactions: _list(map, 'transactions', TransactionEntry.fromJson),
+      gratitudeEntries: _list(map, 'gratitudeEntries', GratitudeEntry.fromJson),
+      books: _list(map, 'books', BookEntry.fromJson),
+      wishlistItems: _list(map, 'wishlistItems', WishlistItem.fromJson),
+      shoppingItems: _list(map, 'shoppingItems', ShoppingItem.fromJson),
+      shoppingLists: parsedLists.isEmpty
+          ? const [
+              ShoppingListEntry(
+                id: defaultShoppingListId,
+                name: defaultShoppingListName,
+              ),
+            ]
+          : parsedLists,
+      activeShoppingListId: _string(
+        map,
+        'activeShoppingListId',
+        defaultShoppingListId,
+      ),
+      calendarEvents: _list(map, 'calendarEvents', CalendarEvent.fromJson),
+      calendarSyncToken: map['calendarSyncToken'] is String
+          ? map['calendarSyncToken'] as String
+          : null,
+      calendarLastSyncedAt: _optionalDate(map, 'calendarLastSyncedAt'),
+    );
+  }
 
   static List<T> _list<T>(
     Map<String, dynamic> map,

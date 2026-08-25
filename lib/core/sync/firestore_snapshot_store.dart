@@ -123,15 +123,21 @@ class FirestoreSnapshotStore implements RemoteSnapshotStore {
           updatedAt,
         ),
       ),
-      FirestoreWrite.set(
-        _shoppingListPath,
-        _withExistingAudit(
-          payload.shoppingList,
-          existing?.shoppingList,
-          updatedAt,
-        ),
-      ),
     ];
+
+    final desiredLists = payload.shoppingLists.isEmpty
+        ? <String, Map<String, dynamic>>{
+            defaultShoppingListId: payload.shoppingList,
+          }
+        : payload.shoppingLists;
+    final existingLists = _shoppingListDocuments(existing);
+    _appendCollectionWrites(
+      writes,
+      collectionName: 'shopping_lists',
+      desired: desiredLists,
+      existing: existingLists,
+      updatedAt: updatedAt,
+    );
 
     _appendCollectionWrites(
       writes,
@@ -182,13 +188,25 @@ class FirestoreSnapshotStore implements RemoteSnapshotStore {
       existing: existing?.wishlistItems,
       updatedAt: updatedAt,
     );
-    _appendCollectionWrites(
-      writes,
-      collectionName: 'shopping_lists/$defaultShoppingListId/items',
-      desired: payload.shoppingItems,
-      existing: existing?.shoppingItems,
-      updatedAt: updatedAt,
+    final desiredItemsByList = _shoppingItemsByList(payload.shoppingItems);
+    final existingItemsByList = _shoppingItemsByList(
+      existing?.shoppingItems ?? const {},
     );
+    final shoppingListIds = <String>{
+      ...desiredItemsByList.keys,
+      ...existingItemsByList.keys,
+      ...desiredLists.keys,
+      ...existingLists.keys,
+    };
+    for (final listId in shoppingListIds) {
+      _appendCollectionWrites(
+        writes,
+        collectionName: 'shopping_lists/$listId/items',
+        desired: desiredItemsByList[listId] ?? const {},
+        existing: existingItemsByList[listId] ?? const {},
+        updatedAt: updatedAt,
+      );
+    }
 
     await _backend.commit(writes);
   }
@@ -200,9 +218,11 @@ class FirestoreSnapshotStore implements RemoteSnapshotStore {
     if (existing.preferences != null) {
       writes.add(FirestoreWrite.delete(_preferencesPath));
     }
-    if (existing.shoppingList != null) {
-      writes.add(FirestoreWrite.delete(_shoppingListPath));
-    }
+    _appendCollectionDeletes(
+      writes,
+      collectionName: 'shopping_lists',
+      existing: _shoppingListDocuments(existing),
+    );
     _appendCollectionDeletes(
       writes,
       collectionName: 'water_logs',
@@ -238,11 +258,14 @@ class FirestoreSnapshotStore implements RemoteSnapshotStore {
       collectionName: 'wishlist_items',
       existing: existing.wishlistItems,
     );
-    _appendCollectionDeletes(
-      writes,
-      collectionName: 'shopping_lists/$defaultShoppingListId/items',
-      existing: existing.shoppingItems,
-    );
+    final existingItemsByList = _shoppingItemsByList(existing.shoppingItems);
+    for (final entry in existingItemsByList.entries) {
+      _appendCollectionDeletes(
+        writes,
+        collectionName: 'shopping_lists/${entry.key}/items',
+        existing: entry.value,
+      );
+    }
     if (writes.isNotEmpty) await _backend.commit(writes);
   }
 
@@ -250,15 +273,11 @@ class FirestoreSnapshotStore implements RemoteSnapshotStore {
 
   String get _preferencesPath => '$_userPath/settings/preferences';
 
-  String get _shoppingListPath =>
-      '$_userPath/shopping_lists/$defaultShoppingListId';
-
   String _collectionPath(String collectionName) => '$_userPath/$collectionName';
 
   Future<RemoteSnapshotDocuments> _readDocuments() async {
     final results = await Future.wait<Object?>([
       _backend.getDocument(_preferencesPath),
-      _backend.getDocument(_shoppingListPath),
       _backend.getCollection(_collectionPath('water_logs')),
       _backend.getCollection(_collectionPath('bowel_logs')),
       _backend.getCollection(_collectionPath('exercise_sessions')),
@@ -266,23 +285,73 @@ class FirestoreSnapshotStore implements RemoteSnapshotStore {
       _backend.getCollection(_collectionPath('books')),
       _backend.getCollection(_collectionPath('gratitude_entries')),
       _backend.getCollection(_collectionPath('wishlist_items')),
-      _backend.getCollection(
-        _collectionPath('shopping_lists/$defaultShoppingListId/items'),
-      ),
+      _backend.getCollection(_collectionPath('shopping_lists')),
     ]);
+
+    final shoppingLists = _documentsAt(results[8]);
+    final listIds = <String>{defaultShoppingListId, ...shoppingLists.keys};
+    final itemCollections = await Future.wait(
+      listIds.map(
+        (listId) => _backend.getCollection(
+          _collectionPath('shopping_lists/$listId/items'),
+        ),
+      ),
+    );
+    final shoppingItems = <String, Map<String, dynamic>>{};
+    var collectionIndex = 0;
+    for (final listId in listIds) {
+      final documents = itemCollections[collectionIndex++];
+      for (final entry in documents.entries) {
+        shoppingItems[entry.key] = {
+          ...entry.value,
+          'listId': entry.value['listId'] is String
+              ? entry.value['listId']
+              : listId,
+        };
+      }
+    }
 
     return RemoteSnapshotDocuments(
       preferences: results[0] as Map<String, dynamic>?,
-      shoppingList: results[1] as Map<String, dynamic>?,
-      waterLogs: _documentsAt(results[2]),
-      bowelLogs: _documentsAt(results[3]),
-      exerciseSessions: _documentsAt(results[4]),
-      transactions: _documentsAt(results[5]),
-      books: _documentsAt(results[6]),
-      gratitudeEntries: _documentsAt(results[7]),
-      wishlistItems: _documentsAt(results[8]),
-      shoppingItems: _documentsAt(results[9]),
+      shoppingList: shoppingLists[defaultShoppingListId],
+      shoppingLists: shoppingLists,
+      waterLogs: _documentsAt(results[1]),
+      bowelLogs: _documentsAt(results[2]),
+      exerciseSessions: _documentsAt(results[3]),
+      transactions: _documentsAt(results[4]),
+      books: _documentsAt(results[5]),
+      gratitudeEntries: _documentsAt(results[6]),
+      wishlistItems: _documentsAt(results[7]),
+      shoppingItems: shoppingItems,
     );
+  }
+
+  Map<String, Map<String, dynamic>> _shoppingListDocuments(
+    RemoteSnapshotDocuments? documents,
+  ) {
+    if (documents == null) return const {};
+    if (documents.shoppingLists.isNotEmpty) return documents.shoppingLists;
+    final legacy = documents.shoppingList;
+    return legacy == null
+        ? const {}
+        : <String, Map<String, dynamic>>{defaultShoppingListId: legacy};
+  }
+
+  Map<String, Map<String, Map<String, dynamic>>> _shoppingItemsByList(
+    Map<String, Map<String, dynamic>> items,
+  ) {
+    final grouped = <String, Map<String, Map<String, dynamic>>>{};
+    for (final entry in items.entries) {
+      final rawListId = entry.value['listId'];
+      final listId =
+          rawListId is String &&
+              rawListId.isNotEmpty &&
+              !rawListId.contains('/')
+          ? rawListId
+          : defaultShoppingListId;
+      grouped.putIfAbsent(listId, () => {})[entry.key] = entry.value;
+    }
+    return grouped;
   }
 
   void _appendCollectionWrites(

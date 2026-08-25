@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/environment.dart';
 import '../../../app/lume_app.dart';
@@ -221,13 +222,33 @@ class _CalendarScreenState extends State<CalendarScreen> {
       onSelected: (value) {
         if (value == 'edit') _showEventForm(context, initial: event);
         if (value == 'delete') _deleteEvent(context, event);
+        if (value == 'open') _openEvent(context, event);
       },
-      itemBuilder: (context) => const [
-        PopupMenuItem(value: 'edit', child: Text('Editar')),
-        PopupMenuItem(value: 'delete', child: Text('Excluir')),
+      itemBuilder: (context) => [
+        if (event.htmlLink != null && event.htmlLink!.isNotEmpty)
+          const PopupMenuItem(
+            value: 'open',
+            child: Text('Abrir no Google Agenda'),
+          ),
+        const PopupMenuItem(value: 'edit', child: Text('Editar')),
+        const PopupMenuItem(value: 'delete', child: Text('Excluir')),
       ],
     ),
   );
+
+  Future<void> _openEvent(BuildContext context, CalendarEvent event) async {
+    final rawLink = event.htmlLink;
+    final link = rawLink == null ? null : Uri.tryParse(rawLink);
+    if (link == null || (link.scheme != 'http' && link.scheme != 'https')) {
+      return;
+    }
+    final opened = await launchUrl(link, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir o evento.')),
+      );
+    }
+  }
 
   Future<void> _connect(BuildContext context) async {
     setState(() => _busy = true);

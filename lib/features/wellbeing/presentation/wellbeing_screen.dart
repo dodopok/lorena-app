@@ -266,8 +266,7 @@ class WellbeingScreen extends StatelessWidget {
         content: Text('${log.amountMl} ml removidos.'),
         action: SnackBarAction(
           label: 'Desfazer',
-          onPressed: () =>
-              AppScope.read(context).addWater(log.amountMl, at: log.occurredAt),
+          onPressed: () => AppScope.read(context).restoreWater(log),
         ),
       ),
     );
@@ -433,6 +432,10 @@ class WellbeingScreen extends StatelessWidget {
       SnackBar(
         content: Text(
           'Registro de ${controller.formatTime(log.occurredAt)} removido.',
+        ),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => controller.restoreBowel(log),
         ),
       ),
     );
@@ -618,9 +621,15 @@ class WellbeingScreen extends StatelessWidget {
     final controller = AppScope.read(context);
     await controller.removeExercise(log.id);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('${log.activityType} removido.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${log.activityType} removido.'),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => controller.restoreExercise(log),
+        ),
+      ),
+    );
   }
 }
 

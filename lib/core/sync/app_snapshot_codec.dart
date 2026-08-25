@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../app/models.dart';
 
 const int currentSnapshotSchemaVersion = 1;
-const String defaultShoppingListId = 'default';
 
 /// Firestore-shaped documents without any Firestore I/O.
 ///
@@ -14,6 +13,7 @@ class RemoteSnapshotDocuments {
   const RemoteSnapshotDocuments({
     this.preferences,
     this.shoppingList,
+    this.shoppingLists = const <String, Map<String, dynamic>>{},
     this.waterLogs = const <String, Map<String, dynamic>>{},
     this.bowelLogs = const <String, Map<String, dynamic>>{},
     this.exerciseSessions = const <String, Map<String, dynamic>>{},
@@ -25,7 +25,10 @@ class RemoteSnapshotDocuments {
   });
 
   final Map<String, dynamic>? preferences;
+
+  /// Legacy convenience field for the original single “Compras” document.
   final Map<String, dynamic>? shoppingList;
+  final Map<String, Map<String, dynamic>> shoppingLists;
   final Map<String, Map<String, dynamic>> waterLogs;
   final Map<String, Map<String, dynamic>> bowelLogs;
   final Map<String, Map<String, dynamic>> exerciseSessions;
@@ -38,6 +41,7 @@ class RemoteSnapshotDocuments {
   bool get hasAnyDocument =>
       preferences != null ||
       shoppingList != null ||
+      shoppingLists.isNotEmpty ||
       waterLogs.isNotEmpty ||
       bowelLogs.isNotEmpty ||
       exerciseSessions.isNotEmpty ||
@@ -53,6 +57,7 @@ class FirestoreSnapshotPayload {
   const FirestoreSnapshotPayload({
     required this.preferences,
     required this.shoppingList,
+    this.shoppingLists = const <String, Map<String, dynamic>>{},
     required this.waterLogs,
     required this.bowelLogs,
     required this.exerciseSessions,
@@ -64,7 +69,10 @@ class FirestoreSnapshotPayload {
   });
 
   final Map<String, dynamic> preferences;
+
+  /// Legacy convenience field for the original single “Compras” document.
   final Map<String, dynamic> shoppingList;
+  final Map<String, Map<String, dynamic>> shoppingLists;
   final Map<String, Map<String, dynamic>> waterLogs;
   final Map<String, Map<String, dynamic>> bowelLogs;
   final Map<String, Map<String, dynamic>> exerciseSessions;
@@ -228,17 +236,47 @@ class AppSnapshotCodec {
       );
     }
 
+    final shoppingLists = <String, Map<String, dynamic>>{};
+    for (final list in snapshot.shoppingLists) {
+      if (!_validId(list.id) || _nonEmpty(list.name) == null) continue;
+      shoppingLists[list.id] = _withAudit(
+        {
+          'name': list.name.trim(),
+          if (list.archivedAt != null)
+            'archivedAt': timestampFromDate(list.archivedAt!),
+        },
+        updatedAt: updatedAt,
+        schemaVersion: schemaVersion,
+      );
+    }
+    if (shoppingLists.isEmpty) {
+      shoppingLists[defaultShoppingListId] = _withAudit(
+        {'name': defaultShoppingListName},
+        updatedAt: updatedAt,
+        schemaVersion: schemaVersion,
+      );
+    }
+
     final shoppingItems = <String, Map<String, dynamic>>{};
-    for (var index = 0; index < snapshot.shoppingItems.length; index++) {
-      final item = snapshot.shoppingItems[index];
+    final listPositions = <String, int>{};
+    for (final item in snapshot.shoppingItems) {
       if (!_validId(item.id) || _nonEmpty(item.name) == null) continue;
+      final listId = _validId(item.listId)
+          ? item.listId
+          : defaultShoppingListId;
+      final fallbackPosition = listPositions[listId] ?? 0;
+      final position = item.position == 0 && fallbackPosition > 0
+          ? fallbackPosition
+          : item.position;
+      listPositions[listId] = position + 1;
       shoppingItems[item.id] = _withAudit(
         {
+          'listId': listId,
           'name': item.name,
           'quantity': item.quantity,
           if (_nonEmpty(item.note) != null) 'note': item.note,
           'isChecked': item.isChecked,
-          'position': item.position == 0 ? index : item.position,
+          'position': position,
           if (item.estimatedPriceMinor != null)
             'estimatedPriceMinor': item.estimatedPriceMinor,
           if (item.checkedAt != null)
@@ -251,11 +289,8 @@ class AppSnapshotCodec {
 
     return FirestoreSnapshotPayload(
       preferences: preferences,
-      shoppingList: _withAudit(
-        {'name': 'Compras'},
-        updatedAt: updatedAt,
-        schemaVersion: schemaVersion,
-      ),
+      shoppingList: shoppingLists[defaultShoppingListId]!,
+      shoppingLists: shoppingLists,
       waterLogs: waterLogs,
       bowelLogs: bowelLogs,
       exerciseSessions: exerciseSessions,
@@ -282,6 +317,10 @@ class AppSnapshotCodec {
       gratitudeEntries: _decodeGratitudeEntries(documents.gratitudeEntries),
       books: _decodeBooks(documents.books),
       wishlistItems: _decodeWishlistItems(documents.wishlistItems),
+      shoppingLists: _decodeShoppingLists(
+        documents.shoppingLists,
+        documents.shoppingList,
+      ),
       shoppingItems: _decodeShoppingItems(documents.shoppingItems),
     );
   }
@@ -601,6 +640,49 @@ class AppSnapshotCodec {
     return entries.map(_decodeShoppingItem).whereType<ShoppingItem>().toList();
   }
 
+  static List<ShoppingListEntry> _decodeShoppingLists(
+    Map<String, Map<String, dynamic>> documents,
+    Map<String, dynamic>? legacyDefault,
+  ) {
+    final source = <String, Map<String, dynamic>>{
+      ...documents,
+      if (documents.isEmpty && legacyDefault != null)
+        defaultShoppingListId: legacyDefault,
+    };
+    final decoded = source.entries
+        .map((entry) {
+          final name = _nonEmpty(entry.value['name']);
+          if (!_validId(entry.key) || name == null) return null;
+          return ShoppingListEntry(
+            id: entry.key,
+            name: name,
+            createdAt: dateTimeFromFirestore(entry.value['createdAt']),
+            updatedAt: dateTimeFromFirestore(entry.value['updatedAt']),
+            archivedAt: dateTimeFromFirestore(entry.value['archivedAt']),
+          );
+        })
+        .whereType<ShoppingListEntry>()
+        .toList();
+    if (decoded.isEmpty) {
+      return const [
+        ShoppingListEntry(
+          id: defaultShoppingListId,
+          name: defaultShoppingListName,
+        ),
+      ];
+    }
+    if (!decoded.any((list) => list.id == defaultShoppingListId)) {
+      decoded.insert(
+        0,
+        const ShoppingListEntry(
+          id: defaultShoppingListId,
+          name: defaultShoppingListName,
+        ),
+      );
+    }
+    return decoded;
+  }
+
   static ShoppingItem? _decodeShoppingItem(
     MapEntry<String, Map<String, dynamic>> entry,
   ) {
@@ -614,8 +696,12 @@ class AppSnapshotCodec {
         ? rawQuantity.toString()
         : '1';
     final note = _nonEmpty(data['note']);
+    final listId = _nonEmpty(data['listId']);
     return ShoppingItem.fromJson({
       'id': entry.key,
+      'listId': listId != null && _validId(listId)
+          ? listId
+          : defaultShoppingListId,
       'name': name,
       'quantity': quantity,
       ..._optionalField('note', note),

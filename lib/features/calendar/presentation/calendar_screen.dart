@@ -5,6 +5,7 @@ import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
 import '../../../app/ui.dart' as app_ui;
 import '../../../core/calendar/calendar_gateway.dart';
+import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -16,6 +17,8 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   bool _busy = false;
+  CalendarView _view = CalendarView.day;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +27,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final integrationEnabled =
         LumeBuildConfig.enableCalendar &&
         LumeBuildConfig.googleCalendarIosClientId.isNotEmpty;
+    final visibleEvents = controller.calendarEvents.where((event) {
+      if (_view == CalendarView.month) {
+        return event.start.year == _selectedDate.year &&
+            event.start.month == _selectedDate.month;
+      }
+      return _isSameDay(event.start, _selectedDate);
+    }).toList()..sort(_compareEvents);
     return app_ui.LumePage(
       title: 'Agenda',
       subtitle: connected ? 'Conta Google conectada' : 'Uma conexão opcional',
@@ -118,24 +128,48 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ),
             const SizedBox(height: 24),
+            _CalendarNavigator(
+              view: _view,
+              selectedDate: _selectedDate,
+              onViewChanged: (view) => setState(() => _view = view),
+              onPrevious: () => setState(() {
+                _selectedDate = _view == CalendarView.month
+                    ? DateTime(_selectedDate.year, _selectedDate.month - 1, 1)
+                    : _selectedDate.subtract(const Duration(days: 1));
+              }),
+              onNext: () => setState(() {
+                _selectedDate = _view == CalendarView.month
+                    ? DateTime(_selectedDate.year, _selectedDate.month + 1, 1)
+                    : _selectedDate.add(const Duration(days: 1));
+              }),
+            ),
+            const SizedBox(height: 12),
             LumeSectionHeader(
-              title: 'Eventos',
+              title: _view == CalendarView.month
+                  ? 'Eventos do mês'
+                  : 'Agenda do dia',
               actionLabel: 'Novo evento',
               onAction: _busy ? null : () => _showEventForm(context),
             ),
             const SizedBox(height: 8),
-            if (controller.calendarEvents.isEmpty)
-              const LumeEmptyState(
-                title: 'Nenhum evento neste cache',
-                description:
-                    'Atualize a Agenda para buscar os próximos compromissos. Eventos de dia inteiro continuam sem horário inventado.',
-                illustration: Icon(Icons.event_available_outlined, size: 40),
+            if (visibleEvents.isEmpty)
+              LumeEmptyState(
+                title: _view == CalendarView.month
+                    ? 'Nenhum evento neste mês'
+                    : 'Nenhum evento neste dia',
+                description: controller.calendarEvents.isEmpty
+                    ? 'Atualize a Agenda para buscar os próximos compromissos. Eventos de dia inteiro continuam sem horário inventado.'
+                    : 'Use os controles acima para consultar outro período.',
+                illustration: const Icon(
+                  Icons.event_available_outlined,
+                  size: 40,
+                ),
               )
             else
               LumeCard(
                 tone: LumeCardTone.calendar,
                 child: Column(
-                  children: controller.calendarEvents
+                  children: visibleEvents
                       .map((event) => _eventTile(context, event))
                       .toList(),
                 ),
@@ -165,6 +199,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     contentPadding: EdgeInsets.zero,
     leading: Icon(
       event.isAllDay ? Icons.wb_sunny_outlined : Icons.event_outlined,
+      color: _eventColor(context, event.colorId),
     ),
     title: Text(event.title),
     subtitle: Text(
@@ -172,6 +207,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
         event.isAllDay
             ? 'Dia inteiro · ${_date(event.start)}'
             : '${_date(event.start)} · ${_time(event.start)}–${_time(event.end)}',
+        if (event.recurrence.isNotEmpty) 'Recorrente',
+        if (event.reminderMinutes.isNotEmpty)
+          'Lembrete ${event.reminderMinutes.first} min antes',
         if (event.description != null && event.description!.trim().isNotEmpty)
           event.description!.trim(),
       ].join(' · '),
@@ -266,6 +304,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     var start = initial?.start ?? _nextHour();
     var end = initial?.end ?? start.add(const Duration(hours: 1));
     var isAllDay = initial?.isAllDay ?? false;
+    var recurrenceSelection = initial?.recurrence.firstOrNull ?? 'none';
+    var reminderSelection = initial?.reminderMinutes.firstOrNull ?? 0;
+    var colorSelection = initial?.colorId ?? 'default';
     var saving = false;
     final controller = AppScope.read(context);
     await app_ui.showLumeSheet(
@@ -410,6 +451,53 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
             ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: recurrenceSelection,
+              decoration: const InputDecoration(labelText: 'Recorrência'),
+              items: const [
+                DropdownMenuItem(value: 'none', child: Text('Não repetir')),
+                DropdownMenuItem(value: 'FREQ=DAILY', child: Text('Diário')),
+                DropdownMenuItem(value: 'FREQ=WEEKLY', child: Text('Semanal')),
+                DropdownMenuItem(value: 'FREQ=MONTHLY', child: Text('Mensal')),
+              ],
+              onChanged: saving
+                  ? null
+                  : (value) => setSheetState(
+                      () => recurrenceSelection = value ?? 'none',
+                    ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: reminderSelection,
+              decoration: const InputDecoration(labelText: 'Lembrete'),
+              items: const [
+                DropdownMenuItem(value: 0, child: Text('Sem lembrete')),
+                DropdownMenuItem(value: 10, child: Text('10 minutos antes')),
+                DropdownMenuItem(value: 30, child: Text('30 minutos antes')),
+                DropdownMenuItem(value: 60, child: Text('1 hora antes')),
+              ],
+              onChanged: saving
+                  ? null
+                  : (value) =>
+                        setSheetState(() => reminderSelection = value ?? 0),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: colorSelection,
+              decoration: const InputDecoration(labelText: 'Cor'),
+              items: const [
+                DropdownMenuItem(value: 'default', child: Text('Padrão')),
+                DropdownMenuItem(value: '1', child: Text('Lavanda')),
+                DropdownMenuItem(value: '2', child: Text('Menta')),
+                DropdownMenuItem(value: '3', child: Text('Rosa')),
+              ],
+              onChanged: saving
+                  ? null
+                  : (value) => setSheetState(
+                      () => colorSelection = value ?? 'default',
+                    ),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -447,6 +535,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   clearDescription: description.text
                                       .trim()
                                       .isEmpty,
+                                  recurrence: recurrenceSelection == 'none'
+                                      ? const []
+                                      : [recurrenceSelection],
+                                  reminderMinutes: reminderSelection == 0
+                                      ? const []
+                                      : [reminderSelection],
+                                  colorId: colorSelection == 'default'
+                                      ? null
+                                      : colorSelection,
+                                  clearColorId: colorSelection == 'default',
                                 );
                         if (!event.end.isAfter(event.start)) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -533,4 +631,87 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   String _time(DateTime date) =>
       '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+
+  Color _eventColor(BuildContext context, String? colorId) => switch (colorId) {
+    '1' => context.lumeColors.calendar,
+    '2' => context.lumeColors.wellbeing,
+    '3' => context.lumeColors.brandSoft,
+    _ => Theme.of(context).colorScheme.primary,
+  };
+
+  bool _isSameDay(DateTime first, DateTime second) =>
+      first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
+
+  int _compareEvents(CalendarEvent first, CalendarEvent second) =>
+      first.start.compareTo(second.start);
+}
+
+enum CalendarView { day, month }
+
+class _CalendarNavigator extends StatelessWidget {
+  const _CalendarNavigator({
+    required this.view,
+    required this.selectedDate,
+    required this.onViewChanged,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final CalendarView view;
+  final DateTime selectedDate;
+  final ValueChanged<CalendarView> onViewChanged;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      SegmentedButton<CalendarView>(
+        segments: const [
+          ButtonSegment(
+            value: CalendarView.day,
+            label: Text('Dia'),
+            icon: Icon(Icons.view_agenda_outlined),
+          ),
+          ButtonSegment(
+            value: CalendarView.month,
+            label: Text('Mês'),
+            icon: Icon(Icons.calendar_view_month_outlined),
+          ),
+        ],
+        selected: {view},
+        onSelectionChanged: (selection) => onViewChanged(selection.first),
+      ),
+      Row(
+        children: [
+          IconButton(
+            tooltip: 'Período anterior',
+            onPressed: onPrevious,
+            icon: const Icon(Icons.chevron_left),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                view == CalendarView.month
+                    ? '${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}'
+                    : '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Próximo período',
+            onPressed: onNext,
+            icon: const Icon(Icons.chevron_right),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+extension<T> on List<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

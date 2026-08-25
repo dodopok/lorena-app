@@ -650,11 +650,13 @@ class AppController extends ChangeNotifier {
     required int amountMinor,
     required String category,
     required String description,
+    DateTime? at,
     String? note,
   }) async {
     if (amountMinor <= 0) throw ArgumentError.value(amountMinor, 'amountMinor');
     final existing = transactions.where((entry) => entry.id == id).firstOrNull;
     if (existing == null) throw ArgumentError('Lançamento não encontrado');
+    final occurredAt = at ?? existing.occurredAt;
     transactions = transactions
         .map(
           (entry) => entry.id == id
@@ -665,7 +667,10 @@ class AppController extends ChangeNotifier {
                       ? 'Outros'
                       : category.trim(),
                   description: description.trim(),
-                  note: note,
+                  occurredAt: occurredAt,
+                  period: periodFor(occurredAt),
+                  note: note?.trim(),
+                  clearNote: note?.trim().isEmpty != false,
                 )
               : entry,
         )

@@ -11,15 +11,27 @@ import '../../../app/ui.dart' as app_ui;
 import '../../../core/photos/local_photo_service.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
-class FinanceScreen extends StatelessWidget {
+class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
+
+  @override
+  State<FinanceScreen> createState() => _FinanceScreenState();
+}
+
+class _FinanceScreenState extends State<FinanceScreen> {
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  String? _categoryFilter;
 
   @override
   Widget build(BuildContext context) {
     final controller = AppScope.of(context);
-    final now = DateTime.now();
-    final period = controller.periodFor(now);
-    final entries = controller.transactionsFor(period);
+    final period = controller.periodFor(_selectedMonth);
+    final allEntries = controller.transactionsFor(period);
+    final entries = _categoryFilter == null
+        ? allEntries
+        : allEntries
+              .where((entry) => entry.category == _categoryFilter)
+              .toList();
     final wishlist = controller.wishlistItems
         .where((item) => item.status != WishlistStatus.archived)
         .toList();
@@ -32,12 +44,30 @@ class FinanceScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LumeMoneySummaryCard(
-            periodLabel: _monthLabel(now),
+            periodLabel: _monthLabel(_selectedMonth),
             balanceMinor: controller.balanceFor(period),
             currency: 'BRL',
             incomeMinor: controller.incomeFor(period),
             expenseMinor: controller.expensesFor(period),
             rolloverMinor: controller.rolloverFor(period),
+          ),
+          const SizedBox(height: 8),
+          _MonthPicker(
+            month: _selectedMonth,
+            onPrevious: () => setState(() {
+              _selectedMonth = DateTime(
+                _selectedMonth.year,
+                _selectedMonth.month - 1,
+              );
+              _categoryFilter = null;
+            }),
+            onNext: () => setState(() {
+              _selectedMonth = DateTime(
+                _selectedMonth.year,
+                _selectedMonth.month + 1,
+              );
+              _categoryFilter = null;
+            }),
           ),
           const SizedBox(height: 12),
           Row(
@@ -63,18 +93,25 @@ class FinanceScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           LumeSectionHeader(
-            title: 'Lançamentos de ${_monthLabel(now)}',
-            actionLabel: entries.isEmpty ? null : 'Filtrar',
-            onAction: entries.isEmpty ? null : () => _showCategoryInfo(context),
+            title: 'Lançamentos de ${_monthLabel(_selectedMonth)}',
+            actionLabel: allEntries.isEmpty
+                ? null
+                : _categoryFilter == null
+                ? 'Filtrar'
+                : '$_categoryFilter ×',
+            onAction: allEntries.isEmpty ? null : () => _showFilters(context),
           ),
           const SizedBox(height: 8),
           if (entries.isEmpty)
             LumeCard(
               child: LumeEmptyState(
                 illustration: const Icon(Icons.receipt_long_outlined, size: 40),
-                title: 'Nenhum lançamento ainda',
-                description:
-                    'Registre o primeiro gasto ou entrada para acompanhar o mês.',
+                title: allEntries.isEmpty
+                    ? 'Nenhum lançamento neste mês'
+                    : 'Nenhum lançamento nesta categoria',
+                description: allEntries.isEmpty
+                    ? 'Registre o primeiro gasto ou entrada para acompanhar o mês.'
+                    : 'Escolha outra categoria ou limpe o filtro para ver os demais lançamentos.',
                 primaryAction: LumeButton(
                   label: 'Registrar gasto',
                   onPressed: () =>
@@ -139,8 +176,7 @@ class FinanceScreen extends StatelessWidget {
                                 controller.toggleShoppingItem(item.id),
                             onEdit: () =>
                                 _showShoppingItem(context, existing: item),
-                            onDelete: () =>
-                                controller.removeShoppingItem(item.id),
+                            onDelete: () => _deleteShoppingItem(context, item),
                           );
                         },
                       ),
@@ -187,7 +223,7 @@ class FinanceScreen extends StatelessWidget {
                         controller.updateWishlistStatus(item.id, status),
                     onEdit: () => _showWishlist(context, existing: item),
                     onOpen: () => _openWishlist(context, item),
-                    onDelete: () => controller.removeWishlistItem(item.id),
+                    onDelete: () => _deleteWishlist(context, item),
                   );
                 }).toList(),
               ),
@@ -199,6 +235,9 @@ class FinanceScreen extends StatelessWidget {
 
   String _monthLabel(DateTime date) =>
       '${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+  String _shortDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
   Future<void> _showTransaction(
     BuildContext context,
@@ -221,7 +260,10 @@ class FinanceScreen extends StatelessWidget {
           existing?.category ??
           (initialType == TransactionType.expense ? 'Outros' : 'Receita'),
     );
+    final note = TextEditingController(text: existing?.note ?? '');
     var type = existing?.type ?? initialType;
+    var occurredAt = existing?.occurredAt ?? _selectedMonth;
+    var saving = false;
     await app_ui.showLumeSheet(
       context,
       title: existing == null
@@ -271,41 +313,98 @@ class FinanceScreen extends StatelessWidget {
               controller: category,
               decoration: const InputDecoration(labelText: 'Categoria'),
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          initialDate: occurredAt,
+                        );
+                        if (picked != null && context.mounted) {
+                          setSheetState(
+                            () => occurredAt = DateTime(
+                              picked.year,
+                              picked.month,
+                              picked.day,
+                              occurredAt.hour,
+                              occurredAt.minute,
+                            ),
+                          );
+                        }
+                      },
+                icon: const Icon(Icons.event_outlined),
+                label: Text('Data: ${_shortDate(occurredAt)}'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: note,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Observação (opcional)',
+              ),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () async {
-                  final minor = _parseMoney(amount.text);
-                  if (minor == null ||
-                      minor <= 0 ||
-                      description.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Informe valor e descrição.'),
-                      ),
-                    );
-                    return;
-                  }
-                  if (existing == null) {
-                    await controller.addTransaction(
-                      type: type,
-                      amountMinor: minor,
-                      category: category.text,
-                      description: description.text,
-                    );
-                  } else {
-                    await controller.updateTransaction(
-                      id: existing.id,
-                      type: type,
-                      amountMinor: minor,
-                      category: category.text,
-                      description: description.text,
-                    );
-                  }
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: const Text('Salvar lançamento'),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final minor = _parseMoney(amount.text);
+                        if (minor == null ||
+                            minor <= 0 ||
+                            description.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Informe valor e descrição.'),
+                            ),
+                          );
+                          return;
+                        }
+                        setSheetState(() => saving = true);
+                        try {
+                          if (existing == null) {
+                            await controller.addTransaction(
+                              type: type,
+                              amountMinor: minor,
+                              category: category.text,
+                              description: description.text,
+                              at: occurredAt,
+                              note: note.text,
+                            );
+                          } else {
+                            await controller.updateTransaction(
+                              id: existing.id,
+                              type: type,
+                              amountMinor: minor,
+                              category: category.text,
+                              description: description.text,
+                              at: occurredAt,
+                              note: note.text,
+                            );
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        } on ArgumentError catch (error) {
+                          if (!context.mounted) return;
+                          setSheetState(() => saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                error.message?.toString() ??
+                                    'Confira os campos.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: Text(saving ? 'Salvando…' : 'Salvar lançamento'),
               ),
             ),
           ],
@@ -315,6 +414,7 @@ class FinanceScreen extends StatelessWidget {
     amount.dispose();
     description.dispose();
     category.dispose();
+    note.dispose();
   }
 
   Future<void> _showShoppingItem(
@@ -442,21 +542,106 @@ class FinanceScreen extends StatelessWidget {
     if (confirmed == true) await controller.clearCompletedShoppingItems();
   }
 
-  void _showCategoryInfo(BuildContext context) => showDialog<void>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Filtros'),
-      content: const Text(
-        'A lista já está agrupada pela competência atual. Categorias continuam visíveis em cada lançamento; o próximo passo é adicionar filtros persistentes por categoria.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Fechar'),
+  Future<void> _deleteShoppingItem(
+    BuildContext context,
+    ShoppingItem item,
+  ) async {
+    final confirmed = await _confirmDelete(
+      context,
+      title: 'Excluir item?',
+      content: '“${item.name}” será removido da lista de compras.',
+    );
+    if (!context.mounted || !confirmed) return;
+    await AppScope.read(context).removeShoppingItem(item.id);
+  }
+
+  Future<void> _deleteWishlist(BuildContext context, WishlistItem item) async {
+    final confirmed = await _confirmDelete(
+      context,
+      title: 'Excluir desejo?',
+      content: '“${item.title}” e sua imagem local serão removidos.',
+    );
+    if (!context.mounted || !confirmed) return;
+    await AppScope.read(context).removeWishlistItem(item.id);
+  }
+
+  Future<bool> _confirmDelete(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) async {
+    return (await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(content),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Excluir'),
+              ),
+            ],
+          ),
+        ) ??
+        false);
+  }
+
+  Future<void> _showFilters(BuildContext context) async {
+    final controller = AppScope.read(context);
+    final categories =
+        controller
+            .transactionsFor(controller.periodFor(_selectedMonth))
+            .map((entry) => entry.category)
+            .toSet()
+            .toList()
+          ..sort();
+    var draft = _categoryFilter;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Filtrar lançamentos'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('Todas'),
+                  selected: draft == null,
+                  onSelected: (_) => setDialogState(() => draft = null),
+                ),
+                for (final category in categories)
+                  FilterChip(
+                    label: Text(category),
+                    selected: draft == category,
+                    onSelected: (_) => setDialogState(() => draft = category),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                setState(() => _categoryFilter = draft);
+                Navigator.pop(context);
+              },
+              child: const Text('Aplicar'),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 
   Future<void> _showWishlist(
     BuildContext context, {
@@ -634,6 +819,13 @@ class FinanceScreen extends StatelessWidget {
     BuildContext context,
     TransactionEntry entry,
   ) async {
+    final confirmed = await _confirmDelete(
+      context,
+      title: 'Excluir lançamento?',
+      content:
+          '“${entry.description}” será removido e o resumo será recalculado.',
+    );
+    if (!context.mounted || !confirmed) return;
     await AppScope.read(context).removeTransaction(entry.id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(
@@ -646,6 +838,42 @@ class FinanceScreen extends StatelessWidget {
     final value = double.tryParse(normalized);
     return value == null ? null : (value * 100).round();
   }
+}
+
+class _MonthPicker extends StatelessWidget {
+  const _MonthPicker({
+    required this.month,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final DateTime month;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      IconButton(
+        tooltip: 'Mês anterior',
+        onPressed: onPrevious,
+        icon: const Icon(Icons.chevron_left),
+      ),
+      Expanded(
+        child: Center(
+          child: Text(
+            '${month.month.toString().padLeft(2, '0')}/${month.year}',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+      ),
+      IconButton(
+        tooltip: 'Próximo mês',
+        onPressed: onNext,
+        icon: const Icon(Icons.chevron_right),
+      ),
+    ],
+  );
 }
 
 class _TransactionRow extends StatelessWidget {
@@ -677,7 +905,13 @@ class _TransactionRow extends StatelessWidget {
       ),
       title: Text(entry.description),
       subtitle: Text(
-        '${entry.category} · ${controller.formatDate(entry.occurredAt)}',
+        [
+          entry.category,
+          controller.formatDate(entry.occurredAt),
+          if (entry.note != null && entry.note!.isNotEmpty) entry.note!,
+        ].join(' · '),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

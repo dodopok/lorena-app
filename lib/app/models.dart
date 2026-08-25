@@ -434,6 +434,7 @@ class TransactionEntry {
     String? category,
     String? description,
     String? note,
+    bool clearNote = false,
   }) => TransactionEntry(
     id: id,
     type: type ?? this.type,
@@ -442,7 +443,7 @@ class TransactionEntry {
     period: period ?? this.period,
     category: category ?? this.category,
     description: description ?? this.description,
-    note: note ?? this.note,
+    note: clearNote ? null : note ?? this.note,
     syncState: SyncState.pending,
   );
 

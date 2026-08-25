@@ -1,5 +1,6 @@
 export 'lume_actions.dart';
 export 'lume_card.dart';
+export 'lume_currency_input.dart';
 export 'lume_navigation.dart';
 export 'lume_motion.dart';
 export 'lume_photo_viewer.dart';

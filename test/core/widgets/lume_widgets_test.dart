@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lume/core/theme/lume_theme.dart';
 import 'package:lume/core/widgets/lume_actions.dart';
 import 'package:lume/core/widgets/lume_card.dart';
+import 'package:lume/core/widgets/lume_currency_input.dart';
 import 'package:lume/core/widgets/lume_navigation.dart';
 import 'package:lume/core/widgets/lume_progress.dart';
 import 'package:lume/core/widgets/lume_states.dart';
@@ -131,6 +132,22 @@ void main() {
     await tester.pumpWidget(
       _host(const LumeSyncIndicator(state: LumeSyncState.pending)),
     );
-    expect(find.textContaining('Salvo neste aparelho'), findsOneWidget);
+    expect(find.text('Sincronizando'), findsOneWidget);
+    expect(find.textContaining('Salvo neste aparelho'), findsNothing);
   });
+
+  test(
+    'currency input groups reais and keeps cents in the last two digits',
+    () {
+      const formatter = LumeCurrencyInputFormatter();
+      final formatted = formatter.formatEditUpdate(
+        const TextEditingValue(),
+        const TextEditingValue(text: '120000'),
+      );
+
+      expect(formatted.text, '1.200,00');
+      expect(formatted.selection.baseOffset, formatted.text.length);
+      expect(LumeCurrencyInputFormatter.formatMinor(2599), '25,99');
+    },
+  );
 }

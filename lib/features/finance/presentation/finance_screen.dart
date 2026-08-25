@@ -335,9 +335,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final amount = TextEditingController(
       text: existing == null
           ? ''
-          : (existing.amountMinor / 100)
-                .toStringAsFixed(2)
-                .replaceAll('.', ','),
+          : LumeCurrencyInputFormatter.formatMinor(existing.amountMinor),
     );
     final description = TextEditingController(
       text: existing?.description ?? '',
@@ -382,9 +380,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
             TextField(
               controller: amount,
               autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: const [LumeCurrencyInputFormatter()],
               decoration: const InputDecoration(
                 labelText: 'Valor',
                 prefixText: r'R$ ',
@@ -514,9 +511,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final price = TextEditingController(
       text: existing?.estimatedPriceMinor == null
           ? ''
-          : (existing!.estimatedPriceMinor! / 100)
-                .toStringAsFixed(2)
-                .replaceAll('.', ','),
+          : LumeCurrencyInputFormatter.formatMinor(
+              existing!.estimatedPriceMinor!,
+            ),
     );
     await app_ui.showLumeSheet(
       context,
@@ -537,7 +534,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: price,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: TextInputType.number,
+            inputFormatters: const [LumeCurrencyInputFormatter()],
             decoration: const InputDecoration(
               labelText: 'Preço estimado (opcional)',
               prefixText: r'R$ ',
@@ -876,9 +874,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final price = TextEditingController(
       text: existing?.priceMinor == null
           ? ''
-          : (existing!.priceMinor! / 100)
-                .toStringAsFixed(2)
-                .replaceAll('.', ','),
+          : LumeCurrencyInputFormatter.formatMinor(existing!.priceMinor!),
     );
     final note = TextEditingController(text: existing?.note ?? '');
     String? localImagePath = existing?.localImagePath;
@@ -962,9 +958,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                 }
                                 if (price.text.trim().isEmpty &&
                                     metadata.priceMinor != null) {
-                                  price.text = (metadata.priceMinor! / 100)
-                                      .toStringAsFixed(2)
-                                      .replaceAll('.', ',');
+                                  price.text =
+                                      LumeCurrencyInputFormatter.formatMinor(
+                                        metadata.priceMinor!,
+                                      );
                                 }
                                 url.text = metadata.canonicalUrl;
                               });
@@ -1008,9 +1005,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: price,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: const [LumeCurrencyInputFormatter()],
               decoration: const InputDecoration(
                 labelText: 'Preço (opcional)',
                 prefixText: r'R$ ',

@@ -16,10 +16,9 @@ class LumeSyncIndicator extends StatelessWidget {
 
   String get _text => switch (state) {
     LumeSyncState.synced => 'Sincronizado',
-    LumeSyncState.pending =>
-      'Salvo neste aparelho; sincronizando quando houver conexão',
+    LumeSyncState.pending => 'Sincronizando',
     LumeSyncState.offline =>
-      'Sem conexão. Mostrando dados salvos${updatedAt == null ? '' : ' em ${_date(updatedAt!)}'}',
+      'Sem conexão${updatedAt == null ? '' : ' · atualizado ${_date(updatedAt!)}'}',
     LumeSyncState.conflict => 'Este item mudou fora do app. Revisar',
     LumeSyncState.unavailable => 'Sincronização indisponível',
   };

@@ -150,12 +150,12 @@ class LumeSyncBadge extends StatelessWidget {
       ),
       SyncBadgeState.pending => (
         Icons.cloud_upload_outlined,
-        'Salvo neste aparelho; sincronizando',
+        'Sincronizando',
         LumeColors.brandStrong,
       ),
       SyncBadgeState.offline => (
         Icons.cloud_off_outlined,
-        'Sem conexão; mostrando dados salvos',
+        'Sem conexão',
         LumeColors.textSecondary,
       ),
     };
@@ -321,22 +321,28 @@ Future<void> showLumeSheet(
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
-    builder: (context) => Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        0,
-        20,
-        MediaQuery.viewInsetsOf(context).bottom + 24,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 20),
-            child,
-          ],
+    builder: (context) => ScaffoldMessenger(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        resizeToAvoidBottomInset: false,
+        body: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            0,
+            20,
+            MediaQuery.viewInsetsOf(context).bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 20),
+                child,
+              ],
+            ),
+          ),
         ),
       ),
     ),

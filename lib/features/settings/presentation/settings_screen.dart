@@ -14,160 +14,167 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = AppScope.of(context);
     final settings = controller.settings;
-    return app_ui.LumePage(
-      title: 'Configurações',
-      subtitle: 'Preferências do seu Lume',
-      showProfile: false,
-      actions: [
-        IconButton(
-          tooltip: 'Fechar',
-          onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(Icons.close),
-        ),
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SettingsGroup(
-            title: 'Seu dia',
-            children: [
-              ListTile(
-                leading: const Icon(Icons.water_drop_outlined),
-                title: const Text('Meta de água'),
-                subtitle: Text('${settings.waterGoalMl} ml por dia'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _editWaterGoal(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.account_balance_wallet_outlined),
-                title: const Text('Mesada'),
-                subtitle: Text(
-                  settings.allowanceAmountMinor == 0
-                      ? 'Não configurada'
-                      : '${controller.formatMinor(settings.allowanceAmountMinor)} · dia ${settings.allowanceDayOfMonth}',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _editAllowance(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _SettingsGroup(
-            title: 'Proteção e lembretes',
-            children: [
-              SwitchListTile(
-                secondary: const Icon(Icons.face_outlined),
-                title: const Text('Bloqueio biométrico'),
-                subtitle: const Text(
-                  'Protege a abertura do app quando disponível',
-                ),
-                value: settings.biometricLockEnabled,
-                onChanged: (value) async {
-                  final enabled = await controller.setBiometricLockEnabled(
-                    value,
-                  );
-                  if (!enabled && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Este aparelho não possui biometria disponível.',
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.schedule_outlined),
-                title: const Text('Horários dos lembretes'),
-                subtitle: Text(_reminderSummary(settings.reminderPreferences)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _editReminders(context),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.notifications_none),
-                title: const Text('Lembretes'),
-                subtitle: const Text(
-                  'Começam desligados até você escolher ativar',
-                ),
-                value: settings.notificationsEnabled,
-                onChanged: (value) async {
-                  final enabled = await controller.setNotificationsEnabled(
-                    value,
-                  );
-                  if (!enabled && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'A permissão de lembretes não foi concedida.',
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _SettingsGroup(
-            title: 'Integrações',
-            children: [
-              ListTile(
-                leading: const Icon(Icons.calendar_month_outlined),
-                title: const Text('Google Agenda'),
-                subtitle: Text(
-                  settings.calendarConnected
-                      ? 'Conectada neste aparelho'
-                      : 'Não conectada',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).pushNamed('/app/calendar'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _SettingsGroup(
-            title: 'Conta e privacidade',
-            children: [
-              ListTile(
-                leading: const Icon(Icons.ios_share_outlined),
-                title: const Text('Exportar meus dados'),
-                subtitle: const Text(
-                  'Cópia legível dos registros deste aparelho',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () =>
-                    Navigator.of(context).pushNamed('/app/settings/privacy'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Sair'),
-                onTap: () => _signOut(context),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.delete_forever_outlined,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                title: Text(
-                  'Excluir conta e dados',
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-                onTap: () =>
-                    Navigator.of(context).pushNamed('/app/settings/privacy'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: Text(
-              'Lume · ambiente ${LumeBuildConfig.label} · dados locais + Firebase',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: app_theme.LumeColors.textSecondary,
-              ),
-            ),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: app_ui.LumePage(
+        title: 'Configurações',
+        subtitle: 'Preferências do seu Lume',
+        showProfile: false,
+        actions: [
+          IconButton(
+            tooltip: 'Fechar',
+            onPressed: () => Navigator.maybePop(context),
+            icon: const Icon(Icons.close),
           ),
         ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SettingsGroup(
+              title: 'Seu dia',
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.water_drop_outlined),
+                  title: const Text('Meta de água'),
+                  subtitle: Text('${settings.waterGoalMl} ml por dia'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _editWaterGoal(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.account_balance_wallet_outlined),
+                  title: const Text('Mesada'),
+                  subtitle: Text(
+                    settings.allowanceAmountMinor == 0
+                        ? 'Não configurada'
+                        : '${controller.formatMinor(settings.allowanceAmountMinor)} · dia ${settings.allowanceDayOfMonth}',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _editAllowance(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _SettingsGroup(
+              title: 'Proteção e lembretes',
+              children: [
+                SwitchListTile(
+                  secondary: const Icon(Icons.face_outlined),
+                  title: const Text('Bloqueio biométrico'),
+                  subtitle: const Text(
+                    'Protege a abertura do app quando disponível',
+                  ),
+                  value: settings.biometricLockEnabled,
+                  onChanged: (value) async {
+                    final enabled = await controller.setBiometricLockEnabled(
+                      value,
+                    );
+                    if (!enabled && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Este aparelho não possui biometria disponível.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.schedule_outlined),
+                  title: const Text('Horários dos lembretes'),
+                  subtitle: Text(
+                    _reminderSummary(settings.reminderPreferences),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _editReminders(context),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.notifications_none),
+                  title: const Text('Lembretes'),
+                  subtitle: const Text(
+                    'Começam desligados até você escolher ativar',
+                  ),
+                  value: settings.notificationsEnabled,
+                  onChanged: (value) async {
+                    final enabled = await controller.setNotificationsEnabled(
+                      value,
+                    );
+                    if (!enabled && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'A permissão de lembretes não foi concedida.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _SettingsGroup(
+              title: 'Integrações',
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.calendar_month_outlined),
+                  title: const Text('Google Agenda'),
+                  subtitle: Text(
+                    settings.calendarConnected
+                        ? 'Conectada neste aparelho'
+                        : 'Disponível para conectar',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).pushNamed('/app/calendar'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _SettingsGroup(
+              title: 'Conta e privacidade',
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.ios_share_outlined),
+                  title: const Text('Exportar meus dados'),
+                  subtitle: const Text(
+                    'Cópia legível dos registros deste aparelho',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/app/settings/privacy'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.logout),
+                  title: const Text('Sair'),
+                  onTap: () => _signOut(context),
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.delete_forever_outlined,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    'Excluir conta e dados',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/app/settings/privacy'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                'Lume · ambiente ${LumeBuildConfig.label} · dados locais + Firebase',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: app_theme.LumeColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -473,68 +480,74 @@ class PrivacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return app_ui.LumePage(
-      title: 'Privacidade',
-      subtitle: 'Você tem controle sobre seus dados',
-      showProfile: false,
-      actions: [
-        IconButton(
-          tooltip: 'Fechar',
-          onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(Icons.close),
-        ),
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          app_ui.LumeCard(
-            color: app_theme.LumeColors.brandSoft.withValues(alpha: .5),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.lock_outline),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'O Lume mantém uma cópia local para funcionar offline e sincroniza dados próprios com o Firebase quando a sessão estiver configurada. Mídias ficam privadas no Storage por UID.',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text('Portabilidade', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _export(context),
-              icon: const Icon(Icons.download_outlined),
-              label: const Text('Exportar e compartilhar meus dados'),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text('Exclusão', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'A exclusão exige confirmação clara. O fluxo remove o snapshot local, dados remotos e mídias conhecidas do UID.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: app_theme.LumeColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-              onPressed: () => _delete(context),
-              icon: const Icon(Icons.delete_forever_outlined),
-              label: const Text('Excluir dados deste aparelho'),
-            ),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: app_ui.LumePage(
+        title: 'Privacidade',
+        subtitle: 'Você tem controle sobre seus dados',
+        showProfile: false,
+        actions: [
+          IconButton(
+            tooltip: 'Fechar',
+            onPressed: () => Navigator.maybePop(context),
+            icon: const Icon(Icons.close),
           ),
         ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            app_ui.LumeCard(
+              color: app_theme.LumeColors.brandSoft.withValues(alpha: .5),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.lock_outline),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'O Lume mantém uma cópia local para funcionar offline e sincroniza dados próprios com o Firebase quando a sessão estiver configurada. Mídias ficam privadas no Storage por UID.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Portabilidade',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _export(context),
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Exportar e compartilhar meus dados'),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Exclusão', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              'A exclusão exige confirmação clara. O fluxo remove o snapshot local, dados remotos e mídias conhecidas do UID.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: app_theme.LumeColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+                onPressed: () => _delete(context),
+                icon: const Icon(Icons.delete_forever_outlined),
+                label: const Text('Excluir dados deste aparelho'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

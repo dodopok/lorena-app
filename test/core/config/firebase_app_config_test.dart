@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lume/app/environment.dart';
 import 'package:lume/core/config/firebase_app_config.dart';
 
 void main() {
@@ -40,5 +41,13 @@ void main() {
     expect(config.apiKey, isNot(contains('PRIVATE')));
     expect(config.apiKey, isNot(contains('client_secret')));
     expect(config.apiKey, isNot(contains('.p8')));
+  });
+
+  test('a Agenda usa o client iOS público confirmado por padrão', () {
+    expect(LumeBuildConfig.enableCalendar, isTrue);
+    expect(
+      LumeBuildConfig.googleCalendarIosClientId,
+      '1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com',
+    );
   });
 }

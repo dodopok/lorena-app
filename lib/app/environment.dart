@@ -7,10 +7,12 @@ abstract final class LumeBuildConfig {
   );
   static const enableCalendar = bool.fromEnvironment(
     'LUME_ENABLE_CALENDAR',
-    defaultValue: false,
+    defaultValue: true,
   );
   static const googleCalendarIosClientId = String.fromEnvironment(
     'LUME_GOOGLE_IOS_CLIENT_ID',
+    defaultValue:
+        '1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com',
   );
   static const enableLinkExtraction = bool.fromEnvironment(
     'LUME_ENABLE_LINK_EXTRACTION',

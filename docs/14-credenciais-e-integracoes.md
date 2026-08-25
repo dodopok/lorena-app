@@ -115,24 +115,24 @@ O Google OAuth é uma autorização para Agenda, não o login principal do Lume.
 
 - `GOOGLE_CLOUD_PROJECT_ID=lume-app-506521`, compartilhado por `dev` e `prod`;
 - `FIREBASE_PROJECT_ID=lume-13125`, compartilhado por `dev` e `prod`;
-- OAuth iOS client ID do projeto `lume-app-506521` e, se necessário, OAuth Web client IDs registrados no mesmo projeto; o client informado acima deve ser classificado antes do uso;
+- OAuth iOS client ID do projeto `lume-app-506521`, confirmado como `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`;
 - `REVERSED_CLIENT_ID`/URL scheme no target iOS correspondente;
 - OAuth Web client ID e secret somente se houver fluxo backend;
 - lista de test users no modo `Testing`;
 - escopos aprovados e calendário(s) habilitado(s).
 
-No código, a Agenda permanece desligada por padrão até o client iOS correto do
-projeto `lume-app-506521` ser criado e conferido. Depois disso, o build pode
-receber somente o identificador público por `--dart-define`, por exemplo:
+No código, a Agenda usa por padrão o client iOS público confirmado. Um build
+que precise desligar a integração pode passar `LUME_ENABLE_CALENDAR=false`; o
+client também pode ser sobrescrito por `--dart-define`, por exemplo:
 
 ```text
-LUME_ENABLE_CALENDAR=true
+LUME_ENABLE_CALENDAR=false
 LUME_GOOGLE_IOS_CLIENT_ID=<client-id-ios-do-projeto-lume-app-506521>
 ```
 
 O client iOS `1018427269031-d002niqglh23u9omq8urmee091gqotca.apps.googleusercontent.com`
-está registrado para a Agenda. O build ainda precisa receber `LUME_ENABLE_CALENDAR=true`
-e o mesmo client ID por `LUME_GOOGLE_IOS_CLIENT_ID` quando a integração for habilitada.
+está registrado para a Agenda e o URL scheme correspondente está no target iOS.
+A conexão só inicia quando a usuária toca em “Conectar Google Agenda”.
 
 ### Onde não armazenar
 

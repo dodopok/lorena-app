@@ -56,11 +56,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!integrationEnabled)
-            const LumeErrorState(
-              title: 'Agenda em preparação',
-              description:
-                  'Ative a integração somente depois de criar o OAuth iOS da Agenda no projeto lume-app-506521 e passar o client ID por LUME_GOOGLE_IOS_CLIENT_ID.',
-              errorKind: LumeErrorKind.permission,
+            LumeCard(
+              tone: LumeCardTone.calendar,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.calendar_month_outlined, size: 32),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Agenda desativada',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Este build está sem a integração do Google Agenda. Ative LUME_ENABLE_CALENDAR para disponibilizar a conexão.',
+                  ),
+                ],
+              ),
             )
           else if (!connected)
             LumeCard(

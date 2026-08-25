@@ -12,6 +12,7 @@ import 'core/bootstrap/firebase_bootstrap.dart';
 import 'core/calendar/calendar_gateway.dart';
 import 'core/notifications/lume_notification_gateway.dart';
 import 'core/photos/firebase_photo_storage.dart';
+import 'core/share/share_intent_service.dart';
 import 'core/sync/firestore_snapshot_store.dart';
 
 Future<void> main() async {
@@ -39,6 +40,7 @@ Future<void> main() async {
     biometricGateway: biometricGateway,
     notificationGateway: LumeNotificationGateway(),
     photoStorage: firebaseReady ? FirebasePhotoStorage() : null,
+    shareIntentService: const ShareIntentService(),
     remoteStoreFactory: firebaseReady
         ? (uid) => FirestoreSnapshotStore(
             uid: uid,

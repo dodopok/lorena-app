@@ -271,11 +271,12 @@ O MVP usa notificações locais e não precisa de push remoto. Só habilitar **P
 
 ### App Groups e Share Extension
 
-- **Onde criar:** Apple Developer > Identifiers > App Groups; associar ao App ID principal e ao target da Share Extension; criar a extensão no projeto iOS.
-- **Valores:** grupo estável associado ao bundle compartilhado, por exemplo `group.com.seudominio.lume`; bundle ID próprio da extensão; URL scheme/deep link de retorno selecionado por configuração.
+- **Onde criar:** Apple Developer > Identifiers > App Groups; associar ao App ID principal `com.dodopok.lume` e ao target da Share Extension; o target nativo já está no projeto iOS.
+- **Valores deste projeto:** App Group `group.com.dodopok.lume`; bundle ID da extensão `com.dodopok.lume.ShareExtension`; callback `lume://share`; target Xcode `ShareExtension`. O Runner e a extensão já declaram o mesmo entitlement e o Flutter consome o payload de uso único.
 - **Não armazenar:** tokens Google, cookies ou conteúdo permanente de usuário em `UserDefaults` compartilhado; não usar App Group como cofre.
-- **Dev/prod:** o grupo e o bundle são compartilhados; namespacear arquivos/chaves pelo ambiente e limpar dados ao trocar build; Share Extension aceita somente URLs/itens esperados; app valida novamente após receber.
-- **Validação:** Safari compartilha uma URL; extensão salva payload mínimo; app abre a tela correta; cancelamento e URL malformada não travam nem fazem request direto.
+- **Dev/prod:** o grupo e os bundle IDs são compartilhados, assim como Firebase e Google; namespacear arquivos/chaves pelo ambiente e limpar dados ao trocar build. A extensão aceita URL/texto, salva somente uma URL `http(s)` por vez e o app valida novamente antes de abrir o editor de desejos.
+- **Configuração externa pendente:** criar o App Group acima, habilitar **App Groups** nos dois App IDs/targets, registrar `com.dodopok.lume.ShareExtension` e regenerar provisioning profiles. Sem isso, o código compila localmente, mas a instalação assinada não terá comunicação entre extensão e app.
+- **Validação:** Safari compartilha uma URL; extensão salva payload mínimo; o app abre Finanças > Desejos com URL e domínio pré-preenchidos; cancelamento, URL malformada e ausência de entitlement não travam nem fazem request direto.
 
 ## 7. Notificações locais
 

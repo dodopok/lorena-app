@@ -162,7 +162,7 @@ Neste projeto, dev e prod compartilham o mesmo bundle ID iOS por decisão explí
 ## Deep links e compartilhamento
 
 - Definir URL scheme/universal link para retorno do OAuth quando necessário.
-- Criar Share Extension no iOS para receber URLs de Safari, TikTok e lojas por um App Group compartilhado.
+- A Share Extension nativa em `ios/ShareExtension` recebe URLs de Safari, TikTok e lojas pelo App Group `group.com.dodopok.lume`; o app valida novamente e abre o editor de desejos sem request direto.
 - A extensão apenas valida/encaminha o link; a análise completa ocorre no app/backend.
 - Suportar abertura direta das telas de favorito, livro e evento por rota interna.
 
@@ -192,7 +192,7 @@ Neste projeto, dev e prod compartilham o mesmo bundle ID iOS por decisão explí
 ## Decisões que exigem spike técnico
 
 1. Conexão Google dedicada que autorize os escopos da Agenda no iOS sem criar outra conta no app.
-2. Share Extension interoperando com Flutter e App Groups.
+2. Teste em aparelho físico e assinatura da Share Extension interoperando com Flutter e App Groups; o target, canal e fluxo local já estão implementados.
 3. Extração de Mercado Livre e TikTok Shop, com páginas reais fornecidas pela usuária.
 4. Restauração de fotos pendentes após encerramento forçado do app.
 5. Exportação completa e formato do arquivo entregue à usuária.

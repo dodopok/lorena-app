@@ -21,6 +21,27 @@ class FinanceScreen extends StatefulWidget {
 class _FinanceScreenState extends State<FinanceScreen> {
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   String? _categoryFilter;
+  String? _handledSharedUrl;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final sharedUrl = AppScope.of(context).pendingSharedUrl;
+    final rawUrl = sharedUrl?.toString();
+    if (rawUrl == null || rawUrl == _handledSharedUrl) return;
+    _handledSharedUrl = rawUrl;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        await _showWishlist(context, initialUrl: rawUrl);
+      } finally {
+        if (mounted) {
+          AppScope.read(context).clearPendingSharedUrl(sharedUrl);
+          _handledSharedUrl = null;
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -646,9 +667,15 @@ class _FinanceScreenState extends State<FinanceScreen> {
   Future<void> _showWishlist(
     BuildContext context, {
     WishlistItem? existing,
+    String? initialUrl,
   }) async {
-    final url = TextEditingController(text: existing?.originalUrl ?? '');
-    final title = TextEditingController(text: existing?.title ?? '');
+    final sharedUri = initialUrl == null ? null : Uri.tryParse(initialUrl);
+    final url = TextEditingController(
+      text: existing?.originalUrl ?? initialUrl ?? '',
+    );
+    final title = TextEditingController(
+      text: existing?.title ?? (sharedUri?.host ?? ''),
+    );
     final price = TextEditingController(
       text: existing?.priceMinor == null
           ? ''

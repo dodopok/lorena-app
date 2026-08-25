@@ -11,6 +11,7 @@ import '../core/notifications/lume_notification_gateway.dart';
 import '../core/notifications/notification_rules.dart';
 import '../core/photos/local_photo_service.dart';
 import '../core/photos/firebase_photo_storage.dart';
+import '../core/share/share_intent_service.dart';
 import '../core/sync/remote_snapshot_store.dart';
 import 'local_store.dart';
 import 'models.dart';
@@ -28,6 +29,7 @@ class AppController extends ChangeNotifier {
     PhotoStorageGateway? photoStorage,
     ExportService? exportService,
     RemoteSnapshotStoreFactory? remoteStoreFactory,
+    ShareIntentService? shareIntentService,
   }) : _store = store ?? LocalStore(),
        _authGateway = authGateway,
        _calendarGateway = calendarGateway,
@@ -36,7 +38,8 @@ class AppController extends ChangeNotifier {
        _notificationGateway = notificationGateway,
        _photoStorage = photoStorage,
        _exportService = exportService ?? ExportService(),
-       _remoteStoreFactory = remoteStoreFactory;
+       _remoteStoreFactory = remoteStoreFactory,
+       _shareIntentService = shareIntentService;
 
   final LocalStore _store;
   final AuthGateway? _authGateway;
@@ -47,6 +50,7 @@ class AppController extends ChangeNotifier {
   final PhotoStorageGateway? _photoStorage;
   final ExportService _exportService;
   final RemoteSnapshotStoreFactory? _remoteStoreFactory;
+  final ShareIntentService? _shareIntentService;
   RemoteSnapshotStore? _remoteStore;
   String? _remoteUserId;
   Future<void> _remoteWriteQueue = Future<void>.value();
@@ -66,6 +70,28 @@ class AppController extends ChangeNotifier {
   List<CalendarEvent> calendarEvents = [];
   String? calendarSyncToken;
   DateTime? calendarLastSyncedAt;
+  Uri? pendingSharedUrl;
+
+  /// Consumes the one-shot native share payload, if the current platform has
+  /// the iOS Share Extension installed and configured.
+  Future<void> consumeSharedUrl() async {
+    final service = _shareIntentService;
+    if (service == null) return;
+    final url = await service.consumePendingUrl();
+    if (url == null) return;
+    pendingSharedUrl = url;
+    notifyListeners();
+  }
+
+  void clearPendingSharedUrl([Uri? expected]) {
+    if (expected != null &&
+        pendingSharedUrl?.toString() != expected.toString()) {
+      return;
+    }
+    if (pendingSharedUrl == null) return;
+    pendingSharedUrl = null;
+    notifyListeners();
+  }
 
   Future<void> hydrate() async {
     final snapshot = await _store.read();
@@ -884,7 +910,8 @@ class AppController extends ChangeNotifier {
     WishlistStatus status = WishlistStatus.wanted,
   }) async {
     final uri = _validatedWishlistUri(originalUrl);
-    if (title.trim().isEmpty) throw ArgumentError('Nome obrigatório');
+    final normalizedTitle = title.trim().isEmpty ? uri.host : title.trim();
+    if (normalizedTitle.isEmpty) throw ArgumentError('Nome obrigatório');
     if (priceMinor != null && priceMinor < 0) {
       throw ArgumentError('Preço não pode ser negativo');
     }
@@ -893,7 +920,7 @@ class AppController extends ChangeNotifier {
       WishlistItem(
         id: _id('wishlist'),
         originalUrl: uri.toString(),
-        title: title.trim(),
+        title: normalizedTitle,
         siteHost: uri.host,
         priceMinor: priceMinor,
         currency: priceMinor == null ? null : 'BRL',
@@ -943,7 +970,8 @@ class AppController extends ChangeNotifier {
     WishlistStatus? status,
   }) async {
     final uri = _validatedWishlistUri(originalUrl);
-    if (title.trim().isEmpty) throw ArgumentError('Nome obrigatório');
+    final normalizedTitle = title.trim().isEmpty ? uri.host : title.trim();
+    if (normalizedTitle.isEmpty) throw ArgumentError('Nome obrigatório');
     if (priceMinor != null && priceMinor < 0) {
       throw ArgumentError('Preço não pode ser negativo');
     }
@@ -966,7 +994,7 @@ class AppController extends ChangeNotifier {
           (item) => item.id == id
               ? existing.copyWith(
                   originalUrl: uri.toString(),
-                  title: title.trim(),
+                  title: normalizedTitle,
                   siteHost: uri.host,
                   priceMinor: priceMinor,
                   clearPrice: priceMinor == null,

@@ -162,8 +162,44 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   late AppDestination _destination = widget.initialDestination;
+  bool _isConsumingSharedUrl = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _consumeSharedUrl());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _consumeSharedUrl();
+    }
+  }
+
+  Future<void> _consumeSharedUrl() async {
+    if (!mounted || _isConsumingSharedUrl) return;
+    _isConsumingSharedUrl = true;
+    try {
+      final controller = AppScope.read(context);
+      await controller.consumeSharedUrl();
+      if (!mounted || controller.pendingSharedUrl == null) return;
+      if (_destination != AppDestination.finance) {
+        setState(() => _destination = AppDestination.finance);
+      }
+    } finally {
+      _isConsumingSharedUrl = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

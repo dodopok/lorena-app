@@ -2,7 +2,7 @@
 
 Aplicativo pessoal para iPhone, planejado em Flutter, que reúne agenda, autocuidado, finanças, leituras, desejos e gratidão em um único espaço acolhedor.
 
-> **Status:** MVP funcional em alpha, com modo offline, motion system sem layout shifting, ícone nativo rosa, mídia privada, exportação/exclusão e fluxos completos de Hoje, Bem-estar, Finanças e Cantinho. Ainda faltam validações em aparelho físico, o OAuth iOS correto da Agenda e a configuração nativa de App Groups/Share Extension descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
+> **Status:** MVP funcional em alpha, com modo offline, motion system sem layout shifting, ícone nativo rosa, mídia privada, exportação/exclusão, Share Extension nativa e fluxos completos de Hoje, Bem-estar, Finanças e Cantinho. Ainda faltam validações em aparelho físico, o OAuth iOS correto da Agenda e a associação/assinatura do App Group da extensão descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
 
 ## Visão rápida
 

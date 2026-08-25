@@ -206,7 +206,7 @@ Não existe uma “chave secreta do Storage” para colocar no app. O SDK usa a 
 
 ### Estado no repositório
 
-O scaffold executável está em `functions/`, com a função `extractLinkMetadata`, parser JSON-LD/Open Graph, fallback manual, autenticação Firebase, rate limit em memória, concorrência limitada, redirects revalidados, DNS pinning, bloqueio de redes privadas/metadata, limite de resposta e testes Node. O app Flutter só cria o cliente quando `LUME_ENABLE_LINK_EXTRACTION=true`; o endpoint padrão aponta para `us-central1` do projeto compartilhado, mas o deploy não é feito automaticamente.
+O scaffold executável está em `functions/`, com a função `extractLinkMetadata`, parser JSON-LD/Open Graph/itemprop, fallback manual, autenticação Firebase, rate limit em memória, concorrência limitada, redirects revalidados, DNS pinning, bloqueio de redes privadas/metadata, limite de resposta e testes Node. O app Flutter cria o cliente por padrão quando Firebase, autenticação e endpoint estão disponíveis; `LUME_ENABLE_LINK_EXTRACTION=false` desativa a integração. O endpoint padrão aponta para `us-central1` do projeto compartilhado, mas o deploy não é feito automaticamente.
 
 ### Criar e configurar
 

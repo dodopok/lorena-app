@@ -57,3 +57,28 @@ test('usa Open Graph quando não há Product JSON-LD', async () => {
   assert.equal(result?.imageUrl, 'https://shop.example/caneca.jpg');
   assert.equal(result?.priceMinor, 4990);
 });
+
+test('aceita metadados itemprop e fallbacks do Twitter', async () => {
+  const itempropResult = await parseProductHtml(
+    `<meta itemprop="name" content="Paleta Harry Potter">
+     <meta itemprop="image" content="/paleta.jpg">
+     <meta itemprop="price" content="119,90">
+     <meta itemprop="priceCurrency" content="BRL">`,
+    new URL('https://www.mercadolivre.com.br/item/1'),
+    { validateImageUrl: false },
+  );
+  assert.equal(itempropResult?.title, 'Paleta Harry Potter');
+  assert.equal(itempropResult?.imageUrl, 'https://www.mercadolivre.com.br/paleta.jpg');
+  assert.equal(itempropResult?.priceMinor, 11990);
+  assert.equal(itempropResult?.currency, 'BRL');
+
+  const twitterResult = await parseProductHtml(
+    `<meta name="twitter:title" content="Produto social">
+     <meta name="twitter:image" content="https://cdn.example/product.jpg">`,
+    new URL('https://shop.example/item/3'),
+    { validateImageUrl: false },
+  );
+  assert.equal(twitterResult?.title, 'Produto social');
+  assert.equal(twitterResult?.imageUrl, 'https://cdn.example/product.jpg');
+  assert.equal(twitterResult?.source, 'open_graph');
+});

@@ -21,7 +21,7 @@ abstract final class LumeBuildConfig {
   );
   static const enableLinkExtraction = bool.fromEnvironment(
     'LUME_ENABLE_LINK_EXTRACTION',
-    defaultValue: false,
+    defaultValue: true,
   );
   static const linkExtractionEndpoint = String.fromEnvironment(
     'LUME_LINK_EXTRACTION_ENDPOINT',

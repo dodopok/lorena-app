@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -885,232 +886,306 @@ class _FinanceScreenState extends State<FinanceScreen> {
     DateTime? metadataFetchedAt = existing?.metadataFetchedAt;
     var status = existing?.status ?? WishlistStatus.wanted;
     var extracting = false;
+    var metadataRequest = 0;
+    String? lastExtractedUrl;
+    Timer? metadataDebounce;
+    var initialExtractionScheduled = false;
     final controller = AppScope.read(context);
+
+    Future<void> fillMetadata(
+      BuildContext sheetContext,
+      StateSetter setSheetState, {
+      bool showFeedback = false,
+    }) async {
+      if (!controller.linkExtractionAvailable || extracting) return;
+      final rawUrl = url.text.trim();
+      if (!_isHttpUrl(rawUrl)) {
+        if (showFeedback && sheetContext.mounted) {
+          ScaffoldMessenger.of(sheetContext).showSnackBar(
+            const SnackBar(content: Text('Cole uma URL http(s) válida.')),
+          );
+        }
+        return;
+      }
+      if (!showFeedback && rawUrl == lastExtractedUrl) return;
+      metadataDebounce?.cancel();
+      final requestId = ++metadataRequest;
+      lastExtractedUrl = rawUrl;
+      setSheetState(() => extracting = true);
+      try {
+        final metadata = await controller.extractWishlistMetadata(rawUrl);
+        if (!sheetContext.mounted || requestId != metadataRequest) return;
+        if (metadata == null) {
+          if (showFeedback) {
+            ScaffoldMessenger.of(sheetContext).showSnackBar(
+              const SnackBar(
+                content: Text('Não encontramos dados; preencha manualmente.'),
+              ),
+            );
+          }
+          return;
+        }
+        setSheetState(() {
+          canonicalUrl = metadata.canonicalUrl;
+          imageUrl = metadata.imageUrl;
+          metadataSource = metadata.source;
+          metadataFetchedAt = metadata.fetchedAt ?? DateTime.now();
+          metadataCurrency = metadata.currency;
+          if (title.text.trim().isEmpty ||
+              title.text.trim() == (sharedUri?.host ?? '')) {
+            title.text = metadata.title ?? title.text;
+          }
+          if (price.text.trim().isEmpty && metadata.priceMinor != null) {
+            price.text = LumeCurrencyInputFormatter.formatMinor(
+              metadata.priceMinor!,
+            );
+          }
+          url.text = metadata.canonicalUrl;
+        });
+        if (showFeedback && metadata.warnings.isNotEmpty) {
+          ScaffoldMessenger.of(
+            sheetContext,
+          ).showSnackBar(SnackBar(content: Text(metadata.warnings.first)));
+        }
+      } on LinkMetadataException catch (error) {
+        if (showFeedback && sheetContext.mounted) {
+          ScaffoldMessenger.of(
+            sheetContext,
+          ).showSnackBar(SnackBar(content: Text(error.message)));
+        }
+      } catch (_) {
+        if (showFeedback && sheetContext.mounted) {
+          ScaffoldMessenger.of(sheetContext).showSnackBar(
+            const SnackBar(
+              content: Text('Não foi possível preencher este produto.'),
+            ),
+          );
+        }
+      } finally {
+        if (sheetContext.mounted && requestId == metadataRequest) {
+          setSheetState(() => extracting = false);
+        }
+      }
+    }
+
     await app_ui.showLumeSheet(
       context,
       title: existing == null ? 'Salvar desejo' : 'Editar desejo',
       child: StatefulBuilder(
-        builder: (context, setSheetState) => Column(
-          children: [
-            if (localImagePath != null) ...[
-              _LocalPhotoThumb(path: localImagePath!, size: 64),
-              const SizedBox(height: 8),
-            ],
-            OutlinedButton.icon(
-              onPressed: () async {
-                final path = await AppScope.read(
-                  context,
-                ).pickLocalPhoto(LocalPhotoKind.wishlist);
-                if (path != null && context.mounted) {
-                  setSheetState(() => localImagePath = path);
-                }
-              },
-              icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(
-                localImagePath == null ? 'Adicionar imagem' : 'Trocar imagem',
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: url,
-              autofocus: existing == null,
-              keyboardType: TextInputType.url,
-              decoration: const InputDecoration(
-                labelText: 'Link do produto',
-                hintText: 'https://…',
-                helperText:
-                    'O link fica salvo mesmo se a extração não estiver disponível.',
-              ),
-            ),
-            if (controller.linkExtractionAvailable) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  onPressed: extracting
-                      ? null
-                      : () async {
-                          setSheetState(() => extracting = true);
-                          try {
-                            final metadata = await controller
-                                .extractWishlistMetadata(url.text);
-                            if (!context.mounted) return;
-                            if (metadata == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Não encontramos dados; preencha manualmente.',
-                                  ),
-                                ),
-                              );
-                            } else {
-                              setSheetState(() {
-                                canonicalUrl = metadata.canonicalUrl;
-                                imageUrl = metadata.imageUrl;
-                                metadataSource = metadata.source;
-                                metadataFetchedAt =
-                                    metadata.fetchedAt ?? DateTime.now();
-                                metadataCurrency = metadata.currency;
-                                if (title.text.trim().isEmpty ||
-                                    title.text.trim() ==
-                                        (sharedUri?.host ?? '')) {
-                                  title.text = metadata.title ?? title.text;
-                                }
-                                if (price.text.trim().isEmpty &&
-                                    metadata.priceMinor != null) {
-                                  price.text =
-                                      LumeCurrencyInputFormatter.formatMinor(
-                                        metadata.priceMinor!,
-                                      );
-                                }
-                                url.text = metadata.canonicalUrl;
-                              });
-                              if (metadata.warnings.isNotEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(metadata.warnings.first),
-                                  ),
-                                );
-                              }
-                            }
-                          } on LinkMetadataException catch (error) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error.message)),
-                              );
-                            }
-                          } finally {
-                            if (context.mounted) {
-                              setSheetState(() => extracting = false);
-                            }
-                          }
-                        },
-                  icon: extracting
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.auto_awesome_outlined),
+        builder: (context, setSheetState) {
+          if (initialUrl != null &&
+              controller.linkExtractionAvailable &&
+              !initialExtractionScheduled) {
+            initialExtractionScheduled = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                unawaited(fillMetadata(context, setSheetState));
+              }
+            });
+          }
+          return Column(
+            children: [
+              if (imageUrl != null || localImagePath != null) ...[
+                _WishlistImageThumb(
+                  imageUrl: imageUrl,
+                  localImagePath: localImagePath,
+                  size: 72,
+                  onRemoteError: () {
+                    if (context.mounted) {
+                      setSheetState(() => imageUrl = null);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (imageUrl == null)
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final path = await AppScope.read(
+                      context,
+                    ).pickLocalPhoto(LocalPhotoKind.wishlist);
+                    if (path != null && context.mounted) {
+                      setSheetState(() => localImagePath = path);
+                    }
+                  },
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
                   label: Text(
-                    extracting ? 'Preenchendo…' : 'Preencher automaticamente',
+                    localImagePath == null
+                        ? 'Adicionar imagem'
+                        : 'Trocar imagem',
                   ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            TextField(
-              controller: title,
-              decoration: const InputDecoration(labelText: 'Nome do produto'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: price,
-              keyboardType: TextInputType.number,
-              inputFormatters: const [LumeCurrencyInputFormatter()],
-              decoration: const InputDecoration(
-                labelText: 'Preço (opcional)',
-                prefixText: r'R$ ',
-              ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<WishlistStatus>(
-              initialValue: status,
-              decoration: const InputDecoration(labelText: 'Status'),
-              items: const [
-                DropdownMenuItem(
-                  value: WishlistStatus.wanted,
-                  child: Text('Desejado'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: url,
+                autofocus: existing == null,
+                keyboardType: TextInputType.url,
+                onChanged: (value) {
+                  metadataDebounce?.cancel();
+                  metadataRequest++;
+                  lastExtractedUrl = null;
+                  if (!controller.linkExtractionAvailable ||
+                      !_isHttpUrl(value)) {
+                    return;
+                  }
+                  metadataDebounce = Timer(
+                    const Duration(milliseconds: 650),
+                    () => fillMetadata(context, setSheetState),
+                  );
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Link do produto',
+                  hintText: 'https://…',
+                  helperText:
+                      'Cole um link para preencher os detalhes automaticamente.',
                 ),
-                DropdownMenuItem(
-                  value: WishlistStatus.purchased,
-                  child: Text('Comprado'),
-                ),
-                DropdownMenuItem(
-                  value: WishlistStatus.archived,
-                  child: Text('Arquivado'),
+              ),
+              if (controller.linkExtractionAvailable) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: extracting
+                        ? null
+                        : () {
+                            lastExtractedUrl = null;
+                            fillMetadata(
+                              context,
+                              setSheetState,
+                              showFeedback: true,
+                            );
+                          },
+                    icon: extracting
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome_outlined),
+                    label: Text(
+                      extracting ? 'Preenchendo…' : 'Preencher automaticamente',
+                    ),
+                  ),
                 ),
               ],
-              onChanged: (value) =>
-                  setSheetState(() => status = value ?? WishlistStatus.wanted),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: note,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Observação (opcional)',
+              const SizedBox(height: 12),
+              TextField(
+                controller: title,
+                decoration: const InputDecoration(labelText: 'Nome do produto'),
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () async {
-                  final priceMinor = price.text.trim().isEmpty
-                      ? null
-                      : _parseMoney(price.text);
-                  if (price.text.trim().isNotEmpty &&
-                      (priceMinor == null || priceMinor < 0)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Confira o preço.')),
-                    );
-                    return;
-                  }
-                  try {
-                    if (existing == null) {
-                      await controller.addWishlistItem(
-                        originalUrl: url.text,
-                        title: title.text,
-                        canonicalUrl: canonicalUrl,
-                        imageUrl: imageUrl,
-                        priceMinor: priceMinor,
-                        currency: priceMinor == null
-                            ? null
-                            : metadataCurrency ?? 'BRL',
-                        note: note.text,
-                        localImagePath: localImagePath,
-                        status: status,
-                        metadataSource: metadataSource,
-                        metadataFetchedAt: metadataFetchedAt,
+              const SizedBox(height: 12),
+              TextField(
+                controller: price,
+                keyboardType: TextInputType.number,
+                inputFormatters: const [LumeCurrencyInputFormatter()],
+                decoration: const InputDecoration(
+                  labelText: 'Preço (opcional)',
+                  prefixText: r'R$ ',
+                ),
+              ),
+              if (existing != null) ...[
+                const SizedBox(height: 12),
+                DropdownButtonFormField<WishlistStatus>(
+                  initialValue: status,
+                  decoration: const InputDecoration(labelText: 'Status'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: WishlistStatus.wanted,
+                      child: Text('Desejado'),
+                    ),
+                    DropdownMenuItem(
+                      value: WishlistStatus.purchased,
+                      child: Text('Comprado'),
+                    ),
+                    DropdownMenuItem(
+                      value: WishlistStatus.archived,
+                      child: Text('Arquivado'),
+                    ),
+                  ],
+                  onChanged: (value) => setSheetState(
+                    () => status = value ?? WishlistStatus.wanted,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: note,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Observação (opcional)',
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    final priceMinor = price.text.trim().isEmpty
+                        ? null
+                        : _parseMoney(price.text);
+                    if (price.text.trim().isNotEmpty &&
+                        (priceMinor == null || priceMinor < 0)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Confira o preço.')),
                       );
-                    } else {
-                      await controller.updateWishlistItem(
-                        id: existing.id,
-                        originalUrl: url.text,
-                        title: title.text,
-                        canonicalUrl: canonicalUrl,
-                        imageUrl: imageUrl,
-                        priceMinor: priceMinor,
-                        currency: priceMinor == null
-                            ? null
-                            : metadataCurrency ?? 'BRL',
-                        note: note.text,
-                        localImagePath: localImagePath,
-                        status: status,
-                        metadataSource: metadataSource,
-                        metadataFetchedAt: metadataFetchedAt,
-                      );
+                      return;
                     }
-                  } on ArgumentError catch (error) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          error.message?.toString() ?? 'Confira os campos.',
+                    try {
+                      if (existing == null) {
+                        await controller.addWishlistItem(
+                          originalUrl: url.text,
+                          title: title.text,
+                          canonicalUrl: canonicalUrl,
+                          imageUrl: imageUrl,
+                          priceMinor: priceMinor,
+                          currency: priceMinor == null
+                              ? null
+                              : metadataCurrency ?? 'BRL',
+                          note: note.text,
+                          localImagePath: localImagePath,
+                          status: status,
+                          metadataSource: metadataSource,
+                          metadataFetchedAt: metadataFetchedAt,
+                        );
+                      } else {
+                        await controller.updateWishlistItem(
+                          id: existing.id,
+                          originalUrl: url.text,
+                          title: title.text,
+                          canonicalUrl: canonicalUrl,
+                          imageUrl: imageUrl,
+                          priceMinor: priceMinor,
+                          currency: priceMinor == null
+                              ? null
+                              : metadataCurrency ?? 'BRL',
+                          note: note.text,
+                          localImagePath: localImagePath,
+                          status: status,
+                          metadataSource: metadataSource,
+                          metadataFetchedAt: metadataFetchedAt,
+                        );
+                      }
+                    } on ArgumentError catch (error) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            error.message?.toString() ?? 'Confira os campos.',
+                          ),
                         ),
-                      ),
-                    );
-                    return;
-                  }
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: Text(existing == null ? 'Salvar desejo' : 'Salvar'),
+                      );
+                      return;
+                    }
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  child: Text(existing == null ? 'Salvar desejo' : 'Salvar'),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
+    metadataDebounce?.cancel();
     url.dispose();
     title.dispose();
     price.dispose();
@@ -1153,6 +1228,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
         ),
       ),
     );
+  }
+
+  bool _isHttpUrl(String raw) {
+    final uri = Uri.tryParse(raw.trim());
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty &&
+        uri.userInfo.isEmpty;
   }
 
   int? _parseMoney(String raw) {
@@ -1372,12 +1455,10 @@ class _WishlistRow extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       onTap: onOpen,
-      leading: item.localImagePath == null
-          ? CircleAvatar(
-              backgroundColor: app_theme.LumeColors.brandSoft,
-              child: const Icon(Icons.favorite_border),
-            )
-          : _LocalPhotoThumb(path: item.localImagePath!),
+      leading: _WishlistImageThumb(
+        imageUrl: item.imageUrl,
+        localImagePath: item.localImagePath,
+      ),
       title: Text(item.title),
       subtitle: Text(
         [
@@ -1415,6 +1496,95 @@ class _WishlistRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _WishlistImageThumb extends StatefulWidget {
+  const _WishlistImageThumb({
+    this.imageUrl,
+    this.localImagePath,
+    this.size = 48,
+    this.onRemoteError,
+  });
+
+  final String? imageUrl;
+  final String? localImagePath;
+  final double size;
+  final VoidCallback? onRemoteError;
+
+  @override
+  State<_WishlistImageThumb> createState() => _WishlistImageThumbState();
+}
+
+class _WishlistImageThumbState extends State<_WishlistImageThumb> {
+  bool _remoteErrorReported = false;
+
+  @override
+  void didUpdateWidget(covariant _WishlistImageThumb oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _remoteErrorReported = false;
+    }
+  }
+
+  void _reportRemoteError() {
+    if (_remoteErrorReported) return;
+    _remoteErrorReported = true;
+    final callback = widget.onRemoteError;
+    if (callback == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) callback();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final remote = widget.imageUrl?.trim();
+    final local = widget.localImagePath?.trim();
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: remote != null && remote.isNotEmpty
+            ? Image.network(
+                remote,
+                width: widget.size,
+                height: widget.size,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) => progress == null
+                    ? child
+                    : _WishlistImagePlaceholder(size: widget.size),
+                errorBuilder: (context, error, stackTrace) {
+                  _reportRemoteError();
+                  return local == null || local.isEmpty
+                      ? _WishlistImagePlaceholder(size: widget.size)
+                      : _LocalPhotoThumb(path: local, size: widget.size);
+                },
+              )
+            : local == null || local.isEmpty
+            ? _WishlistImagePlaceholder(size: widget.size)
+            : _LocalPhotoThumb(path: local, size: widget.size),
+      ),
+    );
+  }
+}
+
+class _WishlistImagePlaceholder extends StatelessWidget {
+  const _WishlistImagePlaceholder({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+    color: app_theme.LumeColors.brandSoft,
+    child: Center(
+      child: Icon(
+        Icons.favorite_border,
+        size: size * 0.45,
+        color: app_theme.LumeColors.brandStrong,
+      ),
+    ),
+  );
 }
 
 class _LocalPhotoThumb extends StatelessWidget {

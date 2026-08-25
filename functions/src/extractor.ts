@@ -107,7 +107,12 @@ export async function parseProductHtml(
   const metaPattern = /<meta\b([^>]+)>/gi;
   for (const match of html.matchAll(metaPattern)) {
     const attributes = attributesFromTag(match[1]);
-    const key = (attributes.property ?? attributes.name ?? '').toLowerCase();
+    const key = (
+      attributes.property ??
+      attributes.name ??
+      attributes.itemprop ??
+      ''
+    ).toLowerCase();
     const content = decodeEntities(attributes.content ?? '').trim();
     if (key && content) metadata.set(key, content);
   }
@@ -118,18 +123,35 @@ export async function parseProductHtml(
   const jsonTitle = product ? boundedText(product.name) : undefined;
   const jsonImage = product ? imageFromValue(product.image) : undefined;
   const jsonOffer = product ? offerFromProduct(product) : undefined;
-  const ogTitle = boundedText(metadata.get('og:title'));
-  const ogImage = metadata.get('og:image');
-  const ogPrice = parsePrice(metadata.get('product:price:amount'));
-  const ogCurrency = normalizeCurrency(metadata.get('product:price:currency'));
-  const title = jsonTitle ?? ogTitle ?? boundedText(titleFromHtml(html));
-  const imageCandidate = jsonImage ?? ogImage;
+  const metaTitle =
+    boundedText(metadata.get('og:title')) ??
+    boundedText(metadata.get('twitter:title')) ??
+    boundedText(metadata.get('title')) ??
+    boundedText(metadata.get('name'));
+  const metaImage =
+    metadata.get('og:image') ??
+    metadata.get('twitter:image') ??
+    metadata.get('twitter:image:src') ??
+    metadata.get('image');
+  const metaPrice = parsePrice(
+    metadata.get('product:price:amount') ??
+      metadata.get('og:price:amount') ??
+      metadata.get('price'),
+  );
+  const metaCurrency = normalizeCurrency(
+    metadata.get('product:price:currency') ??
+      metadata.get('og:price:currency') ??
+      metadata.get('pricecurrency') ??
+      metadata.get('priceCurrency'),
+  );
+  const title = jsonTitle ?? metaTitle ?? boundedText(titleFromHtml(html));
+  const imageCandidate = jsonImage ?? metaImage;
   const imageUrl = imageCandidate ? safeRelatedUrl(imageCandidate, canonical) : undefined;
-  const priceMinor = jsonOffer?.priceMinor ?? ogPrice;
-  const currency = jsonOffer?.currency ?? ogCurrency ?? (priceMinor == null ? undefined : 'BRL');
+  const priceMinor = jsonOffer?.priceMinor ?? metaPrice;
+  const currency = jsonOffer?.currency ?? metaCurrency ?? (priceMinor == null ? undefined : 'BRL');
   const source: MetadataSource = jsonTitle || jsonImage || jsonOffer
     ? 'json_ld'
-    : ogTitle || ogImage || ogPrice != null
+    : metaTitle || metaImage || metaPrice != null
       ? 'open_graph'
       : 'manual';
   const warnings: string[] = [];
@@ -177,7 +199,11 @@ function requestHtml(target: SafeTarget): Promise<{
         method: 'GET',
         headers: {
           accept: 'text/html,application/xhtml+xml;q=0.9',
-          'user-agent': 'LumeMetadataFetcher/1.0',
+          'accept-language': 'pt-BR,pt;q=0.9,en;q=0.8',
+          'user-agent':
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
+            + 'AppleWebKit/605.1.15 (KHTML, like Gecko) '
+            + 'Version/17.0 Mobile/15E148 Safari/604.1',
           'accept-encoding': 'gzip, deflate, br',
         },
         timeout: REQUEST_TIMEOUT_MS,

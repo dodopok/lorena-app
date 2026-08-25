@@ -45,6 +45,7 @@ void main() {
 
   test('a Agenda usa o client iOS público confirmado por padrão', () {
     expect(LumeBuildConfig.enableCalendar, isTrue);
+    expect(LumeBuildConfig.enableLinkExtraction, isTrue);
     expect(
       LumeBuildConfig.googleCalendarIosClientId,
       '1018427269031-btmqjfbld86lqsfpr0aivec1vj8bbn8d.apps.googleusercontent.com',

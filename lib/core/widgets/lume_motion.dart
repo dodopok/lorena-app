@@ -118,3 +118,99 @@ Widget lumePageTransition(Widget child, Animation<double> animation) {
     child: SlideTransition(position: offset, child: child),
   );
 }
+
+/// Keeps a destination mounted while replaying only its entrance on selection.
+class LumeTabStage extends StatefulWidget {
+  const LumeTabStage({required this.active, required this.child, super.key});
+  final bool active;
+  final Widget child;
+
+  @override
+  State<LumeTabStage> createState() => _LumeTabStageState();
+}
+
+class _LumeTabStageState extends State<LumeTabStage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    value: 1,
+  );
+
+  @override
+  void didUpdateWidget(LumeTabStage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) _controller.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    return FadeTransition(
+      opacity: _controller.drive(CurveTween(curve: Curves.easeOutCubic)),
+      child: widget.child,
+    );
+  }
+}
+
+/// Paint-only feedback; InkWell remains responsible for taps and semantics.
+class LumePressScale extends StatefulWidget {
+  const LumePressScale({required this.child, this.enabled = true, super.key});
+  final Widget child;
+  final bool enabled;
+
+  @override
+  State<LumePressScale> createState() => _LumePressScaleState();
+}
+
+class _LumePressScaleState extends State<LumePressScale> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) => Listener(
+    onPointerDown: widget.enabled ? (_) => _setPressed(true) : null,
+    onPointerUp: (_) => _setPressed(false),
+    onPointerCancel: (_) => _setPressed(false),
+    child: AnimatedScale(
+      scale:
+          _pressed && widget.enabled && !MediaQuery.disableAnimationsOf(context)
+          ? .975
+          : 1,
+      duration: lumeMotionDuration(context, const Duration(milliseconds: 140)),
+      curve: Curves.easeOutCubic,
+      child: widget.child,
+    ),
+  );
+}
+
+/// A short, bounded entrance sequence for the daily overview.
+class LumeStaggeredColumn extends StatelessWidget {
+  const LumeStaggeredColumn({required this.children, super.key});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      for (var index = 0; index < children.length; index++)
+        if (children[index] is SizedBox)
+          children[index]
+        else
+          LumeReveal(
+            delay: Duration(milliseconds: (index * 30).clamp(0, 210)),
+            duration: const Duration(milliseconds: 300),
+            child: children[index],
+          ),
+    ],
+  );
+}

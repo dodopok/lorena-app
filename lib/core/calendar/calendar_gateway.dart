@@ -282,7 +282,7 @@ class GoogleCalendarGateway implements CalendarGateway {
       'Content-Type': 'application/json',
       if (event.etag != null && event.etag!.isNotEmpty) 'If-Match': event.etag!,
     };
-    final response = await _put(
+    final response = await _patch(
       _eventsUri(event.calendarId, {
         'sendUpdates': 'none',
         'eventId': event.id!,
@@ -367,13 +367,13 @@ class GoogleCalendarGateway implements CalendarGateway {
     ),
   );
 
-  Future<http.Response> _put(
+  Future<http.Response> _patch(
     Uri uri, {
     required String token,
     required Map<String, String> extraHeaders,
     required String body,
   }) => _guarded(
-    () => _client.put(
+    () => _client.patch(
       uri,
       headers: {
         'Authorization': 'Bearer $token',
@@ -460,27 +460,51 @@ Map<String, dynamic> calendarEventRequestBody(
   return {
     if (includeId && event.id != null && event.id!.isNotEmpty) 'id': event.id,
     'summary': event.title.trim(),
-    if (event.description != null && event.description!.trim().isNotEmpty)
-      'description': event.description!.trim(),
-    'start': _calendarDateBody(event.start, event.isAllDay),
-    'end': _calendarDateBody(event.end, event.isAllDay),
-    if (event.colorId != null && event.colorId!.isNotEmpty)
-      'colorId': event.colorId,
-    if (event.recurrence.isNotEmpty) 'recurrence': event.recurrence,
-    if (event.reminderMinutes.isNotEmpty)
-      'reminders': {
-        'useDefault': false,
-        'overrides': [
-          for (final minutes in event.reminderMinutes)
-            {'method': 'popup', 'minutes': minutes},
-        ],
-      },
+    'description': event.description?.trim() ?? '',
+    'start': _calendarDateBody(
+      event.start,
+      event.isAllDay,
+      event.timeZone,
+      !includeId,
+    ),
+    'end': _calendarDateBody(
+      event.end,
+      event.isAllDay,
+      event.timeZone,
+      !includeId,
+    ),
+    'colorId': event.colorId,
+    'recurrence': event.recurrence,
+    'reminders':
+        event.reminderConfiguration ??
+        {
+          'useDefault': false,
+          'overrides': [
+            for (final minutes in event.reminderMinutes)
+              {'method': 'popup', 'minutes': minutes},
+          ],
+        },
   };
 }
 
-Map<String, String> _calendarDateBody(DateTime date, bool isAllDay) {
-  if (isAllDay) return {'date': _dateOnly(date)};
-  return {'dateTime': date.toUtc().toIso8601String()};
+Map<String, dynamic> _calendarDateBody(
+  DateTime date,
+  bool isAllDay,
+  String timeZone,
+  bool patch,
+) {
+  if (isAllDay) {
+    return {
+      'date': _dateOnly(date),
+      if (patch) 'dateTime': null,
+      if (patch) 'timeZone': null,
+    };
+  }
+  return {
+    'dateTime': date.toUtc().toIso8601String(),
+    'timeZone': timeZone,
+    if (patch) 'date': null,
+  };
 }
 
 String _dateOnly(DateTime value) =>
@@ -516,6 +540,13 @@ CalendarEvent? parseCalendarEvent(Map<String, dynamic> item) {
             .toList()
       : const <int>[];
   return CalendarEvent(
+    reminderConfiguration: rawReminders is Map
+        ? Map<String, dynamic>.from(rawReminders)
+        : null,
+    timeZone:
+        item['start'] is Map && (item['start'] as Map)['timeZone'] is String
+        ? (item['start'] as Map)['timeZone'] as String
+        : 'America/Sao_Paulo',
     id: item['id'] is String ? item['id'] as String : null,
     calendarId: item['calendarId'] is String
         ? item['calendarId'] as String

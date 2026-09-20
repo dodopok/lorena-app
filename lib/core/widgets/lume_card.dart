@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'lume_motion.dart';
 import 'package:lume/core/theme/lume_theme.dart';
 
 enum LumeCardTone { neutral, wellbeing, finance, calendar, corner, danger }
@@ -75,7 +76,10 @@ class LumeCard extends StatelessWidget {
         button: onTap != null,
         enabled: isEnabled,
         label: semanticLabel,
-        child: Opacity(opacity: isEnabled ? 1 : .55, child: card),
+        child: LumePressScale(
+          enabled: enabled,
+          child: Opacity(opacity: isEnabled ? 1 : .55, child: card),
+        ),
       ),
     );
   }
@@ -98,43 +102,63 @@ class LumeSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.lumeColors;
-    return Row(
+    final heading = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: .1,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: LumeSpacing.xs),
-                Text(
-                  subtitle!,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: c.textSecondary),
-                ),
-              ],
-            ],
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontFamily: 'Lora',
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0,
           ),
         ),
-        if (actionLabel != null && onAction != null)
-          TextButton(
-            onPressed: onAction,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              minimumSize: const Size(44, 36),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(actionLabel!),
+        if (subtitle != null) ...[
+          const SizedBox(height: LumeSpacing.xs),
+          Text(
+            subtitle!,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: c.textSecondary),
           ),
+        ],
       ],
+    );
+    if (actionLabel == null || onAction == null) return heading;
+    final action = TextButton(
+      onPressed: onAction,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: const Size(44, 44),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(actionLabel!),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked =
+            constraints.maxWidth < 340 ||
+            MediaQuery.textScalerOf(context).scale(14) > 18;
+        if (stacked) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              heading,
+              Align(alignment: Alignment.centerRight, child: action),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(child: heading),
+            const SizedBox(width: 8),
+            action,
+          ],
+        );
+      },
     );
   }
 }

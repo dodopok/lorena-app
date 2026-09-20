@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'lume_motion.dart';
 import 'package:lume/core/theme/lume_theme.dart';
 import 'package:lume/core/widgets/lume_card.dart';
 
@@ -48,46 +49,49 @@ class LumeQuickAction extends StatelessWidget {
       button: true,
       enabled: isEnabled && !isLoading,
       label: semantic,
-      child: Material(
-        color: bg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LumeRadii.control),
-          side: BorderSide(color: border),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: isEnabled && !isLoading ? onPressed : null,
-          borderRadius: BorderRadius.circular(LumeRadii.control),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: LumeSpacing.touchMinimum,
-              minWidth: LumeSpacing.touchMinimum,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: LumeSpacing.md,
-                vertical: LumeSpacing.sm,
+      child: LumePressScale(
+        enabled: isEnabled && !isLoading && onPressed != null,
+        child: Material(
+          color: bg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(LumeRadii.control),
+            side: BorderSide(color: border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: isEnabled && !isLoading ? onPressed : null,
+            borderRadius: BorderRadius.circular(LumeRadii.control),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: LumeSpacing.touchMinimum,
+                minWidth: LumeSpacing.touchMinimum,
               ),
-              child: isLoading
-                  ? const Center(
-                      child: SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icon, size: 20),
-                        const SizedBox(width: LumeSpacing.sm),
-                        Flexible(
-                          child: Text(
-                            value == null ? label : '$label\n$value',
-                            textAlign: TextAlign.start,
-                          ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: LumeSpacing.md,
+                  vertical: LumeSpacing.sm,
+                ),
+                child: isLoading
+                    ? const Center(
+                        child: SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                      ],
-                    ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, size: 20),
+                          const SizedBox(width: LumeSpacing.sm),
+                          Flexible(
+                            child: Text(
+                              value == null ? label : '$label\n$value',
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
             ),
           ),
         ),

@@ -53,6 +53,7 @@ O [plano completo do produto](docs/README.md) é a fonte de verdade para escopo,
 - [Visão do produto](docs/00-visao-produto.md)
 - [Escopo e requisitos](docs/01-escopo-requisitos.md)
 - [Experiência e design](docs/02-experiencia-design.md)
+- [Revisão de UI/UX e pendências atuais](docs/15-revisao-ui-ux.md)
 - [Roadmap e entregas](docs/08-roadmap.md)
 - [Backlog e critérios de aceite](docs/10-backlog-aceite.md)
 

@@ -52,65 +52,81 @@ class LumeProgressCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
-                    label,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      AnimatedSwitcher(
+                        duration: motionDuration,
+                        layoutBuilder: (child, previous) => Stack(
+                          alignment: Alignment.centerLeft,
+                          children: [...previous, ?child],
+                        ),
+                        child: Text(
+                          '$value $unit',
+                          key: ValueKey('$value $unit'),
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(color: context.lumeColors.brandStrong),
+                        ),
+                      ),
+                      if (safeMax != null)
+                        Text(
+                          'de $safeMax $unit',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: context.lumeColors.textSecondary,
+                              ),
+                        ),
+                    ],
                   ),
                 ),
-                SizedBox(
-                  width: 104,
-                  child: AnimatedSwitcher(
-                    duration: motionDuration,
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    layoutBuilder: (currentChild, previousChildren) => Stack(
-                      alignment: Alignment.centerRight,
-                      children: <Widget>[...previousChildren, ?currentChild],
-                    ),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, .15),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    ),
-                    child: Align(
-                      key: ValueKey('$value $unit'),
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        '$value $unit',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
+                const SizedBox(width: 12),
+                ExcludeSemantics(
+                  child: SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned.fill(
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(end: fraction),
+                            duration: progressDuration,
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, _) =>
+                                CircularProgressIndicator(
+                                  value: value,
+                                  strokeWidth: 5,
+                                  strokeCap: StrokeCap.round,
+                                  backgroundColor: context.lumeColors.border,
+                                  color: context.lumeColors.brand,
+                                ),
+                          ),
+                        ),
+                        AnimatedSwitcher(
+                          duration: motionDuration,
+                          child: Icon(
+                            fraction >= 1
+                                ? Icons.check_rounded
+                                : Icons.water_drop_outlined,
+                            key: ValueKey(fraction >= 1),
+                            size: 30,
+                            color: context.lumeColors.brandStrong,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-            if (safeMax != null) ...[
-              const SizedBox(height: LumeSpacing.md),
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(end: fraction),
-                duration: progressDuration,
-                curve: Curves.easeOutCubic,
-                builder: (context, animatedFraction, child) => ClipRRect(
-                  borderRadius: BorderRadius.circular(LumeRadii.pill),
-                  child: LinearProgressIndicator(
-                    value: animatedFraction,
-                    minHeight: 10,
-                    backgroundColor: context.lumeColors.surface.withValues(
-                      alpha: .7,
-                    ),
-                    color: context.lumeColors.brandStrong,
-                  ),
-                ),
-              ),
-            ],
             if (supportingText != null) ...[
               const SizedBox(height: LumeSpacing.sm),
               Text(

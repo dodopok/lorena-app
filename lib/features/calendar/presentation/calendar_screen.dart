@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/environment.dart';
 import '../../../app/lume_app.dart';
+import '../../../app/app_route.dart';
 import '../../../app/models.dart';
 import '../../../app/ui.dart' as app_ui;
 import '../../../core/calendar/calendar_gateway.dart';
@@ -10,13 +11,88 @@ import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  const CalendarScreen({this.initialRoute, super.key});
+  final AppRouteRequest? initialRoute;
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends State<CalendarScreen>
+    with InitialRouteHandler<CalendarScreen> {
+  @override
+  AppRouteRequest? get initialRoute => widget.initialRoute;
+  @override
+  Future<void> openInitialRoute(AppRouteRequest route) async {
+    final controller = AppScope.read(context);
+    if (route.action != AppRouteAction.calendarConnect &&
+        route.action != AppRouteAction.eventNew &&
+        route.action != AppRouteAction.eventEdit) {
+      return;
+    }
+    if (!LumeBuildConfig.enableCalendar ||
+        LumeBuildConfig.googleCalendarIosClientId.isEmpty) {
+      routeMessage(
+        'A conexão com a Agenda ainda não está disponível nesta versão.',
+      );
+      return;
+    }
+    if (route.action == AppRouteAction.calendarConnect ||
+        !controller.settings.calendarConnected) {
+      var connecting = false;
+      await app_ui.showLumeSheet(
+        context,
+        title: 'Conectar Google Agenda',
+        child: StatefulBuilder(
+          builder: (sheetContext, setSheetState) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'A conta Google é uma conexão separada do Lume. Você escolhe autorizar a leitura dos seus compromissos.',
+              ),
+              const SizedBox(height: 16),
+              LumeButton(
+                label: 'Conectar Google Agenda',
+                isLoading: connecting,
+                onPressed: () async {
+                  setSheetState(() => connecting = true);
+                  try {
+                    await _connect(sheetContext);
+                    if (sheetContext.mounted &&
+                        controller.settings.calendarConnected) {
+                      Navigator.pop(sheetContext);
+                    }
+                  } finally {
+                    if (sheetContext.mounted) {
+                      setSheetState(() => connecting = false);
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!mounted ||
+          !controller.settings.calendarConnected ||
+          route.action == AppRouteAction.calendarConnect) {
+        return;
+      }
+    }
+    if (route.action == AppRouteAction.eventNew) {
+      await _showEventForm(context);
+    } else if (route.action == AppRouteAction.eventEdit) {
+      final event = controller.calendarEvents
+          .where((item) => item.id == route.id)
+          .firstOrNull;
+      if (event == null) {
+        routeMessage();
+        return;
+      }
+      await _showEventForm(context, initial: event);
+    }
+  }
+
   bool _busy = false;
   CalendarView _view = CalendarView.day;
   DateTime _selectedDate = DateTime.now();
@@ -71,12 +147,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   const Icon(Icons.calendar_month_outlined, size: 32),
                   const SizedBox(height: 14),
                   Text(
-                    'Agenda desativada',
+                    'Sua agenda, no seu tempo',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Este build está sem a integração do Google Agenda. Ative LUME_ENABLE_CALENDAR para disponibilizar a conexão.',
+                    'A conexão com o Google Agenda ainda não está disponível nesta versão. Enquanto isso, seus outros registros continuam à mão.',
                   ),
                 ],
               ),
@@ -305,8 +381,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
     var start = initial?.start ?? _nextHour();
     var end = initial?.end ?? start.add(const Duration(hours: 1));
     var isAllDay = initial?.isAllDay ?? false;
-    var recurrenceSelection = initial?.recurrence.firstOrNull ?? 'none';
-    var reminderSelection = initial?.reminderMinutes.firstOrNull ?? 0;
+    final existingRecurrence = initial?.recurrence ?? const <String>[];
+    final recurrenceRule = existingRecurrence.length == 1
+        ? existingRecurrence.single.replaceFirst(RegExp(r'^RRULE:'), '')
+        : null;
+    final hasCustomRecurrence =
+        existingRecurrence.isNotEmpty &&
+        !const [
+          'FREQ=DAILY',
+          'FREQ=WEEKLY',
+          'FREQ=MONTHLY',
+        ].contains(recurrenceRule);
+    var recurrenceSelection = hasCustomRecurrence
+        ? 'existing'
+        : recurrenceRule ?? 'none';
+    final existingReminders = initial?.reminderMinutes ?? const <int>[];
+    final hasCustomReminders =
+        initial?.reminderConfiguration != null ||
+        existingReminders.length > 1 ||
+        (existingReminders.length == 1 &&
+            !const [0, 10, 30, 60].contains(existingReminders.single));
+    var reminderSelection = hasCustomReminders
+        ? -2
+        : existingReminders.firstOrNull ?? -1;
     var colorSelection = initial?.colorId ?? 'default';
     var saving = false;
     final controller = AppScope.read(context);
@@ -338,7 +435,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
               value: isAllDay,
               onChanged: saving
                   ? null
-                  : (value) => setSheetState(() => isAllDay = value),
+                  : (value) => setSheetState(() {
+                      isAllDay = value;
+                      if (value) {
+                        start = DateUtils.dateOnly(start);
+                        end = DateUtils.dateOnly(end);
+                        if (!end.isAfter(start)) {
+                          end = DateTime(
+                            start.year,
+                            start.month,
+                            start.day + 1,
+                          );
+                        }
+                      }
+                    }),
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -349,36 +459,66 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     : () async {
                         final picked = await showDatePicker(
                           context: context,
-                          firstDate: DateTime.now().subtract(
-                            const Duration(days: 365),
-                          ),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 730),
-                          ),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime(2100),
                           initialDate: start,
                         );
                         if (picked == null || !context.mounted) return;
-                        setSheetState(
-                          () => start = DateTime(
+                        final duration = end.difference(start);
+                        setSheetState(() {
+                          start = DateTime(
                             picked.year,
                             picked.month,
                             picked.day,
                             start.hour,
                             start.minute,
-                          ),
-                        );
-                        if (!isAllDay) {
-                          setSheetState(
-                            () => end = start.add(const Duration(hours: 1)),
                           );
-                        }
+                          end = start.add(duration);
+                        });
                       },
                 icon: const Icon(Icons.event_outlined),
-                label: Text(_date(start)),
+                label: Text('De: ${_date(start)}'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.event_available_outlined),
+                label: Text(
+                  'Até: ${_date(isAllDay ? end.subtract(const Duration(days: 1)) : end)}',
+                ),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: isAllDay
+                              ? end.subtract(const Duration(days: 1))
+                              : end,
+                          firstDate: DateUtils.dateOnly(start),
+                          lastDate: DateTime(2100),
+                        );
+                        if (date == null || !context.mounted) return;
+                        setSheetState(
+                          () => end = isAllDay
+                              ? DateTime(date.year, date.month, date.day + 1)
+                              : DateTime(
+                                  date.year,
+                                  date.month,
+                                  date.day,
+                                  end.hour,
+                                  end.minute,
+                                ),
+                        );
+                      },
               ),
             ),
             AnimatedSize(
-              duration: const Duration(milliseconds: 220),
+              duration: lumeMotionDuration(
+                context,
+                const Duration(milliseconds: 220),
+              ),
               alignment: Alignment.topCenter,
               child: isAllDay
                   ? const SizedBox.shrink()
@@ -454,13 +594,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              isExpanded: true,
+              itemHeight: null,
               initialValue: recurrenceSelection,
               decoration: const InputDecoration(labelText: 'Recorrência'),
-              items: const [
-                DropdownMenuItem(value: 'none', child: Text('Não repetir')),
-                DropdownMenuItem(value: 'FREQ=DAILY', child: Text('Diário')),
-                DropdownMenuItem(value: 'FREQ=WEEKLY', child: Text('Semanal')),
-                DropdownMenuItem(value: 'FREQ=MONTHLY', child: Text('Mensal')),
+              items: [
+                const DropdownMenuItem(
+                  value: 'none',
+                  child: Text('Não repetir'),
+                ),
+                const DropdownMenuItem(
+                  value: 'FREQ=DAILY',
+                  child: Text('Diário'),
+                ),
+                const DropdownMenuItem(
+                  value: 'FREQ=WEEKLY',
+                  child: Text('Semanal'),
+                ),
+                const DropdownMenuItem(
+                  value: 'FREQ=MONTHLY',
+                  child: Text('Mensal'),
+                ),
+                if (hasCustomRecurrence)
+                  const DropdownMenuItem(
+                    value: 'existing',
+                    child: Text('Manter repetição atual'),
+                  ),
               ],
               onChanged: saving
                   ? null
@@ -470,28 +629,58 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
+              isExpanded: true,
+              itemHeight: null,
               initialValue: reminderSelection,
               decoration: const InputDecoration(labelText: 'Lembrete'),
-              items: const [
-                DropdownMenuItem(value: 0, child: Text('Sem lembrete')),
-                DropdownMenuItem(value: 10, child: Text('10 minutos antes')),
-                DropdownMenuItem(value: 30, child: Text('30 minutos antes')),
-                DropdownMenuItem(value: 60, child: Text('1 hora antes')),
+              items: [
+                const DropdownMenuItem(value: -1, child: Text('Sem lembrete')),
+                const DropdownMenuItem(
+                  value: 0,
+                  child: Text('Na hora do evento'),
+                ),
+                const DropdownMenuItem(
+                  value: 10,
+                  child: Text('10 minutos antes'),
+                ),
+                const DropdownMenuItem(
+                  value: 30,
+                  child: Text('30 minutos antes'),
+                ),
+                const DropdownMenuItem(value: 60, child: Text('1 hora antes')),
+                if (hasCustomReminders)
+                  const DropdownMenuItem(
+                    value: -2,
+                    child: Text('Manter lembretes atuais'),
+                  ),
               ],
               onChanged: saving
                   ? null
                   : (value) =>
-                        setSheetState(() => reminderSelection = value ?? 0),
+                        setSheetState(() => reminderSelection = value ?? -1),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              isExpanded: true,
+              itemHeight: null,
               initialValue: colorSelection,
               decoration: const InputDecoration(labelText: 'Cor'),
-              items: const [
-                DropdownMenuItem(value: 'default', child: Text('Padrão')),
-                DropdownMenuItem(value: '1', child: Text('Lavanda')),
-                DropdownMenuItem(value: '2', child: Text('Menta')),
-                DropdownMenuItem(value: '3', child: Text('Rosa')),
+              items: [
+                const DropdownMenuItem(value: 'default', child: Text('Padrão')),
+                const DropdownMenuItem(value: '1', child: Text('Lavanda')),
+                const DropdownMenuItem(value: '2', child: Text('Menta')),
+                const DropdownMenuItem(value: '3', child: Text('Rosa')),
+                if (initial?.colorId != null &&
+                    !const [
+                      'default',
+                      '1',
+                      '2',
+                      '3',
+                    ].contains(initial!.colorId))
+                  DropdownMenuItem(
+                    value: initial.colorId,
+                    child: const Text('Manter cor atual'),
+                  ),
               ],
               onChanged: saving
                   ? null
@@ -523,14 +712,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     ))
                                 .copyWith(
                                   title: title.text,
-                                  start: start,
-                                  end: isAllDay
-                                      ? DateTime(
-                                          start.year,
-                                          start.month,
-                                          start.day,
-                                        ).add(const Duration(days: 1))
-                                      : end,
+                                  start: isAllDay
+                                      ? DateUtils.dateOnly(start)
+                                      : start,
+                                  end: isAllDay ? DateUtils.dateOnly(end) : end,
                                   isAllDay: isAllDay,
                                   description: description.text,
                                   clearDescription: description.text
@@ -538,10 +723,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       .isEmpty,
                                   recurrence: recurrenceSelection == 'none'
                                       ? const []
-                                      : [recurrenceSelection],
-                                  reminderMinutes: reminderSelection == 0
+                                      : recurrenceSelection == 'existing'
+                                      ? existingRecurrence
+                                      : ['RRULE:$recurrenceSelection'],
+                                  reminderMinutes: reminderSelection == -1
                                       ? const []
+                                      : reminderSelection == -2
+                                      ? existingReminders
                                       : [reminderSelection],
+                                  clearReminderConfiguration:
+                                      reminderSelection != -2,
                                   colorId: colorSelection == 'default'
                                       ? null
                                       : colorSelection,
@@ -814,7 +1005,10 @@ class _MonthCalendar extends StatelessWidget {
             child: Column(
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
+                  duration: lumeMotionDuration(
+                    context,
+                    const Duration(milliseconds: 180),
+                  ),
                   width: 30,
                   height: 30,
                   decoration: numberDecoration,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/app_controller.dart';
+import '../../gratitude/presentation/gratitude_editor.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
 import '../../../app/ui.dart' as app_ui;
@@ -29,26 +31,29 @@ class TodayScreen extends StatelessWidget {
         ? 'Boa tarde'
         : 'Boa noite';
     return app_ui.LumePage(
-      title: greeting,
-      subtitle: '${controller.formatDate(now)} · um passo de cada vez',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: 'Lorena',
+      eyebrow: '$greeting,',
+      subtitle: '${controller.formatDate(now)} · o dia é seu',
+      child: LumeStaggeredColumn(
         children: [
           LumeCard(
             tone: LumeCardTone.calendar,
             semanticLabel: 'Próximo compromisso',
             child: Row(
               children: [
-                const CircleAvatar(
-                  backgroundColor: Colors.white54,
-                  child: Icon(Icons.event_outlined),
+                CircleAvatar(
+                  backgroundColor: context.lumeColors.surface,
+                  child: const Icon(Icons.event_outlined),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: SizedBox(
-                    height: 68,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 68),
                     child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 220),
+                      duration: lumeMotionDuration(
+                        context,
+                        const Duration(milliseconds: 220),
+                      ),
                       layoutBuilder: (currentChild, previousChildren) => Stack(
                         alignment: Alignment.centerLeft,
                         children: <Widget>[...previousChildren, ?currentChild],
@@ -70,7 +75,7 @@ class TodayScreen extends StatelessWidget {
                 IconButton(
                   tooltip: 'Abrir Agenda',
                   onPressed: () =>
-                      Navigator.of(context).pushNamed('/app/calendar'),
+                      AppShell.goTo(context, AppDestination.calendar),
                   icon: const Icon(Icons.chevron_right),
                 ),
               ],
@@ -84,10 +89,10 @@ class TodayScreen extends StatelessWidget {
             unit: 'ml',
             tone: LumeCardTone.wellbeing,
             supportingText: waterTotal >= controller.settings.waterGoalMl
-                ? 'Meta alcançada — seu ritmo está ótimo.'
-                : 'Um copo a mais também conta 💧',
+                ? 'Meta alcançada. Seu ritmo está ótimo.'
+                : 'Um copo a mais também conta.',
             action: 'Ver histórico',
-            onAction: () => Navigator.of(context).pushNamed('/app/wellbeing'),
+            onAction: () => AppShell.goTo(context, AppDestination.wellbeing),
           ),
           const SizedBox(height: 12),
           Row(
@@ -157,14 +162,23 @@ class TodayScreen extends StatelessWidget {
             incomeMinor: controller.incomeFor(currentPeriod),
             expenseMinor: controller.expensesFor(currentPeriod),
             rolloverMinor: controller.rolloverFor(currentPeriod),
-            onTap: () => Navigator.of(context).pushNamed('/app/finance'),
+            onTap: () => AppShell.goTo(context, AppDestination.finance),
           ),
           const SizedBox(height: 24),
           const LumeSectionHeader(title: 'Gratidão de hoje'),
           const SizedBox(height: 10),
+          ExcludeSemantics(
+            child: Image.asset(
+              'assets/images/lume-editorial-still-life.png',
+              height: 160,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 12),
           LumeCard(
             tone: LumeCardTone.corner,
-            onTap: () => _showGratitude(context, gratitude?.text ?? ''),
+            onTap: () => showGratitudeEditor(context),
             child: gratitude == null
                 ? const Row(
                     children: [
@@ -177,11 +191,13 @@ class TodayScreen extends StatelessWidget {
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.favorite, color: Colors.pink),
+                      Icon(Icons.favorite, color: context.lumeColors.brand),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          gratitude.text,
+                          gratitude.text.isEmpty
+                              ? 'Uma foto para lembrar de hoje'
+                              : gratitude.text,
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -207,15 +223,18 @@ class TodayScreen extends StatelessWidget {
   ) async {
     final id = await controller.addWater(amount);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$amount ml adicionados.'),
-        action: SnackBarAction(
-          label: 'Desfazer',
-          onPressed: () => controller.removeWater(id),
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('$amount ml adicionados.'),
+          action: SnackBarAction(
+            label: 'Desfazer',
+            onPressed: () => controller.removeWater(id),
+          ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _showBowel(BuildContext context) async {
@@ -623,48 +642,6 @@ class TodayScreen extends StatelessWidget {
     note.dispose();
   }
 
-  Future<void> _showGratitude(BuildContext context, String initial) async {
-    final text = TextEditingController(text: initial);
-    await app_ui.showLumeSheet(
-      context,
-      title: 'Gratidão de hoje',
-      child: Column(
-        children: [
-          TextField(
-            controller: text,
-            autofocus: true,
-            maxLines: 5,
-            maxLength: 1000,
-            decoration: const InputDecoration(
-              labelText: 'O que foi bom hoje?',
-              alignLabelWithHint: true,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () async {
-                if (text.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Escreva algo antes de salvar.'),
-                    ),
-                  );
-                  return;
-                }
-                await AppScope.read(context).saveGratitude(text.text);
-                if (context.mounted) Navigator.pop(context);
-              },
-              child: const Text('Guardar'),
-            ),
-          ),
-        ],
-      ),
-    );
-    text.dispose();
-  }
-
   int? _parseMoney(String raw) {
     final normalized = raw.trim().replaceAll('.', '').replaceAll(',', '.');
     final value = double.tryParse(normalized);
@@ -702,7 +679,7 @@ class _UpcomingEventCopy extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             connected
-                ? 'Nenhum evento próximo no cache.'
+                ? 'Sem compromissos por enquanto. Um respiro no seu dia.'
                 : 'Conecte a Agenda quando quiser visualizar seus eventos.',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -766,8 +743,8 @@ class _ActionTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          height: 82,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 96),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
             child: Column(
@@ -792,7 +769,7 @@ class _ActionTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     color: context.lumeColors.text,
                     fontWeight: FontWeight.w600,
                   ),

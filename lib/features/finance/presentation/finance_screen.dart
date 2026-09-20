@@ -6,8 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_controller.dart';
 import '../../../app/lume_app.dart';
+import '../../../app/app_route.dart';
 import '../../../app/models.dart';
-import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
 import '../../../core/photos/local_photo_service.dart';
 import '../../../core/links/link_metadata.dart';
@@ -15,13 +15,84 @@ import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class FinanceScreen extends StatefulWidget {
-  const FinanceScreen({super.key});
+  const FinanceScreen({this.initialRoute, super.key});
+  final AppRouteRequest? initialRoute;
 
   @override
   State<FinanceScreen> createState() => _FinanceScreenState();
 }
 
-class _FinanceScreenState extends State<FinanceScreen> {
+class _FinanceScreenState extends State<FinanceScreen>
+    with InitialRouteHandler<FinanceScreen> {
+  @override
+  AppRouteRequest? get initialRoute => widget.initialRoute;
+  final _shoppingSection = GlobalKey();
+  final _wishlistSection = GlobalKey();
+
+  @override
+  Future<void> openInitialRoute(AppRouteRequest route) async {
+    final controller = AppScope.read(context);
+    switch (route.action) {
+      case AppRouteAction.transactionNew:
+        await _showTransaction(
+          context,
+          route.income ? TransactionType.income : TransactionType.expense,
+        );
+      case AppRouteAction.transactionEdit:
+        final entry = controller.transactions
+            .where((item) => item.id == route.id)
+            .firstOrNull;
+        if (entry == null) {
+          routeMessage();
+          return;
+        }
+        setState(
+          () => _selectedMonth = DateTime(
+            entry.occurredAt.year,
+            entry.occurredAt.month,
+          ),
+        );
+        await _showTransaction(context, entry.type, existing: entry);
+      case AppRouteAction.wishlistNew:
+        await _showWishlist(context);
+      case AppRouteAction.wishlistEdit:
+        final item = controller.wishlistItems
+            .where((item) => item.id == route.id)
+            .firstOrNull;
+        if (item == null) {
+          routeMessage();
+          return;
+        }
+        await _showWishlist(context, existing: item);
+      case AppRouteAction.shopping:
+        if (!controller.shoppingLists.any(
+          (list) => list.id == route.id && !list.isArchived,
+        )) {
+          routeMessage();
+          return;
+        }
+        await controller.selectShoppingList(route.id!);
+        if (!mounted) return;
+        await Scrollable.ensureVisible(
+          _shoppingSection.currentContext!,
+          duration: lumeMotionDuration(
+            context,
+            const Duration(milliseconds: 260),
+          ),
+        );
+      case AppRouteAction.wishlist:
+        await Scrollable.ensureVisible(
+          _wishlistSection.currentContext!,
+          duration: lumeMotionDuration(
+            context,
+            const Duration(milliseconds: 260),
+          ),
+        );
+      default:
+        break;
+    }
+  }
+
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   String? _categoryFilter;
   String? _handledSharedUrl;
@@ -170,6 +241,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ),
           const SizedBox(height: 28),
           LumeSectionHeader(
+            key: _shoppingSection,
             title: 'Lista de compras',
             actionLabel: 'Adicionar item',
             onAction: () => _showShoppingItem(context),
@@ -280,6 +352,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           ),
           const SizedBox(height: 28),
           LumeSectionHeader(
+            key: _wishlistSection,
             title: 'Desejos',
             actionLabel: 'Adicionar',
             onAction: () => _showWishlist(context),
@@ -360,23 +433,39 @@ class _FinanceScreenState extends State<FinanceScreen> {
       child: StatefulBuilder(
         builder: (context, setSheetState) => Column(
           children: [
-            SegmentedButton<TransactionType>(
-              segments: const [
-                ButtonSegment(
-                  value: TransactionType.expense,
-                  label: Text('Gasto'),
-                  icon: Icon(Icons.remove),
+            if (type == TransactionType.allowance ||
+                type == TransactionType.adjustment)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.savings_outlined),
+                title: Text(
+                  type == TransactionType.allowance
+                      ? 'Mesada do mês'
+                      : 'Ajuste de saldo',
                 ),
-                ButtonSegment(
-                  value: TransactionType.income,
-                  label: Text('Entrada'),
-                  icon: Icon(Icons.add),
+                subtitle: const Text(
+                  'Esta alteração vale para este lançamento.',
                 ),
-              ],
-              selected: {type},
-              onSelectionChanged: (value) =>
-                  setSheetState(() => type = value.first),
-            ),
+              )
+            else
+              SegmentedButton<TransactionType>(
+                segments: const [
+                  ButtonSegment(
+                    value: TransactionType.expense,
+                    label: Text('Gasto'),
+                    icon: Icon(Icons.remove),
+                  ),
+                  ButtonSegment(
+                    value: TransactionType.income,
+                    label: Text('Entrada'),
+                    icon: Icon(Icons.add),
+                  ),
+                ],
+                selected: {type},
+                onSelectionChanged: saving
+                    ? null
+                    : (value) => setSheetState(() => type = value.first),
+              ),
             const SizedBox(height: 16),
             TextField(
               controller: amount,
@@ -484,6 +573,16 @@ class _FinanceScreenState extends State<FinanceScreen> {
                               content: Text(
                                 error.message?.toString() ??
                                     'Confira os campos.',
+                              ),
+                            ),
+                          );
+                        } catch (_) {
+                          if (!context.mounted) return;
+                          setSheetState(() => saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Não foi possível salvar. Confira os dados e tente novamente.',
                               ),
                             ),
                           );
@@ -1012,7 +1111,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 width: 72,
                 height: 72,
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
+                  duration: lumeMotionDuration(
+                    context,
+                    const Duration(milliseconds: 180),
+                  ),
                   child: imageUrl != null || localImagePath != null
                       ? _WishlistImageThumb(
                           imageUrl: imageUrl,
@@ -1046,13 +1148,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                 padding: EdgeInsets.zero,
                                 minimumSize: Size.zero,
                               ),
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_photo_alternate_outlined),
-                                  SizedBox(height: 2),
-                                  Text('Foto'),
-                                ],
+                              child: const Icon(
+                                Icons.add_photo_alternate_outlined,
                               ),
                             ),
                           ),
@@ -1140,6 +1237,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
               if (existing != null) ...[
                 const SizedBox(height: 12),
                 DropdownButtonFormField<WishlistStatus>(
+                  isExpanded: true,
+                  itemHeight: null,
                   initialValue: status,
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: const [
@@ -1367,8 +1466,8 @@ class _TransactionRow extends StatelessWidget {
           CircleAvatar(
             radius: 19,
             backgroundColor: isExpense
-                ? app_theme.LumeColors.finance
-                : app_theme.LumeColors.wellbeing,
+                ? context.lumeColors.finance
+                : context.lumeColors.wellbeing,
             child: Icon(
               isExpense ? Icons.arrow_downward : Icons.arrow_upward,
               size: 18,
@@ -1409,7 +1508,7 @@ class _TransactionRow extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: isExpense
                       ? Theme.of(context).colorScheme.error
-                      : app_theme.LumeColors.brandStrong,
+                      : context.lumeColors.brandStrong,
                 ),
               ),
               PopupMenuButton<String>(
@@ -1644,12 +1743,12 @@ class _WishlistImagePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ColoredBox(
-    color: app_theme.LumeColors.brandSoft,
+    color: context.lumeColors.brandSoft,
     child: Center(
       child: Icon(
         Icons.favorite_border,
         size: size * 0.45,
-        color: app_theme.LumeColors.brandStrong,
+        color: context.lumeColors.brandStrong,
       ),
     ),
   );
@@ -1670,7 +1769,7 @@ class _LocalPhotoThumb extends StatelessWidget {
       height: size,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => CircleAvatar(
-        backgroundColor: app_theme.LumeColors.brandSoft,
+        backgroundColor: context.lumeColors.brandSoft,
         child: const Icon(Icons.broken_image_outlined),
       ),
     ),

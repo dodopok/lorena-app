@@ -958,6 +958,8 @@ class CalendarEvent {
     this.htmlLink,
     this.recurrence = const [],
     this.reminderMinutes = const [],
+    this.reminderConfiguration,
+    this.timeZone = 'America/Sao_Paulo',
   });
 
   final String? id;
@@ -972,6 +974,8 @@ class CalendarEvent {
   final String? htmlLink;
   final List<String> recurrence;
   final List<int> reminderMinutes;
+  final Map<String, dynamic>? reminderConfiguration;
+  final String timeZone;
 
   CalendarEvent copyWith({
     String? id,
@@ -988,6 +992,9 @@ class CalendarEvent {
     String? htmlLink,
     List<String>? recurrence,
     List<int>? reminderMinutes,
+    Map<String, dynamic>? reminderConfiguration,
+    bool clearReminderConfiguration = false,
+    String? timeZone,
   }) => CalendarEvent(
     id: id ?? this.id,
     calendarId: calendarId ?? this.calendarId,
@@ -1001,6 +1008,10 @@ class CalendarEvent {
     htmlLink: htmlLink ?? this.htmlLink,
     recurrence: recurrence ?? this.recurrence,
     reminderMinutes: reminderMinutes ?? this.reminderMinutes,
+    reminderConfiguration: clearReminderConfiguration
+        ? null
+        : reminderConfiguration ?? this.reminderConfiguration,
+    timeZone: timeZone ?? this.timeZone,
   );
 
   Map<String, dynamic> toJson() => {
@@ -1017,9 +1028,16 @@ class CalendarEvent {
     if (htmlLink != null && htmlLink!.isNotEmpty) 'htmlLink': htmlLink,
     if (recurrence.isNotEmpty) 'recurrence': recurrence,
     if (reminderMinutes.isNotEmpty) 'reminderMinutes': reminderMinutes,
+    if (reminderConfiguration != null)
+      'reminderConfiguration': reminderConfiguration,
+    'timeZone': timeZone,
   };
 
   factory CalendarEvent.fromJson(Map<String, dynamic> map) => CalendarEvent(
+    reminderConfiguration: map['reminderConfiguration'] is Map
+        ? Map<String, dynamic>.from(map['reminderConfiguration'] as Map)
+        : null,
+    timeZone: _string(map, 'timeZone', 'America/Sao_Paulo'),
     id: map['id'] is String ? map['id'] as String : null,
     calendarId: _string(map, 'calendarId', 'primary'),
     title: _string(map, 'title', 'Sem título'),

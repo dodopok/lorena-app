@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../app/environment.dart';
+import '../../../core/theme/lume_theme.dart';
 import '../../../app/lume_app.dart';
 import '../../../app/models.dart';
-import '../../../app/theme.dart' as app_theme;
 import '../../../app/ui.dart' as app_ui;
 
 class SettingsScreen extends StatelessWidget {
@@ -169,7 +169,7 @@ class SettingsScreen extends StatelessWidget {
               child: Text(
                 'Lume · ambiente ${LumeBuildConfig.label} · dados locais + Firebase',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: app_theme.LumeColors.textSecondary,
+                  color: context.lumeColors.textSecondary,
                 ),
               ),
             ),
@@ -497,7 +497,7 @@ class PrivacyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             app_ui.LumeCard(
-              color: app_theme.LumeColors.brandSoft.withValues(alpha: .5),
+              color: context.lumeColors.brandSoft.withValues(alpha: .5),
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -531,7 +531,7 @@ class PrivacyScreen extends StatelessWidget {
             Text(
               'A exclusão exige confirmação clara. O fluxo remove o snapshot local, dados remotos e mídias conhecidas do UID.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: app_theme.LumeColors.textSecondary,
+                color: context.lumeColors.textSecondary,
               ),
             ),
             const SizedBox(height: 12),

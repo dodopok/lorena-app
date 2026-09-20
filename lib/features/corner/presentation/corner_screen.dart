@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../app/lume_app.dart';
+import '../../../app/app_route.dart';
+import '../../gratitude/presentation/gratitude_editor.dart';
 import '../../../app/models.dart';
 import '../../../app/ui.dart' as app_ui;
 import '../../../core/photos/local_photo_service.dart';
@@ -10,13 +12,58 @@ import '../../../core/theme/lume_theme.dart';
 import '../../../core/widgets/lume_widgets.dart';
 
 class CornerScreen extends StatefulWidget {
-  const CornerScreen({super.key});
+  const CornerScreen({this.initialRoute, super.key});
+  final AppRouteRequest? initialRoute;
 
   @override
   State<CornerScreen> createState() => _CornerScreenState();
 }
 
-class _CornerScreenState extends State<CornerScreen> {
+class _CornerScreenState extends State<CornerScreen>
+    with InitialRouteHandler<CornerScreen> {
+  @override
+  AppRouteRequest? get initialRoute => widget.initialRoute;
+  final _booksSection = GlobalKey();
+  final _gratitudeSection = GlobalKey();
+
+  @override
+  Future<void> openInitialRoute(AppRouteRequest route) async {
+    final controller = AppScope.read(context);
+    switch (route.action) {
+      case AppRouteAction.bookNew:
+        await _showBook(context);
+      case AppRouteAction.bookEdit:
+        final book = controller.books
+            .where((item) => item.id == route.id)
+            .firstOrNull;
+        if (book == null) {
+          routeMessage();
+          return;
+        }
+        await _showBook(context, existing: book);
+      case AppRouteAction.gratitudeEdit:
+        final day = DateTime.parse(route.id!);
+        if (controller.gratitudeFor(day).isEmpty) {
+          routeMessage();
+          return;
+        }
+        await showGratitudeEditor(context, date: day);
+      case AppRouteAction.books:
+        await Scrollable.ensureVisible(
+          _booksSection.currentContext!,
+          alignment: 0,
+          duration: lumeMotionDuration(
+            context,
+            const Duration(milliseconds: 260),
+          ),
+        );
+      case AppRouteAction.gratitude:
+        await _showGratitudeHistory(context);
+      default:
+        break;
+    }
+  }
+
   String _bookQuery = '';
   BookStatus? _bookFilter;
 
@@ -80,6 +127,8 @@ class _CornerScreenState extends State<CornerScreen> {
                   child: Text(
                     today == null
                         ? 'Quer guardar algo bom de hoje?'
+                        : today.text.isEmpty
+                        ? 'Uma boa lembrança de hoje'
                         : today.text,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
@@ -91,6 +140,7 @@ class _CornerScreenState extends State<CornerScreen> {
           ),
           const SizedBox(height: 26),
           LumeSectionHeader(
+            key: _booksSection,
             title: 'Biblioteca',
             actionLabel: 'Adicionar livro',
             onAction: () => _showBook(context),
@@ -167,8 +217,10 @@ class _CornerScreenState extends State<CornerScreen> {
             ),
           const SizedBox(height: 26),
           LumeSectionHeader(
+            key: _gratitudeSection,
             title: 'Histórico de gratidão',
             actionLabel: sortedGratitude.isEmpty ? null : 'Ver tudo',
+            onAction: () => _showGratitudeHistory(context),
           ),
           const SizedBox(height: 8),
           if (sortedGratitude.isEmpty)
@@ -197,9 +249,13 @@ class _CornerScreenState extends State<CornerScreen> {
                               path: entry.localImagePath!,
                             ),
                           ),
-                    title: Text(entry.localDate),
+                    title: Text(
+                      controller.formatDate(DateTime.parse(entry.localDate)),
+                    ),
                     subtitle: Text(
-                      entry.text.isEmpty ? 'Foto salva localmente' : entry.text,
+                      entry.text.isEmpty
+                          ? 'Uma boa lembrança em foto'
+                          : entry.text,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -230,157 +286,16 @@ class _CornerScreenState extends State<CornerScreen> {
   String _shortDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
 
-  Future<void> _showGratitude(
-    BuildContext context, {
-    GratitudeEntry? entry,
-  }) async {
-    final text = TextEditingController(text: entry?.text ?? '');
-    String? localImagePath = entry?.localImagePath;
-    var saving = false;
-    await app_ui.showLumeSheet(
-      context,
-      title: entry == null ? 'Gratidão de hoje' : 'Editar gratidão',
-      child: StatefulBuilder(
-        builder: (context, setSheetState) => Column(
-          children: [
-            if (localImagePath != null) ...[
-              GestureDetector(
-                onTap: () => showLumePhotoViewer(
-                  context,
-                  path: localImagePath!,
-                  semanticLabel: 'Foto de gratidão',
-                ),
-                child: _LocalPhotoPreview(path: localImagePath!),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: saving
-                      ? null
-                      : () => setSheetState(() => localImagePath = null),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Remover foto'),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            OutlinedButton.icon(
-              onPressed: saving
-                  ? null
-                  : () async {
-                      final path = await AppScope.read(
-                        context,
-                      ).pickLocalPhoto(LocalPhotoKind.gratitude);
-                      if (path != null && context.mounted) {
-                        setSheetState(() => localImagePath = path);
-                      }
-                    },
-              icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(
-                localImagePath == null ? 'Adicionar foto' : 'Trocar foto',
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: text,
-              autofocus: entry == null,
-              maxLines: 5,
-              maxLength: 1000,
-              decoration: const InputDecoration(
-                labelText: 'O que foi bom hoje?',
-                alignLabelWithHint: true,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: saving
-                    ? null
-                    : () async {
-                        if (text.text.trim().isEmpty &&
-                            (localImagePath == null ||
-                                localImagePath!.isEmpty)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Escreva algo ou adicione uma foto.',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                        setSheetState(() => saving = true);
-                        try {
-                          await AppScope.read(context).saveGratitude(
-                            text.text,
-                            date: entry == null
-                                ? null
-                                : DateTime.tryParse(entry.localDate),
-                            localImagePath: localImagePath,
-                          );
-                          if (context.mounted) Navigator.pop(context);
-                        } on ArgumentError catch (error) {
-                          if (!context.mounted) return;
-                          setSheetState(() => saving = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                error.message?.toString() ??
-                                    'Confira os campos.',
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                child: Text(saving ? 'Salvando…' : 'Guardar'),
-              ),
-            ),
-            if (entry != null) ...[
-              const SizedBox(height: 4),
-              TextButton.icon(
-                onPressed: saving
-                    ? null
-                    : () => _deleteGratitude(context, entry),
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Excluir entrada'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-    text.dispose();
-  }
+  Future<void> _showGratitude(BuildContext context, {GratitudeEntry? entry}) =>
+      showGratitudeEditor(
+        context,
+        date: entry == null ? null : DateTime.parse(entry.localDate),
+      );
 
-  Future<void> _deleteGratitude(
-    BuildContext context,
-    GratitudeEntry entry,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir esta gratidão?'),
-        content: const Text(
-          'O texto e a foto associados a este dia serão removidos do app.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
-    );
-    if (!context.mounted || confirmed != true) return;
-    final controller = AppScope.read(context);
-    await controller.removeGratitude(entry.localDate);
-    if (context.mounted) Navigator.pop(context);
-  }
+  Future<void> _showGratitudeHistory(BuildContext context) =>
+      Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => const _GratitudeHistoryScreen()),
+      );
 
   Future<void> _showBook(BuildContext context, {BookEntry? existing}) async {
     final title = TextEditingController(text: existing?.title ?? '');
@@ -456,6 +371,8 @@ class _CornerScreenState extends State<CornerScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<BookStatus>(
+              isExpanded: true,
+              itemHeight: null,
               initialValue: status,
               decoration: const InputDecoration(labelText: 'Estado'),
               items: const [
@@ -534,6 +451,8 @@ class _CornerScreenState extends State<CornerScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
+              isExpanded: true,
+              itemHeight: null,
               initialValue: rating,
               decoration: const InputDecoration(
                 labelText: 'Avaliação (opcional)',
@@ -783,6 +702,72 @@ class _LocalPhotoThumb extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _GratitudeHistoryScreen extends StatelessWidget {
+  const _GratitudeHistoryScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = AppScope.of(context);
+    final entries = [...controller.gratitudeEntries]
+      ..sort((a, b) => b.localDate.compareTo(a.localDate));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Histórico de gratidão')),
+      body: SafeArea(
+        child: entries.isEmpty
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('Suas boas lembranças vão aparecer aqui.'),
+                ),
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.all(20),
+                itemCount: entries.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final entry = entries[index];
+                  final date = DateTime.parse(entry.localDate);
+                  return LumeCard(
+                    tone: LumeCardTone.corner,
+                    onTap: () => showGratitudeEditor(context, date: date),
+                    child: Row(
+                      children: [
+                        if (entry.localImagePath != null)
+                          _LocalPhotoThumb(path: entry.localImagePath!)
+                        else
+                          const Icon(Icons.favorite_outline),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${controller.formatDate(date)} de ${date.year}',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                entry.text.isEmpty
+                                    ? 'Uma boa lembrança em foto'
+                                    : entry.text,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      ),
+    );
+  }
 }
 
 class _LocalPhotoPreview extends StatelessWidget {

@@ -74,8 +74,14 @@ void main() {
 
     expect(payload['id'], 'event-1');
     expect(payload['summary'], 'Consulta');
-    expect(payload['start'], {'dateTime': '2026-08-24T13:00:00.000Z'});
-    expect(payload['end'], {'dateTime': '2026-08-24T14:00:00.000Z'});
+    expect(payload['start'], {
+      'dateTime': '2026-08-24T13:00:00.000Z',
+      'timeZone': 'America/Sao_Paulo',
+    });
+    expect(payload['end'], {
+      'dateTime': '2026-08-24T14:00:00.000Z',
+      'timeZone': 'America/Sao_Paulo',
+    });
     expect(payload['recurrence'], ['RRULE:FREQ=WEEKLY;COUNT=2']);
     expect(payload['reminders'], {
       'useDefault': false,
@@ -111,4 +117,38 @@ void main() {
       throwsA(isA<CalendarGatewayException>()),
     );
   });
+
+  test(
+    'patch explicitly clears edited fields and retains default Google reminders through local persistence',
+    () {
+      final original = parseCalendarEvent({
+        'id': 'event-1',
+        'summary': 'Agenda',
+        'start': {
+          'dateTime': '2026-09-01T12:00:00Z',
+          'timeZone': 'Europe/Lisbon',
+        },
+        'end': {'dateTime': '2026-09-01T13:00:00Z'},
+        'reminders': {'useDefault': true},
+      })!;
+      final restored = CalendarEvent.fromJson(original.toJson());
+      final patch = calendarEventRequestBody(
+        restored.copyWith(title: 'Título atualizado'),
+        includeId: false,
+      );
+      expect(patch['reminders'], {'useDefault': true});
+      expect((patch['start'] as Map)['timeZone'], 'Europe/Lisbon');
+      expect((patch['start'] as Map).containsKey('date'), isTrue);
+      expect(patch['recurrence'], isEmpty);
+      expect(patch['description'], '');
+      expect(patch.containsKey('colorId'), isTrue);
+      expect(patch.containsKey('attendees'), isFalse);
+      expect(patch.containsKey('location'), isFalse);
+      final cleared = calendarEventRequestBody(
+        restored.copyWith(clearReminderConfiguration: true),
+        includeId: false,
+      );
+      expect(cleared['reminders'], {'useDefault': false, 'overrides': []});
+    },
+  );
 }

@@ -81,6 +81,8 @@ class AppController extends ChangeNotifier {
   Uri? pendingSharedUrl;
 
   bool get linkExtractionAvailable => _linkMetadataGateway != null;
+  bool get usesAppleSignIn =>
+      _authGateway != null && _authGateway is! LocalAuthGateway;
 
   Future<LinkMetadata?> extractWishlistMetadata(String rawUrl) async {
     final gateway = _linkMetadataGateway;
@@ -280,9 +282,11 @@ class AppController extends ChangeNotifier {
     await _store.write(_snapshot());
     await syncRemote();
     _queuePhotoSync();
+    notifyListeners();
   }
 
   Future<void> signOut() async {
+    await _store.clearDrafts(draftOwner);
     await _remoteWriteQueue;
     await _notificationGateway?.cancelAll();
     await _authGateway?.signOut();
@@ -443,6 +447,8 @@ class AppController extends ChangeNotifier {
     required int allowanceDayOfMonth,
     required RolloverMode rolloverMode,
   }) async {
+    final previousSettings = settings;
+    final previousTransactions = transactions;
     settings = settings.copyWith(
       waterGoalMl: waterGoalMl,
       allowanceAmountMinor: allowanceAmountMinor,
@@ -451,7 +457,14 @@ class AppController extends ChangeNotifier {
       onboardingComplete: true,
     );
     _ensureAllowanceForPeriod(periodFor(DateTime.now()));
-    await _commit();
+    try {
+      await _commit();
+    } catch (_) {
+      settings = previousSettings;
+      transactions = previousTransactions;
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<void> updateSettings(UserSettings next) async {
@@ -526,6 +539,7 @@ class AppController extends ChangeNotifier {
     if (amountMl <= 0) throw ArgumentError.value(amountMl, 'amountMl');
     final occurredAt = at ?? DateTime.now();
     final id = _id('water');
+    final previousLogs = waterLogs;
     waterLogs = [
       ...waterLogs,
       WaterLog(
@@ -536,7 +550,13 @@ class AppController extends ChangeNotifier {
         syncState: SyncState.pending,
       ),
     ];
-    await _commit();
+    try {
+      await _commit();
+    } catch (_) {
+      waterLogs = previousLogs;
+      notifyListeners();
+      rethrow;
+    }
     return id;
   }
 
@@ -708,6 +728,7 @@ class AppController extends ChangeNotifier {
     String? note,
   }) async {
     if (amountMinor <= 0) throw ArgumentError.value(amountMinor, 'amountMinor');
+    final previousTransactions = transactions;
     final occurredAt = at ?? DateTime.now();
     transactions = [
       ...transactions,
@@ -723,7 +744,13 @@ class AppController extends ChangeNotifier {
         syncState: SyncState.pending,
       ),
     ];
-    await _commit();
+    try {
+      await _commit();
+    } catch (_) {
+      transactions = previousTransactions;
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<TransactionEntry?> removeTransaction(String id) async {
@@ -752,6 +779,7 @@ class AppController extends ChangeNotifier {
     if (amountMinor <= 0) throw ArgumentError.value(amountMinor, 'amountMinor');
     final existing = transactions.where((entry) => entry.id == id).firstOrNull;
     if (existing == null) throw ArgumentError('Lançamento não encontrado');
+    final previousTransactions = transactions;
     final occurredAt = at ?? existing.occurredAt;
     transactions = transactions
         .map(
@@ -771,7 +799,13 @@ class AppController extends ChangeNotifier {
               : entry,
         )
         .toList();
-    await _commit();
+    try {
+      await _commit();
+    } catch (_) {
+      transactions = previousTransactions;
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<String?> pickLocalPhoto(LocalPhotoKind kind) =>
@@ -782,6 +816,25 @@ class AppController extends ChangeNotifier {
   Future<void> retryPhotoUploads() {
     _queuePhotoSync();
     return _photoSyncQueue;
+  }
+
+  /// Drafts stay on this device and are isolated from other signed-in accounts.
+  String get draftOwner => _authGateway?.userId ?? 'local';
+
+  Future<Map<String, dynamic>?> readDraft(String key) =>
+      _store.readDraft(draftOwner, key);
+
+  Future<void> writeDraft(
+    String key,
+    Map<String, dynamic>? value, {
+    required String owner,
+  }) {
+    if (owner != draftOwner || !signedIn) {
+      return Future.error(
+        StateError('Sua sessão mudou. Abra o editor novamente.'),
+      );
+    }
+    return _store.writeDraft(owner, key, value);
   }
 
   Future<void> saveGratitude(
@@ -798,16 +851,6 @@ class AppController extends ChangeNotifier {
         .where((item) => item.localDate == localDate)
         .firstOrNull;
     final imageUnchanged = previous?.localImagePath == localImagePath;
-    if (previous != null && !imageUnchanged) {
-      for (final remotePath in previous.remoteImagePaths) {
-        _queuePhotoDeletion(
-          category: PhotoCategory.gratitude,
-          id: previous.localDate,
-          remotePath: remotePath,
-        );
-      }
-      await _deleteLocalPhoto(previous.localImagePath);
-    }
     final entry = GratitudeEntry(
       localDate: localDate,
       text: trimmed,
@@ -822,11 +865,28 @@ class AppController extends ChangeNotifier {
           : MediaSyncState.pending,
       syncState: SyncState.pending,
     );
+    final previousEntries = gratitudeEntries;
     gratitudeEntries = [
       ...gratitudeEntries.where((item) => item.localDate != localDate),
       entry,
     ];
-    await _commit();
+    try {
+      await _commit();
+    } catch (_) {
+      gratitudeEntries = previousEntries;
+      notifyListeners();
+      rethrow;
+    }
+    if (previous != null && !imageUnchanged) {
+      for (final remotePath in previous.remoteImagePaths) {
+        _queuePhotoDeletion(
+          category: PhotoCategory.gratitude,
+          id: previous.localDate,
+          remotePath: remotePath,
+        );
+      }
+      await _deleteLocalPhoto(previous.localImagePath);
+    }
     _queuePhotoSync();
   }
 
@@ -835,10 +895,17 @@ class AppController extends ChangeNotifier {
         .where((item) => item.localDate == localDate)
         .firstOrNull;
     if (existing == null) return;
+    final previousEntries = gratitudeEntries;
     gratitudeEntries = gratitudeEntries
         .where((item) => item.localDate != localDate)
         .toList();
-    await _commit();
+    try {
+      await _commit();
+    } catch (_) {
+      gratitudeEntries = previousEntries;
+      notifyListeners();
+      rethrow;
+    }
     for (final remotePath in existing.remoteImagePaths) {
       _queuePhotoDeletion(
         category: PhotoCategory.gratitude,
@@ -1616,9 +1683,9 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> _commit() async {
-    notifyListeners();
     final snapshot = _snapshot();
     await _store.write(snapshot);
+    notifyListeners();
     _queueRemoteWrite(snapshot);
   }
 

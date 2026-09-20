@@ -10,7 +10,7 @@ void main() {
 
     expect(find.text('Lume'), findsOneWidget);
     expect(find.text('Começar'), findsOneWidget);
-    expect(find.textContaining('pequenos passos'), findsOneWidget);
+    expect(find.textContaining('pequenos momentos'), findsOneWidget);
   });
 
   testWidgets('escudo de privacidade mantém Directionality no app', (

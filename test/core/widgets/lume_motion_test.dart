@@ -55,4 +55,40 @@ void main() {
     expect(find.byKey(const ValueKey('reduced-child')), findsOneWidget);
     expect(find.byKey(const ValueKey('lume-reveal-fade')), findsNothing);
   });
+
+  testWidgets(
+    'press feedback keeps bounds and skips scaling with Reduce Motion',
+    (tester) async {
+      for (final reduce in [false, true]) {
+        await tester.pumpWidget(
+          _host(
+            const LumePressScale(
+              child: SizedBox(
+                width: 120,
+                height: 48,
+                child: ColoredBox(color: Colors.pink),
+              ),
+            ),
+            disableAnimations: reduce,
+          ),
+        );
+        final before = tester.getSize(find.byType(LumePressScale));
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byType(LumePressScale)),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale,
+          reduce ? 1 : .975,
+        );
+        expect(tester.getSize(find.byType(LumePressScale)), before);
+        await gesture.up();
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale,
+          1,
+        );
+      }
+    },
+  );
 }

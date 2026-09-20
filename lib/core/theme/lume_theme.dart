@@ -36,14 +36,14 @@ class LumeColors extends ThemeExtension<LumeColors> {
   final Color onSoft;
 
   static const light = LumeColors(
-    background: Color(0xFFFAF8F7),
-    surface: Color(0xFFFFFEFC),
+    background: Color(0xFFF9F8FA),
+    surface: Color(0xFFFFFFFF),
     brand: Color(0xFFA44266),
     brandSoft: Color(0xFFF3E7EC),
     brandStrong: Color(0xFF6F2947),
-    calendar: Color(0xFFEEEAF4),
-    wellbeing: Color(0xFFE6EFE9),
-    finance: Color(0xFFF4EBDD),
+    calendar: Color(0xFFE6EDF5),
+    wellbeing: Color(0xFFE3F0EB),
+    finance: Color(0xFFF2EBD7),
     text: Color(0xFF2E272A),
     textSecondary: Color(0xFF756B70),
     border: Color(0xFFE6DEE1),
@@ -139,9 +139,9 @@ class LumeSpacing {
 
 class LumeRadii {
   const LumeRadii._();
-  static const control = 10.0;
-  static const card = 16.0;
-  static const sheet = 20.0;
+  static const control = 14.0;
+  static const card = 22.0;
+  static const sheet = 28.0;
   static const pill = 999.0;
 }
 
@@ -153,37 +153,143 @@ class LumeTheme {
   static ThemeData dark() => _theme(Brightness.dark, LumeColors.dark);
 
   static ThemeData _theme(Brightness brightness, LumeColors colors) {
-    final scheme = ColorScheme(
-      brightness: brightness,
-      primary: colors.brand,
-      onPrimary: colors.onBrand,
-      secondary: colors.brandStrong,
-      onSecondary: colors.onBrand,
-      error: colors.error,
-      onError: brightness == Brightness.light ? Colors.white : Colors.black,
-      surface: colors.surface,
-      onSurface: colors.text,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: colors.brand,
+          brightness: brightness,
+          surface: colors.surface,
+        ).copyWith(
+          primary: colors.brand,
+          onPrimary: colors.onBrand,
+          primaryContainer: colors.brandSoft,
+          onPrimaryContainer: colors.onSoft,
+          secondary: colors.brandStrong,
+          onSurface: colors.text,
+          onSurfaceVariant: colors.textSecondary,
+          outline: colors.border,
+          error: colors.error,
+        );
     final base = ThemeData(
       brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: colors.background,
+      fontFamily: 'Nunito',
       splashFactory: InkRipple.splashFactory,
       visualDensity: VisualDensity.standard,
       useMaterial3: true,
     );
+    final text = base.textTheme;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(LumeRadii.control),
+      borderSide: BorderSide(color: colors.border),
+    );
+    final buttonShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(LumeRadii.control),
+    );
     return base.copyWith(
       extensions: <ThemeExtension<dynamic>>[colors],
-      textTheme: base.textTheme.apply(
-        bodyColor: colors.text,
-        displayColor: colors.text,
+      textTheme: text
+          .copyWith(
+            headlineMedium: text.headlineMedium?.copyWith(
+              fontFamily: 'Lora',
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0,
+            ),
+            headlineSmall: text.headlineSmall?.copyWith(
+              fontFamily: 'Lora',
+              letterSpacing: 0,
+            ),
+            displayMedium: text.displayMedium?.copyWith(
+              fontFamily: 'Lora',
+              letterSpacing: 0,
+            ),
+            titleLarge: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            titleMedium: text.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            bodyMedium: text.bodyMedium?.copyWith(height: 1.45),
+            bodySmall: text.bodySmall?.copyWith(height: 1.4),
+          )
+          .apply(bodyColor: colors.text, displayColor: colors.text),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        },
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: colors.background,
         foregroundColor: colors.text,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        helperMaxLines: 3,
+        errorMaxLines: 3,
+        filled: true,
+        fillColor: colors.surface,
+        border: border,
+        enabledBorder: border,
+        focusedBorder: border.copyWith(
+          borderSide: BorderSide(color: colors.brand, width: 2),
+        ),
+        errorBorder: border.copyWith(
+          borderSide: BorderSide(color: colors.error),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: colors.surface,
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(LumeRadii.card),
+          side: BorderSide(color: colors.border),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(44, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: buttonShape,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(44, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          side: BorderSide(color: colors.border),
+          shape: buttonShape,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colors.surface,
+        surfaceTintColor: Colors.transparent,
+        dragHandleColor: colors.border,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(LumeRadii.sheet),
+          ),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colors.brandStrong,
+        contentTextStyle: TextStyle(
+          color: colors.surface,
+          fontFamily: 'Nunito',
+        ),
+        actionTextColor: colors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      dividerTheme: DividerThemeData(color: colors.border, thickness: 1),
     );
   }
 }

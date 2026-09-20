@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../core/widgets/lume_motion.dart';
 import 'theme.dart';
+import '../core/theme/lume_theme.dart' show LumeThemeContext;
 
 class LumePage extends StatelessWidget {
   const LumePage({
     required this.title,
     required this.child,
     this.subtitle,
+    this.eyebrow,
     this.actions,
     this.showProfile = true,
     this.padding = const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -16,6 +18,7 @@ class LumePage extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+  final String? eyebrow;
   final Widget child;
   final List<Widget>? actions;
   final bool showProfile;
@@ -23,25 +26,28 @@ class LumePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.lumeColors;
     return SafeArea(
+      bottom: false,
       child: CustomScrollView(
+        key: PageStorageKey('page-$title'),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
           SliverAppBar(
             pinned: true,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            surfaceTintColor: Colors.transparent,
+            toolbarHeight: eyebrow == null ? 76 : 96,
             titleSpacing: 20,
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                if (subtitle != null)
+                if (eyebrow != null)
                   Text(
-                    subtitle!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: LumeColors.textSecondary,
+                    eyebrow!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
                     ),
                   ),
+                Text(title, style: Theme.of(context).textTheme.headlineMedium),
               ],
             ),
             actions: [
@@ -51,23 +57,42 @@ class LumePage extends StatelessWidget {
                   tooltip: 'Abrir configurações',
                   onPressed: () =>
                       Navigator.of(context).pushNamed('/app/settings'),
-                  icon: const CircleAvatar(
-                    radius: 16,
-                    backgroundColor: LumeColors.brandSoft,
+                  icon: CircleAvatar(
+                    radius: 19,
+                    backgroundColor: colors.brandSoft,
                     child: Icon(
                       Icons.person_outline,
-                      size: 18,
-                      color: LumeColors.brandStrong,
+                      size: 21,
+                      color: colors.brandStrong,
                     ),
                   ),
                 ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
             ],
           ),
+          if (subtitle != null)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  subtitle!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+                ),
+              ),
+            ),
           SliverPadding(
             padding: padding,
             sliver: SliverToBoxAdapter(
-              child: LumeReveal(child: LumeAnimatedContent(child: child)),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: child is LumeStaggeredColumn
+                      ? child
+                      : LumeReveal(child: child),
+                ),
+              ),
             ),
           ),
         ],
@@ -262,8 +287,6 @@ class LumeQuickAction extends StatelessWidget {
   );
 }
 
-const _lumeSheetDismissSettleDuration = Duration(milliseconds: 250);
-
 Future<void> showLumeSheet(
   BuildContext context, {
   required String title,
@@ -286,6 +309,7 @@ Future<void> showLumeSheet(
             MediaQuery.viewInsetsOf(context).bottom + 24,
           ),
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,7 +325,7 @@ Future<void> showLumeSheet(
                     ),
                     IconButton(
                       tooltip: 'Fechar',
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(context).maybePop(),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -324,15 +348,29 @@ Future<void> _showLumeSheetAndSettle({
   required Color backgroundColor,
   required WidgetBuilder builder,
 }) async {
-  await showModalBottomSheet<void>(
-    context: context,
+  final navigator = Navigator.of(context);
+  final localizations = MaterialLocalizations.of(context);
+  final route = ModalBottomSheetRoute<void>(
+    capturedThemes: InheritedTheme.capture(
+      from: context,
+      to: navigator.context,
+    ),
+    barrierLabel: localizations.scrimLabel,
+    barrierOnTapHint: localizations.scrimOnTapHint(
+      localizations.bottomSheetLabel,
+    ),
+    modalBarrierColor: Theme.of(context).bottomSheetTheme.modalBarrierColor,
     isScrollControlled: isScrollControlled,
     useSafeArea: true,
+    sheetAnimationStyle: MediaQuery.disableAnimationsOf(context)
+        ? AnimationStyle.noAnimation
+        : null,
     showDragHandle: showDragHandle,
     backgroundColor: backgroundColor,
     builder: builder,
   );
-  // showModalBottomSheet completes when the route is popped, before the
-  // reverse animation has fully removed the sheet's editable children.
-  await Future<void>.delayed(_lumeSheetDismissSettleDuration);
+  await navigator.push(route);
+  // Editors can dispose their controllers only after the reverse transition
+  // has removed every editable child, including with slower system animations.
+  await route.completed;
 }

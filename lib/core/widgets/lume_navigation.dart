@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lume/core/theme/lume_theme.dart';
 import 'package:lume/core/widgets/lume_motion.dart';
 
@@ -39,29 +40,45 @@ class LumeBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.lumeColors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: c.surface,
-        border: Border(top: BorderSide(color: c.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(4, 5, 4, 3),
-        child: Row(
-          children: [
-            for (final item in _items)
-              Expanded(
-                child: _DestinationButton(
-                  item: item,
-                  selected: item.$1 == currentDestination,
-                  onPressed: () {
-                    if (item.$1 != currentDestination) {
-                      onDestinationSelected(item.$1);
-                    }
-                  },
-                ),
+    return Align(
+      heightFactor: 1,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: c.border),
+            boxShadow: [
+              BoxShadow(
+                color: c.text.withValues(alpha: .05),
+                blurRadius: 24,
+                offset: const Offset(0, 6),
               ),
-          ],
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            minimum: const EdgeInsets.fromLTRB(8, 10, 8, 6),
+            child: Row(
+              children: [
+                for (final item in _items)
+                  Expanded(
+                    child: _DestinationButton(
+                      item: item,
+                      selected: item.$1 == currentDestination,
+                      onPressed: () {
+                      if (item.$1 != currentDestination) {
+                        HapticFeedback.selectionClick();
+                        onDestinationSelected(item.$1);
+                        }
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -99,41 +116,38 @@ class _DestinationButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
-                  width: 44,
-                  height: 28,
+                  width: 48,
+                  height: 30,
                   child: AnimatedContainer(
                     duration: motionDuration,
                     curve: Curves.easeOutCubic,
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     decoration: BoxDecoration(
                       color: selected
-                          ? context.lumeColors.brandSoft
+                          ? context.lumeColors.brand
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(LumeRadii.pill),
                     ),
                     child: Icon(
                       item.$3,
                       color: selected
-                          ? context.lumeColors.brand
+                          ? context.lumeColors.onBrand
                           : context.lumeColors.textSecondary,
                     ),
                   ),
                 ),
                 const SizedBox(height: 3),
-                SizedBox(
-                  height: 15,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      item.$2,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 10.5,
-                        color: selected
-                            ? context.lumeColors.brand
-                            : context.lumeColors.textSecondary,
-                        fontWeight: selected ? FontWeight.w700 : null,
-                      ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    item.$2,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontSize: 11,
+                      color: selected
+                          ? context.lumeColors.brand
+                          : context.lumeColors.textSecondary,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),

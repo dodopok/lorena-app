@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../features/auth/presentation/auth_screens.dart';
 import '../features/calendar/presentation/calendar_screen.dart';
@@ -9,6 +10,8 @@ import '../features/settings/presentation/settings_screen.dart';
 import '../features/today/presentation/today_screen.dart';
 import '../features/wellbeing/presentation/wellbeing_screen.dart';
 import 'app_controller.dart';
+import 'app_route.dart';
+export 'app_route.dart' show AppDestination;
 import '../core/biometrics/biometric_gateway.dart';
 import '../core/widgets/lume_motion.dart';
 import '../core/widgets/lume_navigation.dart';
@@ -27,16 +30,22 @@ class LumeApp extends StatelessWidget {
       controller: controller,
       child: MaterialApp(
         title: 'Lume',
+        locale: const Locale('pt', 'BR'),
+        supportedLocales: const [Locale('pt', 'BR')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         debugShowCheckedModeBanner: false,
         theme: LumeTheme.light(),
         darkTheme: LumeTheme.dark(),
         themeMode: ThemeMode.system,
         home: const AppLaunchScreen(),
         onGenerateRoute: _routes,
-        builder: (context, child) => AppPrivacyShield(
-          controller: controller,
-          biometricGateway: biometricGateway,
-          child: child ?? const SizedBox.shrink(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: AppPrivacyShield(
+            controller: controller,
+            biometricGateway: biometricGateway,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );
@@ -44,76 +53,45 @@ class LumeApp extends StatelessWidget {
 
   Route<void>? _routes(RouteSettings settings) {
     final name = settings.name ?? '/welcome';
-    // Keep documented deep links on a safe authenticated destination even
-    // before a dedicated route-state coordinator is added. The destination
-    // screen remains the source of truth for validating the identifier.
-    if (name.startsWith('/app/calendar/event/')) {
-      return _page(const AppShell(initialDestination: AppDestination.calendar));
+    final request = AppRouteRequest.parse(name);
+    Widget page;
+    if (request != null) {
+      page = AppShell(
+        initialDestination: request.destination,
+        initialRoute: request,
+      );
+    } else {
+      page = switch (name) {
+        '/welcome' => const AppLaunchScreen(),
+        '/auth/sign-in' => const AuthenticatedPage(
+          child: AppShell(initialDestination: AppDestination.today),
+        ),
+        '/onboarding' => _onboardingPage(settings.arguments),
+        '/app/settings' => const AuthenticatedPage(child: SettingsScreen()),
+        '/app/settings/privacy' => const AuthenticatedPage(
+          child: PrivacyScreen(),
+        ),
+        _ => const NotFoundScreen(),
+      };
     }
-    if (name.startsWith('/app/finance/transaction/') ||
-        name.startsWith('/app/finance/wishlist/')) {
-      return _page(const AppShell(initialDestination: AppDestination.finance));
-    }
-    if (name.startsWith('/app/corner/books/') ||
-        name.startsWith('/app/corner/gratitude/')) {
-      return _page(const AppShell(initialDestination: AppDestination.corner));
-    }
-    switch (name) {
-      case '/welcome':
-        return _page(const WelcomeScreen());
-      case '/auth/sign-in':
-        return _page(const SignInScreen());
-      case '/onboarding':
-        return _page(const OnboardingScreen());
-      case '/app':
-      case '/app/today':
-        return _page(const AppShell(initialDestination: AppDestination.today));
-      case '/app/calendar':
-        return _page(
-          const AppShell(initialDestination: AppDestination.calendar),
-        );
-      case '/app/calendar/connect':
-        return _page(
-          const AppShell(initialDestination: AppDestination.calendar),
-        );
-      case '/app/wellbeing':
-        return _page(
-          const AppShell(initialDestination: AppDestination.wellbeing),
-        );
-      case '/app/finance':
-        return _page(
-          const AppShell(initialDestination: AppDestination.finance),
-        );
-      case '/app/corner':
-        return _page(const AppShell(initialDestination: AppDestination.corner));
-      case '/app/settings':
-        return _page(const SettingsScreen());
-      case '/app/settings/privacy':
-        return _page(const PrivacyScreen());
-      case '/app/wellbeing/water/new':
-      case '/app/wellbeing/bowel/new':
-      case '/app/wellbeing/exercise/new':
-        return _page(
-          const AppShell(initialDestination: AppDestination.wellbeing),
-        );
-      case '/app/finance/transaction/new':
-      case '/app/finance/shopping/default':
-      case '/app/finance/wishlist':
-      case '/app/finance/wishlist/new':
-        return _page(
-          const AppShell(initialDestination: AppDestination.finance),
-        );
-      case '/app/corner/books':
-      case '/app/corner/books/new':
-      case '/app/corner/gratitude':
-        return _page(const AppShell(initialDestination: AppDestination.corner));
-      default:
-        return _page(const NotFoundScreen());
-    }
+    return MaterialPageRoute<void>(settings: settings, builder: (_) => page);
   }
 
-  MaterialPageRoute<void> _page(Widget child) =>
-      MaterialPageRoute<void>(builder: (_) => child);
+  Widget _onboardingPage(Object? arguments) {
+    final nextRoute = arguments is String ? arguments : '/app/today';
+    final request = AppRouteRequest.parse(nextRoute);
+    final child = request != null
+        ? AppShell(
+            initialDestination: request.destination,
+            initialRoute: request,
+          )
+        : switch (nextRoute) {
+            '/app/settings' => const SettingsScreen(),
+            '/app/settings/privacy' => const PrivacyScreen(),
+            _ => const NotFoundScreen(),
+          };
+    return AuthenticatedPage(child: child);
+  }
 }
 
 class AppLaunchScreen extends StatelessWidget {
@@ -156,9 +134,24 @@ class AppScope extends InheritedNotifier<AppController> {
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({required this.initialDestination, super.key});
+  const AppShell({
+    required this.initialDestination,
+    this.initialRoute,
+    super.key,
+  });
 
   final AppDestination initialDestination;
+  final AppRouteRequest? initialRoute;
+
+  /// Internal shortcuts select a tab without stacking a second app shell.
+  static void goTo(BuildContext context, AppDestination destination) {
+    final shell = context.findAncestorStateOfType<_AppShellState>();
+    if (shell != null) {
+      shell._select(destination);
+    } else {
+      Navigator.of(context).pushNamed('/app/${destination.name}');
+    }
+  }
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -167,6 +160,16 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   late AppDestination _destination = widget.initialDestination;
   bool _isConsumingSharedUrl = false;
+  late final Set<AppDestination> _visited = {widget.initialDestination};
+
+  void _select(AppDestination destination) {
+    if (_destination == destination) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _visited.add(destination);
+      _destination = destination;
+    });
+  }
 
   @override
   void initState() {
@@ -196,7 +199,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       await controller.consumeSharedUrl();
       if (!mounted || controller.pendingSharedUrl == null) return;
       if (_destination != AppDestination.finance) {
-        setState(() => _destination = AppDestination.finance);
+        _select(AppDestination.finance);
       }
     } finally {
       _isConsumingSharedUrl = false;
@@ -213,49 +216,61 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (!controller.settings.onboardingComplete) {
       return const OnboardingScreen();
     }
-    final page = switch (_destination) {
-      AppDestination.today => const TodayScreen(),
-      AppDestination.calendar => const CalendarScreen(),
-      AppDestination.wellbeing => const WellbeingScreen(),
-      AppDestination.finance => const FinanceScreen(),
-      AppDestination.corner => const CornerScreen(),
-    };
-    final motionDuration = lumeMotionDuration(
-      context,
-      const Duration(milliseconds: 280),
-    );
-    final reverseMotionDuration = lumeMotionDuration(
-      context,
-      const Duration(milliseconds: 180),
-    );
     return Scaffold(
-      body: ClipRect(
-        child: AnimatedSwitcher(
-          duration: motionDuration,
-          reverseDuration: reverseMotionDuration,
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          layoutBuilder: (currentChild, previousChildren) => Stack(
-            fit: StackFit.expand,
-            children: <Widget>[...previousChildren, ?currentChild],
-          ),
-          transitionBuilder: lumePageTransition,
-          child: KeyedSubtree(key: ValueKey(_destination), child: page),
-        ),
+      body: IndexedStack(
+        index: _destination.index,
+        children: [
+          for (final destination in AppDestination.values)
+            if (_visited.contains(destination))
+              TickerMode(
+                enabled: destination == _destination,
+                child: LumeTabStage(
+                  active: destination == _destination,
+                  child: switch (destination) {
+                    AppDestination.today => const TodayScreen(),
+                    AppDestination.calendar => CalendarScreen(
+                      initialRoute: widget.initialRoute,
+                    ),
+                    AppDestination.wellbeing => WellbeingScreen(
+                      initialRoute: widget.initialRoute,
+                    ),
+                    AppDestination.finance => FinanceScreen(
+                      initialRoute: widget.initialRoute,
+                    ),
+                    AppDestination.corner => CornerScreen(
+                      initialRoute: widget.initialRoute,
+                    ),
+                  },
+                ),
+              )
+            else
+              const SizedBox.shrink(),
+        ],
       ),
       bottomNavigationBar: LumeBottomNavigation(
         currentDestination: LumeDestination.values[_destination.index],
-        onDestinationSelected: (destination) {
-          setState(
-            () => _destination = AppDestination.values[destination.index],
-          );
-        },
+        onDestinationSelected: (destination) =>
+            _select(AppDestination.values[destination.index]),
       ),
     );
   }
 }
 
-enum AppDestination { today, calendar, wellbeing, finance, corner }
+class AuthenticatedPage extends StatelessWidget {
+  const AuthenticatedPage({required this.child, super.key});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = AppScope.of(context);
+    if (!controller.isReady) return const SplashScreen();
+    if (!controller.signedIn) return const SignInScreen();
+    if (!controller.settings.onboardingComplete) {
+      return const OnboardingScreen();
+    }
+    return child;
+  }
+}
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});

@@ -24,6 +24,7 @@ enum LumeModelContainer {
             WishlistItem.self,
             ShoppingList.self,
             ExerciseEntry.self,
+            WordDayProgress.self,
         ])
     }
 

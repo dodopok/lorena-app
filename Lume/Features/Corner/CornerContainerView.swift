@@ -74,26 +74,21 @@ struct CornerContainerView: View {
                 Button {
                     withAnimation(.easeOut(duration: 0.22)) { tab = option }
                 } label: {
-                    Group {
-                        if option == .words {
-                            Image(systemName: "gamecontroller.fill")
-                                .font(.system(size: 16, weight: isSelected ? .bold : .semibold))
-                        } else {
-                            Text(option.title)
-                                .font(LumeType.sans(13.5, weight: isSelected ? .heavy : .bold))
+                    Text(option.title)
+                        .font(LumeType.sans(12, weight: isSelected ? .heavy : .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .foregroundStyle(isSelected ? .white : LumeColor.textMuted)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .background {
+                            if isSelected { Capsule().fill(LumeColor.brand) }
                         }
-                    }
-                    .foregroundStyle(isSelected ? .white : LumeColor.textMuted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 9)
-                    .background {
-                        if isSelected { Capsule().fill(LumeColor.brand) }
-                    }
-                    .contentShape(Capsule())
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(option.title)
-                .accessibilityHint(option == .words ? "Abre o jogo Palavra do dia" : "Abre a seção (option.title)")
+                .accessibilityHint(option == .words ? "Abre o jogo Palavra do dia" : "Abre a seção \(option.title)")
             }
         }
         .padding(5)

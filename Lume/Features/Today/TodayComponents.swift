@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 /// The upcoming-appointment card — time + countdown on the left, title/place on the right.
 struct NextEventCard: View {
@@ -41,18 +42,38 @@ struct NextEventCard: View {
     }
 }
 
-/// A light invitation to the daily word puzzle, so the game is discoverable
-/// from Hoje without adding another item to the five-tab navigation.
+/// A chamada da Palavra do dia na tela Hoje — mostra o estado real do puzzle
+/// e abre o jogo em tela cheia, sem acrescentar item às cinco abas.
 struct WordOfDayHomeCard: View {
+    @Query private var allProgress: [WordDayProgress]
+    @State private var isPlaying = false
+
+    private var today: Int { WordDay.todayIndex }
+    private var progress: WordDayProgress? { allProgress.first { $0.dayIndex == today } }
+    private var total: Int { WordDay.puzzle(for: today).entries.count }
+    private var found: Int { progress?.foundWords.count ?? 0 }
+    private var isComplete: Bool { progress?.completedAt != nil }
+
+    private var streak: Int {
+        WordDay.streak(completedDays: Set(allProgress.filter { $0.completedAt != nil }.map(\.dayIndex)))
+    }
+
+    private var subtitle: String {
+        var parts: [String] = []
+        parts.append(isComplete ? "Completo hoje" : "\(found) de \(total) palavras")
+        if streak > 0 { parts.append("sequência de \(streak) dia\(streak == 1 ? "" : "s")") }
+        return parts.joined(separator: " · ")
+    }
+
     var body: some View {
-        NavigationLink { WordOfDayTabView() } label: {
+        Button { isPlaying = true } label: {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 17, style: .continuous)
-                        .fill(LumeColor.brandPillLight)
-                    Image(systemName: "textformat.abc")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(LumeColor.brand)
+                        .fill(isComplete ? LumeColor.greenChipBg : LumeColor.brandPillLight)
+                    Image(systemName: isComplete ? "checkmark" : "square.grid.3x3.topleft.filled")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(isComplete ? LumeColor.greenDeep : LumeColor.brand)
                 }
                 .frame(width: 52, height: 52)
 
@@ -60,15 +81,16 @@ struct WordOfDayHomeCard: View {
                     Text("Palavra do dia")
                         .font(LumeType.sans(16, weight: .heavy))
                         .foregroundStyle(LumeColor.ink)
-                    Text("Um puzzle curtinho para o seu momento.")
-                        .font(LumeType.sans(13.5))
+                    Text(subtitle)
+                        .font(LumeType.sans(13))
                         .foregroundStyle(LumeColor.textMuted)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
+                Text(isComplete ? "Rever" : (found > 0 ? "Continuar" : "Jogar"))
+                    .font(LumeType.sans(13, weight: .heavy))
                     .foregroundStyle(LumeColor.brand)
             }
             .padding(16)
@@ -77,6 +99,9 @@ struct WordOfDayHomeCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityHint("Abre a Palavra do dia")
+        .fullScreenCover(isPresented: $isPlaying) {
+            WordGameView(dayIndex: today)
+        }
     }
 }
 

@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E4FA59BDBCA31828F2C6CD17 /* LetterWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1D846003BB0200B6181290 /* LetterWheelView.swift */; };
+		72B059EBA4E5842F9D99FA8D /* WordGameModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9B75E5DAA0B427436A99256 /* WordGameModel.swift */; };
+		10D328FDC92E2CDBC1554072 /* WordGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA9093A707F4592DEC4D083 /* WordGameView.swift */; };
+		F6C6CBEA25D47F04419164B7 /* WordPuzzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E7B51B89DAAC7E23172D81 /* WordPuzzle.swift */; };
+		5F0F135F3DF5B150CE70258B /* WordPuzzleCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252AEC7F1A36B942BF71133F /* WordPuzzleCatalog.swift */; };
+		4E5B10043C964690F3801C1E /* WordDayProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79E5FC2850F24A1FC8026972 /* WordDayProgress.swift */; };
+		4DEAEB782E459E2691100D6F /* WordDayProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79E5FC2850F24A1FC8026972 /* WordDayProgress.swift */; };
 		0111A1511690FC1CB3FE7709 /* LumeMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1812C408D90AC2513A02B931 /* LumeMotion.swift */; };
 		06B1590BF8112715E5E38747 /* GratitudeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A0E800B883420E91BA6CB07 /* GratitudeEntry.swift */; };
 		08B046EA6C43A0B0CA637B4C /* LumeShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67B714B9B188A26078253D1A /* LumeShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -143,6 +150,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6E1D846003BB0200B6181290 /* LetterWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterWheelView.swift; sourceTree = "<group>"; };
+		D9B75E5DAA0B427436A99256 /* WordGameModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordGameModel.swift; sourceTree = "<group>"; };
+		9FA9093A707F4592DEC4D083 /* WordGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordGameView.swift; sourceTree = "<group>"; };
+		58E7B51B89DAAC7E23172D81 /* WordPuzzle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordPuzzle.swift; sourceTree = "<group>"; };
+		252AEC7F1A36B942BF71133F /* WordPuzzleCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordPuzzleCatalog.swift; sourceTree = "<group>"; };
+		79E5FC2850F24A1FC8026972 /* WordDayProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDayProgress.swift; sourceTree = "<group>"; };
 		02747FD53B999CD5EF11E0BA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		03B3BF4884CE98A715CEF839 /* TodayComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayComponents.swift; sourceTree = "<group>"; };
 		03BEE23B93A94D105C0A987F /* LumeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeApp.swift; sourceTree = "<group>"; };
@@ -235,6 +248,18 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		A7A69BE73FE2708C5064E566 /* Words */ = {
+			isa = PBXGroup;
+			children = (
+				252AEC7F1A36B942BF71133F /* WordPuzzleCatalog.swift */,
+				58E7B51B89DAAC7E23172D81 /* WordPuzzle.swift */,
+				6E1D846003BB0200B6181290 /* LetterWheelView.swift */,
+				9FA9093A707F4592DEC4D083 /* WordGameView.swift */,
+				D9B75E5DAA0B427436A99256 /* WordGameModel.swift */,
+			);
+			path = Words;
+			sourceTree = "<group>";
+		};
 		0140F8C0DBBB4333295E18AC /* Lume */ = {
 			isa = PBXGroup;
 			children = (
@@ -284,6 +309,7 @@
 				1BC6D66C7C09478C2D060496 /* UserProfile.swift */,
 				391593B506C0745F094EA923 /* WaterEntry.swift */,
 				963461BD2718494BC31820C6 /* WishlistItem.swift */,
+				79E5FC2850F24A1FC8026972 /* WordDayProgress.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -512,6 +538,7 @@
 				87F98F7146F53F9021B73C78 /* Settings */,
 				E3B282A61EF8AFD6CD9A6E18 /* Today */,
 				48DE8E240A34C531E0AB4258 /* Wellness */,
+				A7A69BE73FE2708C5064E566 /* Words */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -702,6 +729,7 @@
 				AF13497650DEC3FDDFFCED33 /* GratitudeComposerView.swift in Sources */,
 				93036515572D4B70946E65A8 /* GratitudeEntry.swift in Sources */,
 				2CE6ABDA579FA71881B3E687 /* GratitudeTabView.swift in Sources */,
+				E4FA59BDBCA31828F2C6CD17 /* LetterWheelView.swift in Sources */,
 				9420598A0A0E984F6EBD108D /* LinkMetadataFetcher.swift in Sources */,
 				2E25E554146CBBE3B5598A9F /* LiveActivityController.swift in Sources */,
 				AAA10422F016F61E3237B0B0 /* LumeAmountField.swift in Sources */,
@@ -735,7 +763,6 @@
 				4D4CBB2DCF861EF0CD688975 /* ShoppingList.swift in Sources */,
 				BDA5C36B62D43A241225EFDC /* TodayComponents.swift in Sources */,
 				7E60D308DB208FE63C441695 /* TodayView.swift in Sources */,
-				E7F7D2F3A1C74B92A6F84D20 /* WordOfDayTabView.swift in Sources */,
 				8E790C626E5563E32FF47123 /* UserProfile.swift in Sources */,
 				6B6C40CA7DC5ACEDE85E80AD /* WaterActivityAttributes.swift in Sources */,
 				59607B5CA3D6AFF268AD6FD8 /* WaterEntry.swift in Sources */,
@@ -747,6 +774,12 @@
 				D68A1719887BB82816596A86 /* WishlistItem.swift in Sources */,
 				E81E711EB11C03772562E382 /* WishlistLinkCaptureView.swift in Sources */,
 				22C26BBDB1E451A4EEDD4338 /* WishlistTabView.swift in Sources */,
+				4E5B10043C964690F3801C1E /* WordDayProgress.swift in Sources */,
+				72B059EBA4E5842F9D99FA8D /* WordGameModel.swift in Sources */,
+				10D328FDC92E2CDBC1554072 /* WordGameView.swift in Sources */,
+				E7F7D2F3A1C74B92A6F84D20 /* WordOfDayTabView.swift in Sources */,
+				F6C6CBEA25D47F04419164B7 /* WordPuzzle.swift in Sources */,
+				5F0F135F3DF5B150CE70258B /* WordPuzzleCatalog.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -776,6 +809,7 @@
 				D5386CC7EBE932A172240BF3 /* WaterEntry.swift in Sources */,
 				14A666B48C4C617D102BAA74 /* WaterLiveActivityWidget.swift in Sources */,
 				CDAA321C5182DB0EEAAC9C2F /* WishlistItem.swift in Sources */,
+				4DEAEB782E459E2691100D6F /* WordDayProgress.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

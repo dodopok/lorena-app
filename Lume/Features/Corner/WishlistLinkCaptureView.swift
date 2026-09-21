@@ -6,6 +6,7 @@ import UIKit
 /// didn't come through automatically.
 struct WishlistLinkCaptureView: View {
     private let initialURL: URL?
+    private let initialListName: String?
     private let itemToEdit: WishlistItem?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -23,9 +24,11 @@ struct WishlistLinkCaptureView: View {
     @State private var notifyOnDrop = true
     @State private var sourceHost: String?
     @State private var showingNewList = false
+    @State private var didAutoPaste = false
 
-    init(initialURL: URL? = nil, itemToEdit: WishlistItem? = nil) {
+    init(initialURL: URL? = nil, initialListName: String? = nil, itemToEdit: WishlistItem? = nil) {
         self.initialURL = initialURL
+        self.initialListName = initialListName
         self.itemToEdit = itemToEdit
         _urlString = State(initialValue: itemToEdit?.sourceURLString ?? initialURL?.absoluteString ?? "")
         _hasFetched = State(initialValue: itemToEdit != nil)
@@ -33,7 +36,7 @@ struct WishlistLinkCaptureView: View {
         _priceDigits = State(initialValue: itemToEdit.map { String(Int(($0.price * 100).rounded())) } ?? "")
         _originalPriceDigits = State(initialValue: itemToEdit?.originalPrice.map { String(Int(($0 * 100).rounded())) } ?? "")
         _imageData = State(initialValue: itemToEdit?.imageData)
-        _listName = State(initialValue: itemToEdit?.listName ?? "Geral")
+        _listName = State(initialValue: itemToEdit?.listName ?? initialListName ?? "Geral")
         _notifyOnDrop = State(initialValue: itemToEdit?.notifyOnPriceDrop ?? true)
         _sourceHost = State(initialValue: itemToEdit?.sourceHost)
     }
@@ -104,8 +107,12 @@ struct WishlistLinkCaptureView: View {
             }
         }
         .onAppear {
-            if itemToEdit == nil && initialURL != nil && !hasFetched {
+            guard itemToEdit == nil, !didAutoPaste, !hasFetched else { return }
+            didAutoPaste = true
+            if initialURL != nil {
                 fetch()
+            } else {
+                pasteFromClipboard()
             }
         }
     }
@@ -237,12 +244,21 @@ struct WishlistLinkCaptureView: View {
     }
 
     private func pasteFromClipboard() {
-        if let clipboard = UIPasteboard.general.string {
-            urlString = clipboard
-        } else if let clipboardURL = UIPasteboard.general.url {
-            urlString = clipboardURL.absoluteString
-        }
+        guard let clipboardURL = clipboardURL() else { return }
+        urlString = clipboardURL.absoluteString
         fetch()
+    }
+
+    private func clipboardURL() -> URL? {
+        if let url = UIPasteboard.general.url,
+           ["http", "https"].contains(url.scheme?.lowercased()) {
+            return url
+        }
+        guard let text = UIPasteboard.general.string else { return nil }
+        guard let url = normalizedURL(from: text),
+              ["http", "https"].contains(url.scheme?.lowercased()),
+              url.host != nil else { return nil }
+        return url
     }
 
     private func fetch() {

@@ -23,6 +23,11 @@ enum LumeDateFormat {
         formatter("EEEE, d 'de' MMMM").string(from: date).capitalizedFirstLetter
     }
 
+    /// "Segunda, 21"
+    static func weekdayDay(_ date: Date) -> String {
+        formatter("EEEE, d").string(from: date).capitalizedFirstLetter
+    }
+
     /// "SEXTA, 20"
     static func shortWeekdayDayUppercased(_ date: Date) -> String {
         formatter("EEE, d").string(from: date).uppercased()

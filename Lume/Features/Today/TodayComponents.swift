@@ -41,6 +41,45 @@ struct NextEventCard: View {
     }
 }
 
+/// A light invitation to the daily word puzzle, so the game is discoverable
+/// from Hoje without adding another item to the five-tab navigation.
+struct WordOfDayHomeCard: View {
+    var body: some View {
+        NavigationLink { WordOfDayTabView() } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 17, style: .continuous)
+                        .fill(LumeColor.brandPillLight)
+                    Image(systemName: "textformat.abc")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(LumeColor.brand)
+                }
+                .frame(width: 52, height: 52)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Palavra do dia")
+                        .font(LumeType.sans(16, weight: .heavy))
+                        .foregroundStyle(LumeColor.ink)
+                    Text("Um puzzle curtinho para o seu momento.")
+                        .font(LumeType.sans(13.5))
+                        .foregroundStyle(LumeColor.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(LumeColor.brand)
+            }
+            .padding(16)
+            .lumeSoftGlass(cornerRadius: 24, shadow: false)
+            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Abre a Palavra do dia")
+    }
+}
+
 /// The "Água de hoje" card — small ring + three quick-add buttons.
 struct WaterQuickCard: View {
     var currentML: Int

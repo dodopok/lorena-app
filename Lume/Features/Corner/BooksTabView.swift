@@ -95,11 +95,15 @@ struct BooksTabView: View {
                         .buttonStyle(.plain)
                     }
 
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    // A review needs room for five stars and its action label. Three
+                    // narrow columns made the control wrap into an awkward second line
+                    // on the phone, so books use the same comfortable two-column rhythm
+                    // as films and the wishlist.
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
                         ForEach(Array(books.enumerated()), id: \.element.persistentModelID) { index, book in
                             VStack(alignment: .leading, spacing: 8) {
-                                BookCoverView(seedHex: book.coverColorHex, coverURLString: book.coverURLString, coverImageData: book.coverImageData, width: nil, height: 140)
-                                Text(book.title)
+                                BookCoverView(seedHex: book.coverColorHex, coverURLString: book.coverURLString, coverImageData: book.coverImageData, width: nil, height: 174)
+                                    Text(book.title)
                                     .font(LumeType.sans(12, weight: .bold))
                                     .foregroundStyle(LumeColor.ink)
                                     .lineLimit(2)
@@ -155,16 +159,11 @@ struct BooksTabView: View {
     }
 
     private func statusLabel(_ book: Book) -> String {
-        let status: String
         switch book.status {
-        case .reading: status = "lendo agora"
-        case .read: status = "lido"
-        case .wantToRead: status = "quero ler"
+        case .reading: return "lendo agora"
+        case .read: return "lido"
+        case .wantToRead: return "quero ler"
         }
-        if book.rating > 0 {
-            return "\(status) · \(String(repeating: "★", count: min(5, book.rating)))"
-        }
-        return status
     }
 
     @ViewBuilder

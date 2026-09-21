@@ -101,6 +101,7 @@
 		DEA3CB4942F4C1E50BA5BA65 /* RootTabContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5315E05467E8D8408CC53BA /* RootTabContainer.swift */; };
 		DF81304E56F81437523B085C /* BooksTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A9A3DC4D4D077704D2448E3 /* BooksTabView.swift */; };
 		DFBC17A448B8DD5E007FE565 /* LumeCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1BF235E84ED836D2CD1ECB /* LumeCurrency.swift */; };
+		E7F7D2F3A1C74B92A6F84D20 /* WordOfDayTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7E0D7A3B0D2466A9A0D4F11 /* WordOfDayTabView.swift */; };
 		E1A0197ABEB322CFD4FF350F /* DailyTodo.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29DE73F9EF476D0CA7CC00F /* DailyTodo.swift */; };
 		E4161139C7BB0670C7E34F48 /* MoneyAddition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D59F8E1B99F3A69B2F4C2D0 /* MoneyAddition.swift */; };
 		E63A2F5341457B943FB7154A /* AppLockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5845ACFC9B80105160922E3F /* AppLockController.swift */; };
@@ -230,6 +231,7 @@
 		FC48264AA5A0AAF007626D77 /* GoogleBooksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleBooksService.swift; sourceTree = "<group>"; };
 		FC843A0F0C59353D287E001A /* AgendaMonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaMonthView.swift; sourceTree = "<group>"; };
 		FEE4CB2FD3C9ADF1D23DF700 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		C7E0D7A3B0D2466A9A0D4F11 /* WordOfDayTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordOfDayTabView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -376,6 +378,7 @@
 				04E071BA9AD12EBD901F631E /* MoviesTabView.swift */,
 				595A24716FB87E97CCFB4B79 /* WishlistLinkCaptureView.swift */,
 				98AAB85D11B739186B9F3B95 /* WishlistTabView.swift */,
+				C7E0D7A3B0D2466A9A0D4F11 /* WordOfDayTabView.swift */,
 			);
 			path = Corner;
 			sourceTree = "<group>";
@@ -732,6 +735,7 @@
 				4D4CBB2DCF861EF0CD688975 /* ShoppingList.swift in Sources */,
 				BDA5C36B62D43A241225EFDC /* TodayComponents.swift in Sources */,
 				7E60D308DB208FE63C441695 /* TodayView.swift in Sources */,
+				E7F7D2F3A1C74B92A6F84D20 /* WordOfDayTabView.swift in Sources */,
 				8E790C626E5563E32FF47123 /* UserProfile.swift in Sources */,
 				6B6C40CA7DC5ACEDE85E80AD /* WaterActivityAttributes.swift in Sources */,
 				59607B5CA3D6AFF268AD6FD8 /* WaterEntry.swift in Sources */,

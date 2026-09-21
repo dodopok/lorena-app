@@ -27,6 +27,11 @@ struct WishlistTabView: View {
         }
     }
 
+    private var listForNewItem: String? {
+        guard filter != "Todos", filter != "Comprados" else { return nil }
+        return filter
+    }
+
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             ScrollView {
@@ -74,8 +79,13 @@ struct WishlistTabView: View {
             .padding(.trailing, 22)
             .padding(.bottom, 118)
         }
-        .sheet(isPresented: $showingCapture) {
-            WishlistLinkCaptureView(initialURL: captureInitialURL)
+        .sheet(isPresented: $showingCapture, onDismiss: {
+            captureInitialURL = nil
+        }) {
+            WishlistLinkCaptureView(
+                initialURL: captureInitialURL,
+                initialListName: listForNewItem
+            )
         }
         .sheet(item: $itemToEdit) { item in
             WishlistLinkCaptureView(itemToEdit: item)

@@ -1,7 +1,17 @@
 import SwiftUI
 
-enum CornerTab: String, Hashable {
-    case gratitude, books, movies, wishlist
+enum CornerTab: String, Hashable, CaseIterable {
+    case gratitude, books, movies, wishlist, words
+
+    var title: String {
+        switch self {
+        case .gratitude: "Gratidão"
+        case .books: "Livros"
+        case .movies: "Filmes"
+        case .wishlist: "Desejos"
+        case .words: "Palavras"
+        }
+    }
 }
 
 struct CornerContainerView: View {
@@ -27,10 +37,7 @@ struct CornerContainerView: View {
                         .padding(.horizontal, 20)
                         .lumeRiseIn()
 
-                    LumeSegmentedControl(
-                        options: [(CornerTab.gratitude, "Gratidão"), (.books, "Livros"), (.movies, "Filmes"), (.wishlist, "Desejos")],
-                        selection: $tab
-                    )
+                    cornerTabs
                     .padding(.horizontal, 20)
 
                     Group {
@@ -39,6 +46,7 @@ struct CornerContainerView: View {
                         case .books: BooksTabView()
                         case .movies: MoviesTabView()
                         case .wishlist: WishlistTabView()
+                        case .words: WordOfDayTabView()
                         }
                     }
                 }
@@ -56,5 +64,41 @@ struct CornerContainerView: View {
                 tab = .wishlist
             }
         }
+    }
+
+    private var cornerTabs: some View {
+        HStack(spacing: 5) {
+            ForEach(CornerTab.allCases, id: \.self) { option in
+                let isSelected = option == tab
+
+                Button {
+                    withAnimation(.easeOut(duration: 0.22)) { tab = option }
+                } label: {
+                    Group {
+                        if option == .words {
+                            Image(systemName: "gamecontroller.fill")
+                                .font(.system(size: 16, weight: isSelected ? .bold : .semibold))
+                        } else {
+                            Text(option.title)
+                                .font(LumeType.sans(13.5, weight: isSelected ? .heavy : .bold))
+                        }
+                    }
+                    .foregroundStyle(isSelected ? .white : LumeColor.textMuted)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .background {
+                        if isSelected { Capsule().fill(LumeColor.brand) }
+                    }
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(option.title)
+                .accessibilityHint(option == .words ? "Abre o jogo Palavra do dia" : "Abre a seção (option.title)")
+            }
+        }
+        .padding(5)
+        .background(.white.opacity(0.5))
+        .overlay(Capsule().strokeBorder(.white.opacity(0.85), lineWidth: 1))
+        .clipShape(Capsule())
     }
 }

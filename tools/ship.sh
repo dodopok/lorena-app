@@ -2,8 +2,9 @@
 #
 # Sobe um build novo para a TestFlight.
 #
-#   ./tools/ship.sh          # incrementa o build atual em 1
-#   ./tools/ship.sh 42       # usa 42 como build
+#   ./tools/ship.sh                # incrementa o build atual em 1
+#   ./tools/ship.sh 42             # usa 42 como build
+#   ./tools/ship.sh --upload-only  # só envia o archive que já está em build/
 #
 # O número do build mora no project.yml (CURRENT_PROJECT_VERSION), então
 # subir ele e regerar o projeto é o que faz o Xcode enxergar a mudança.
@@ -29,7 +30,17 @@ OPTIONS="$BUILD_DIR/ExportOptions.plist"
 step() { printf '\n\033[1;35m▸ %s\033[0m\n' "$1"; }
 fail() { printf '\n\033[1;31m✗ %s\033[0m\n' "$1" >&2; exit 1; }
 
+upload_only=false
+[ "${1:-}" = "--upload-only" ] && { upload_only=true; shift; }
+
+if [ "$upload_only" = false ]; then
+
 command -v xcodegen >/dev/null || fail "xcodegen não encontrado — brew install xcodegen"
+
+# Sobra de quando o projeto morava em Lume/: o git moveu os arquivos
+# rastreados, mas a pasta fica para trás por causa do xcuserdata ignorado, e
+# aí o xcodegen a inclui como se fosse um subprojeto quebrado.
+[ -d "Lume/Lume.xcodeproj" ] && rm -rf "Lume/Lume.xcodeproj"
 
 # ---------------------------------------------------------------- bump
 current=$(grep -E '^[[:space:]]+CURRENT_PROJECT_VERSION:' project.yml \
@@ -63,6 +74,10 @@ xcodebuild archive \
 
 [ -d "$ARCHIVE" ] || fail "o archive não foi criado — rode o comando sem o filtro para ver o log inteiro"
 
+fi  # fim do trecho pulado por --upload-only
+
+[ -d "$ARCHIVE" ] || fail "não há archive em $ARCHIVE — rode sem --upload-only"
+
 # -------------------------------------------------------------- upload
 cat > "$OPTIONS" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -91,13 +106,20 @@ else
   step "enviando (conta logada no Xcode)"
 fi
 
+# ${auth[@]+"${auth[@]}"} em vez de "${auth[@]}": no bash 3.2 que vem no
+# macOS, expandir um array vazio com set -u ligado aborta com
+# "unbound variable". A forma com + só expande se o array existir, e as
+# aspas internas preservam cada argumento (o caminho da chave pode ter
+# espaço).
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE" \
   -exportOptionsPlist "$OPTIONS" \
   -exportPath "$BUILD_DIR/export" \
   -allowProvisioningUpdates \
-  "${auth[@]}"
+  ${auth[@]+"${auth[@]}"}
 
-step "build $next enviado"
+shipped=$(grep -E '^[[:space:]]+CURRENT_PROJECT_VERSION:' project.yml \
+          | head -1 | sed -E 's/.*"([0-9]+)".*/\1/')
+step "build $shipped enviado"
 echo "Leva alguns minutos processando antes de aparecer na TestFlight."
-echo "Não esqueça de commitar o bump:  git commit -am \"Build $next\""
+echo "Não esqueça de commitar o bump:  git commit -am \"Build $shipped\""

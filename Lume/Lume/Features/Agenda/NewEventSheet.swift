@@ -5,6 +5,7 @@ import SwiftData
 /// needs a destination — built in the same visual language as the rest.
 struct NewEventSheet: View {
     var initialDate: Date
+    var eventToEdit: CalendarEvent?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -18,18 +19,25 @@ struct NewEventSheet: View {
     @State private var hasEndTime = true
     @State private var remindToLogExpense = false
 
-    init(initialDate: Date) {
+    init(initialDate: Date, eventToEdit: CalendarEvent? = nil) {
         self.initialDate = initialDate
-        let start = LumeDateFormat.calendar.date(bySettingHour: 9, minute: 0, second: 0, of: initialDate) ?? initialDate
+        self.eventToEdit = eventToEdit
+        let defaultStart = LumeDateFormat.calendar.date(bySettingHour: 9, minute: 0, second: 0, of: initialDate) ?? initialDate
+        let start = eventToEdit?.startDate ?? defaultStart
         _startDate = State(initialValue: start)
-        _endDate = State(initialValue: start.addingTimeInterval(3600))
+        _endDate = State(initialValue: eventToEdit?.endDate ?? start.addingTimeInterval(3600))
+        _title = State(initialValue: eventToEdit?.title ?? "")
+        _location = State(initialValue: eventToEdit?.location ?? "")
+        _category = State(initialValue: eventToEdit?.category ?? .pessoal)
+        _hasEndTime = State(initialValue: eventToEdit?.endDate != nil)
+        _remindToLogExpense = State(initialValue: eventToEdit?.remindToLogExpense ?? false)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             LumeSheetHeader(
                 leadingTitle: "Cancelar",
-                title: "Novo compromisso",
+                title: eventToEdit == nil ? "Novo compromisso" : "Editar compromisso",
                 trailingTitle: "Salvar",
                 trailingEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
                 onLeading: { dismiss() },
@@ -108,19 +116,36 @@ struct NewEventSheet: View {
     private func save() {
         let trimmed = title.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        let event = CalendarEvent(
-            title: trimmed,
-            location: location.trimmingCharacters(in: .whitespaces).isEmpty ? nil : location,
-            startDate: startDate,
-            endDate: hasEndTime ? endDate : nil,
-            category: category,
-            remindToLogExpense: remindToLogExpense
-        )
-        modelContext.insert(event)
+        let cleanLocation = location.trimmingCharacters(in: .whitespaces).isEmpty ? nil : location.trimmingCharacters(in: .whitespaces)
+        let cleanEndDate = hasEndTime ? max(endDate, startDate) : nil
+        let event: CalendarEvent
+
+        if let eventToEdit {
+            eventToEdit.title = trimmed
+            eventToEdit.location = cleanLocation
+            eventToEdit.startDate = startDate
+            eventToEdit.endDate = cleanEndDate
+            eventToEdit.category = category
+            eventToEdit.remindToLogExpense = remindToLogExpense
+            event = eventToEdit
+        } else {
+            event = CalendarEvent(
+                title: trimmed,
+                location: cleanLocation,
+                startDate: startDate,
+                endDate: cleanEndDate,
+                category: category,
+                remindToLogExpense: remindToLogExpense
+            )
+            modelContext.insert(event)
+        }
+
         try? modelContext.save()
         let remindersEnabled = profiles.first?.postEventExpenseReminderEnabled ?? true
         if remindToLogExpense && remindersEnabled {
             NotificationScheduler.shared.scheduleExpenseReminder(for: event)
+        } else {
+            NotificationScheduler.shared.cancelExpenseReminder(for: event)
         }
         dismiss()
     }

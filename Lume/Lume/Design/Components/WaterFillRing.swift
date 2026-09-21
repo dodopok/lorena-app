@@ -24,7 +24,7 @@ private struct WaterWaveShape: Shape {
     }
 }
 
-/// The circular glass "how much water today" indicator — a rippling green fill
+/// The circular glass "how much water today" indicator — a rippling blue fill
 /// rising to `progress`, with a value/unit label centered on top.
 ///
 /// Used at several sizes: the big onboarding goal picker, the Hoje quick card,
@@ -83,7 +83,7 @@ struct WaterFillRing: View {
         WaterWaveShape(phase: phase, amplitude: max(3, diameter * 0.02))
             .fill(
                 LinearGradient(
-                    colors: [LumeColor.greenLight, LumeColor.greenDeep],
+                    colors: [LumeColor.waterBlueLight, LumeColor.waterBlue],
                     startPoint: .top,
                     endPoint: .bottom
                 )

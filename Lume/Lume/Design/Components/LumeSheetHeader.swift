@@ -17,6 +17,9 @@ struct LumeSheetHeader: View {
                 Text(leadingTitle)
                     .font(LumeType.sans(15.5, weight: .bold))
                     .foregroundStyle(LumeColor.textFaint)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -32,6 +35,9 @@ struct LumeSheetHeader: View {
                 Text(trailingTitle)
                     .font(LumeType.sans(15.5, weight: .heavy))
                     .foregroundStyle(trailingColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .disabled(!trailingEnabled)
@@ -61,6 +67,9 @@ struct LumeSectionLabel: View {
                         Text(trailing)
                             .font(LumeType.sans(14, weight: .bold))
                             .foregroundStyle(trailingColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 } else {

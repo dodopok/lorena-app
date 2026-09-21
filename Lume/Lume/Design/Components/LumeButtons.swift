@@ -14,9 +14,10 @@ struct LumePrimaryButton: View {
                 .font(LumeType.button)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
+                .frame(height: height)
+                .background(color, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
-        .frame(height: height)
-        .background(color, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .buttonStyle(.plain)
         .opacity(isEnabled ? 1 : 0.45)
         .disabled(!isEnabled)
@@ -37,8 +38,9 @@ struct LumeGlassButton: View {
                 .font(LumeType.sans(16, weight: .bold))
                 .foregroundStyle(textColor)
                 .frame(maxWidth: .infinity)
+                .frame(height: height)
+                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
-        .frame(height: height)
         .buttonStyle(.glass)
     }
 }
@@ -55,6 +57,9 @@ struct LumeTextButton: View {
             Text(title)
                 .font(LumeType.sans(15, weight: weight))
                 .foregroundStyle(color)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -74,6 +79,7 @@ struct LumeGlassIconButton: View {
                 .font(.system(size: iconSize, weight: .medium))
                 .foregroundStyle(tint)
                 .frame(width: size, height: size)
+                .contentShape(Circle())
         }
         .buttonStyle(.glass)
     }
@@ -96,9 +102,10 @@ struct LumeSolidIconButton: View {
                 .font(.system(size: iconSize, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: size, height: size)
+                .background(Circle().fill(color))
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .background(Circle().fill(color))
         .modifier(OptionalPulse(enabled: pulses, color: color))
     }
 }
@@ -130,17 +137,19 @@ struct LumeChip: View {
                 .foregroundStyle(isSelected ? .white : LumeColor.textSecondary)
                 .padding(.horizontal, 15)
                 .padding(.vertical, 9)
+                .frame(minHeight: 38)
+                .background {
+                    if isSelected {
+                        Capsule().fill(selectedColor)
+                    } else {
+                        Capsule()
+                            .fill(.white.opacity(0.55))
+                            .overlay(Capsule().strokeBorder(.white.opacity(0.85), lineWidth: 1))
+                    }
+                }
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .background {
-            if isSelected {
-                Capsule().fill(selectedColor)
-            } else {
-                Capsule()
-                    .fill(.white.opacity(0.55))
-                    .overlay(Capsule().strokeBorder(.white.opacity(0.85), lineWidth: 1))
-            }
-        }
     }
 }
 
@@ -166,6 +175,7 @@ struct LumeSegmentedControl<Option: Hashable>: View {
                                 Capsule().fill(LumeColor.brand)
                             }
                         }
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }

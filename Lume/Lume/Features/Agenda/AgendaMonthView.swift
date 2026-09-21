@@ -3,6 +3,7 @@ import SwiftUI
 struct AgendaMonthView: View {
     @Binding var selectedDate: Date
     var itemsProvider: (Date, Date) -> [AgendaItem]
+    var onSelect: (AgendaItem) -> Void
 
     private var monthInterval: DateInterval {
         LumeDateFormat.calendar.dateInterval(of: .month, for: selectedDate) ?? DateInterval(start: selectedDate, duration: 0)
@@ -40,7 +41,7 @@ struct AgendaMonthView: View {
 
                 VStack(spacing: 10) {
                     ForEach(selectedDayItems) { item in
-                        AgendaEventCard(item: item)
+                        AgendaEventCard(item: item, onSelect: onSelect)
                     }
                     if selectedDayItems.isEmpty {
                         Text("Nada marcado neste dia.")
@@ -88,6 +89,7 @@ struct AgendaMonthView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
         .background {

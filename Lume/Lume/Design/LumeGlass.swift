@@ -63,7 +63,7 @@ private struct LumeSoftGlassCard: ViewModifier {
                     .overlay(shape.fill(Color.white.opacity(opacity)))
             }
             .overlay {
-                shape.strokeBorder(Color.white.opacity(0.85), lineWidth: 1)
+                shape.stroke(Color.white.opacity(0.85), lineWidth: 1)
             }
             .clipShape(shape)
             .shadow(color: shadow ? LumeColor.ink.opacity(0.08) : .clear, radius: 20, x: 0, y: 10)
@@ -83,7 +83,7 @@ private struct LumeSoftGlassShape<S: Shape>: ViewModifier {
                     .overlay(shape.fill(Color.white.opacity(opacity)))
             }
             .overlay {
-                shape.strokeBorder(Color.white.opacity(0.85), lineWidth: 1)
+                shape.stroke(Color.white.opacity(0.85), lineWidth: 1)
             }
             .clipShape(shape)
             .shadow(color: shadow ? LumeColor.ink.opacity(0.1) : .clear, radius: 18, x: 0, y: 9)

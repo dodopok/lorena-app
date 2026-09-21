@@ -5,9 +5,14 @@ struct FinanceView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserProfile.createdAt) private var profiles: [UserProfile]
     @Query(sort: \Expense.date, order: .reverse) private var allExpenses: [Expense]
+    @Query(sort: \MoneyAddition.date, order: .reverse) private var moneyAdditions: [MoneyAddition]
 
     @State private var categoryFilter: FinanceCategory?
     @State private var showingNewExpense = false
+    @State private var showingNewMoneyAddition = false
+    @State private var expenseToEdit: Expense?
+    @State private var showingDeleteConfirmation = false
+    @State private var expenseToDelete: Expense?
 
     private let orbs: [OrbSpec] = [
         OrbSpec(color: LumeColor.amberOrb, size: 320, opacity: 0.5, blur: 60, alignment: .topLeading, offset: CGSize(width: -80, height: -40), duration: 17),
@@ -28,12 +33,18 @@ struct FinanceView: View {
 
                         AvailableBalanceCard(
                             available: availableBalance,
-                            subtitle: "Próxima mesada em \(nextAllowanceLabel)."
+                            subtitle: "Próxima mesada em \(nextAllowanceLabel).",
+                            subtitleBelowAmount: true,
+                            bottomInset: 56
                         )
                         .overlay(alignment: .bottom) { progressFooter }
                         .lumeRiseIn()
 
                         chipRow
+
+                        if categoryFilter == nil && !moneyAdditions.isEmpty {
+                            moneyAdditionsSection
+                        }
 
                         VStack(spacing: 18) {
                             ForEach(groupedByDay, id: \.0) { label, dayExpenses in
@@ -46,7 +57,16 @@ struct FinanceView: View {
                                                     .overlay(LumeColor.brandPlumStart.opacity(0.08))
                                                     .padding(.leading, 72)
                                             }
-                                            ExpenseRow(expense: expense)
+                                            ExpenseRow(
+                                                expense: expense,
+                                                onEdit: {
+                                                    expenseToEdit = expense
+                                                },
+                                                onDelete: {
+                                                    expenseToDelete = expense
+                                                    showingDeleteConfirmation = true
+                                                }
+                                            )
                                         }
                                     }
                                     .lumeSoftGlass(cornerRadius: 24, shadow: false)
@@ -64,9 +84,27 @@ struct FinanceView: View {
                     .padding(.top, 4)
                 }
 
-                LumeSolidIconButton(systemImage: "plus", size: 62, iconSize: 26, color: LumeColor.brand, pulses: true) {
-                    showingNewExpense = true
+                Menu {
+                    Button {
+                        showingNewExpense = true
+                    } label: {
+                        Label("Novo gasto", systemImage: "cart.fill")
+                    }
+                    Button {
+                        showingNewMoneyAddition = true
+                    } label: {
+                        Label("Adicionar dinheiro", systemImage: "plus.circle.fill")
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 26, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 62, height: 62)
+                        .background(Circle().fill(LumeColor.brand))
+                        .contentShape(Circle())
                 }
+                .buttonStyle(.plain)
+                .lumePulse(Circle(), color: LumeColor.brand)
                 .shadow(color: LumeColor.brand.opacity(0.4), radius: 16, x: 0, y: 10)
                 .padding(.trailing, 22)
                 .padding(.bottom, 130)
@@ -74,6 +112,20 @@ struct FinanceView: View {
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingNewExpense) {
                 NewExpenseView()
+            }
+            .sheet(isPresented: $showingNewMoneyAddition) {
+                NewMoneyAdditionView()
+            }
+            .sheet(item: $expenseToEdit) { expense in
+                NewExpenseView(expenseToEdit: expense)
+            }
+            .confirmationDialog("Apagar este gasto?", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+                Button("Apagar", role: .destructive) {
+                    deletePendingExpense()
+                }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("Essa ação não pode ser desfeita.")
             }
         }
     }
@@ -109,7 +161,7 @@ struct FinanceView: View {
             HStack {
                 Text("\(LumeCurrency.full(cycleSpent)) usados")
                 Spacer()
-                Text("de \(LumeCurrency.full(profile?.allowanceAmount ?? 0))")
+                Text("de \(LumeCurrency.full(cycleBudget))")
             }
             .font(LumeType.sans(12.5))
             .foregroundStyle(LumeColor.brandOnPlumLabel)
@@ -145,6 +197,23 @@ struct FinanceView: View {
         .padding(.vertical, 40)
     }
 
+    private var moneyAdditionsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            LumeEyebrow(text: "Entradas")
+            VStack(spacing: 0) {
+                ForEach(Array(moneyAdditions.enumerated()), id: \.element.persistentModelID) { index, addition in
+                    if index > 0 {
+                        Divider()
+                            .overlay(LumeColor.greenDeep.opacity(0.1))
+                            .padding(.leading, 72)
+                    }
+                    MoneyAdditionRow(addition: addition)
+                }
+            }
+            .lumeSoftGlass(cornerRadius: 24, shadow: false)
+        }
+    }
+
     private var filteredExpenses: [Expense] {
         guard let categoryFilter else { return allExpenses }
         return allExpenses.filter { $0.category == categoryFilter }
@@ -167,23 +236,75 @@ struct FinanceView: View {
         allExpenses.filter { $0.date >= cycleStart }.reduce(0) { $0 + $1.amount }
     }
 
+    private var cycleAdded: Double {
+        moneyAdditions.filter { $0.date >= cycleStart }.reduce(0) { $0 + $1.amount }
+    }
+
+    private var cycleBudget: Double {
+        (profile?.allowanceAmount ?? 0) + cycleAdded
+    }
+
     private var availableBalance: Double {
-        (profile?.allowanceAmount ?? 0) - cycleSpent
+        cycleBudget - cycleSpent
     }
 
     private var usedFraction: Double {
-        guard let allowance = profile?.allowanceAmount, allowance > 0 else { return 0 }
-        return cycleSpent / allowance
+        guard cycleBudget > 0 else { return 0 }
+        return cycleSpent / cycleBudget
     }
 
     private var nextAllowanceLabel: String {
         guard let profile else { return "" }
         return LumeDateFormat.dayMonthAbbrev(profile.nextAllowanceDate())
     }
+
+    private func deletePendingExpense() {
+        guard let expenseToDelete else { return }
+        modelContext.delete(expenseToDelete)
+        try? modelContext.save()
+        self.expenseToDelete = nil
+    }
+}
+
+private struct MoneyAdditionRow: View {
+    var addition: MoneyAddition
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Circle()
+                .fill(LumeColor.greenChipBg)
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Image(systemName: "plus")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(LumeColor.greenText)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(addition.title)
+                    .font(LumeType.sans(15.5, weight: .bold))
+                    .foregroundStyle(LumeColor.ink)
+                    .lineLimit(1)
+                Text(LumeDateFormat.time(addition.date))
+                    .font(LumeType.sans(13))
+                    .foregroundStyle(LumeColor.textFaint)
+            }
+
+            Spacer()
+
+            Text("+\(LumeCurrency.full(addition.amount))")
+                .font(LumeType.serif(19))
+                .foregroundStyle(LumeColor.greenTextDeep)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+    }
 }
 
 private struct ExpenseRow: View {
     var expense: Expense
+    var onEdit: () -> Void
+    var onDelete: () -> Void
 
     var body: some View {
         HStack(spacing: 14) {
@@ -211,6 +332,18 @@ private struct ExpenseRow: View {
             Text("−\(LumeCurrency.full(expense.amount))")
                 .font(LumeType.serif(19))
                 .foregroundStyle(LumeColor.ink)
+
+            Menu {
+                Button("Editar") { onEdit() }
+                Button("Apagar", role: .destructive) { onDelete() }
+            } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(LumeColor.textFainter)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)

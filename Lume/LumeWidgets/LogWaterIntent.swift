@@ -5,8 +5,8 @@ import SwiftData
 /// Backs the "+300" button on the Live Activity / Dynamic Island — runs right
 /// there, in the widget extension process, without opening the app.
 struct LogWaterIntent: LiveActivityIntent {
-    static var title: LocalizedStringResource = "Registrar água"
-    static var description = IntentDescription("Adiciona água ao total de hoje.")
+    static let title: LocalizedStringResource = "Registrar água"
+    static let description = IntentDescription("Adiciona água ao total de hoje.")
 
     @Parameter(title: "Quantidade (ml)")
     var amountML: Int

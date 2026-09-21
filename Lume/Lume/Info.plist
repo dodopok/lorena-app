@@ -16,6 +16,17 @@
 	<string>Lume</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.dodopok.lume</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lume</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
@@ -39,6 +50,8 @@
 	<string>Light</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>O Face ID mantém o Lume privado, só para você.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Use a câmera para guardar uma foto junto da sua gratidão de hoje.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Conecte seu Calendário para ver todos os compromissos na Agenda do Lume.</string>
 	<key>NSCalendarsUsageDescription</key>
@@ -49,6 +62,8 @@
 		<true/>
 	</dict>
 	<key>NSSupportsLiveActivities</key>
-	<true/>
+	<false/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

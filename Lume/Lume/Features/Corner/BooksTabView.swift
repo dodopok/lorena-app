@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct BooksTabView: View {
     @Environment(\.modelContext) private var modelContext
@@ -7,6 +8,9 @@ struct BooksTabView: View {
 
     @State private var showingAddBook = false
     @State private var showingPageUpdate = false
+    @State private var bookToEdit: Book?
+    @State private var bookToDelete: Book?
+    @State private var showingDeleteConfirmation = false
 
     private var readingBook: Book? { books.first { $0.status == .reading } }
 
@@ -16,7 +20,7 @@ struct BooksTabView: View {
                 if let readingBook {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 18) {
-                            BookCoverView(seedHex: readingBook.coverColorHex, width: 86, height: 126)
+                            BookCoverView(seedHex: readingBook.coverColorHex, coverURLString: readingBook.coverURLString, coverImageData: readingBook.coverImageData, width: 86, height: 126)
 
                             VStack(alignment: .leading, spacing: 8) {
                                 LumeEyebrow(text: "Lendo agora")
@@ -46,6 +50,7 @@ struct BooksTabView: View {
                     .padding(20)
                     .lumeSoftGlass(cornerRadius: 28)
                     .lumeRiseIn()
+                    .contextMenu { bookActions(for: readingBook) }
 
                     Button {
                         showingPageUpdate = true
@@ -55,9 +60,10 @@ struct BooksTabView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
+                            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(LumeColor.brand))
+                            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .buttonStyle(.plain)
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(LumeColor.brand))
                 } else {
                     Button { showingAddBook = true } label: {
                         VStack(spacing: 8) {
@@ -76,15 +82,23 @@ struct BooksTabView: View {
                     HStack {
                         Text("Biblioteca").font(LumeType.sans(17, weight: .heavy)).foregroundStyle(LumeColor.ink)
                         Spacer()
-                        Button("Adicionar") { showingAddBook = true }
-                            .font(LumeType.sans(14, weight: .bold))
-                            .foregroundStyle(LumeColor.brand)
+                        Button {
+                            showingAddBook = true
+                        } label: {
+                            Text("Adicionar")
+                                .font(LumeType.sans(14, weight: .bold))
+                                .foregroundStyle(LumeColor.brand)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
 
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ForEach(Array(books.enumerated()), id: \.element.persistentModelID) { index, book in
                             VStack(alignment: .leading, spacing: 8) {
-                                BookCoverView(seedHex: book.coverColorHex, width: nil, height: 140)
+                                BookCoverView(seedHex: book.coverColorHex, coverURLString: book.coverURLString, coverImageData: book.coverImageData, width: nil, height: 140)
                                 Text(book.title)
                                     .font(LumeType.sans(12, weight: .bold))
                                     .foregroundStyle(LumeColor.ink)
@@ -92,8 +106,26 @@ struct BooksTabView: View {
                                 Text(statusLabel(book))
                                     .font(LumeType.sans(11))
                                     .foregroundStyle(LumeColor.textFaint)
+
+                                Button {
+                                    bookToEdit = book
+                                } label: {
+                                    HStack(spacing: 7) {
+                                        LumeStarDisplay(rating: book.rating, size: 11)
+                                        Text(book.rating == 0 ? "Avaliar" : "Editar avaliação")
+                                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                            .foregroundStyle(LumeColor.brand)
+                                        Spacer(minLength: 0)
+                                    }
+                                    .padding(.vertical, 6)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(book.rating == 0 ? "Avaliar livro" : "Editar avaliação do livro")
+                                .accessibilityHint("Abre as estrelas e o campo de resenha")
                             }
                             .lumeRiseIn(delay: Double(index) * 0.05)
+                            .contextMenu { bookActions(for: book) }
                         }
                     }
                 }
@@ -104,31 +136,82 @@ struct BooksTabView: View {
             .padding(.top, 4)
         }
         .sheet(isPresented: $showingAddBook) { AddBookSheet() }
+        .sheet(item: $bookToEdit) { book in
+            AddBookSheet(bookToEdit: book)
+        }
         .sheet(isPresented: $showingPageUpdate) {
             if let readingBook { UpdatePageSheet(book: readingBook) }
+        }
+        .confirmationDialog(
+            "Apagar este livro?",
+            isPresented: $showingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Apagar", role: .destructive) { deletePendingBook() }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("O livro e o progresso dele serão removidos.")
         }
     }
 
     private func statusLabel(_ book: Book) -> String {
+        let status: String
         switch book.status {
-        case .reading: "lendo agora"
-        case .read: "lido · \(String(repeating: "★", count: max(0, min(5, book.rating))))"
-        case .wantToRead: "quero ler"
+        case .reading: status = "lendo agora"
+        case .read: status = "lido"
+        case .wantToRead: status = "quero ler"
         }
+        if book.rating > 0 {
+            return "\(status) · \(String(repeating: "★", count: min(5, book.rating)))"
+        }
+        return status
+    }
+
+    @ViewBuilder
+    private func bookActions(for book: Book) -> some View {
+        Button("Avaliar e resenhar", systemImage: "star.bubble") { bookToEdit = book }
+        Button("Editar") { bookToEdit = book }
+        Button("Remover", role: .destructive) {
+            bookToDelete = book
+            showingDeleteConfirmation = true
+        }
+    }
+
+    private func deletePendingBook() {
+        guard let bookToDelete else { return }
+        modelContext.delete(bookToDelete)
+        try? modelContext.save()
+        self.bookToDelete = nil
     }
 }
 
 struct BookCoverView: View {
     var seedHex: String
+    var coverURLString: String? = nil
+    var coverImageData: Data? = nil
     var width: CGFloat?
     var height: CGFloat
 
     var body: some View {
         let top = Color(hex: seedHex)
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(LinearGradient(colors: [top, top.darkened()], startPoint: .topLeading, endPoint: .bottomTrailing))
-            .frame(width: width, height: height)
-            .frame(maxWidth: width == nil ? .infinity : nil)
-            .shadow(color: LumeColor.brandPlumStart.opacity(0.16), radius: 8, x: 0, y: 7)
+        ZStack {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(LinearGradient(colors: [top, top.darkened()], startPoint: .topLeading, endPoint: .bottomTrailing))
+            if let coverImageData, let uiImage = UIImage(data: coverImageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            } else if let coverURLString, let url = URL(string: coverURLString) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    }
+                }
+            }
+        }
+        .frame(width: width, height: height)
+        .frame(maxWidth: width == nil ? .infinity : nil)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .shadow(color: LumeColor.brandPlumStart.opacity(0.16), radius: 8, x: 0, y: 7)
     }
 }

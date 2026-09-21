@@ -6,6 +6,7 @@ import Foundation
 /// already live in the system Calendar store — no OAuth, no backend, nothing
 /// for Lume to build except asking permission and reading them (read-only).
 @Observable
+@MainActor
 final class CalendarSyncService {
     static let shared = CalendarSyncService()
 

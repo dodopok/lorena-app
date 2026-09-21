@@ -9,11 +9,13 @@ import SwiftData
 /// presents it.
 struct NewExpenseView: View {
     var eventToLink: CalendarEvent?
+    var expenseToEdit: Expense?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserProfile.createdAt) private var profiles: [UserProfile]
     @Query(sort: \Expense.date, order: .reverse) private var allExpenses: [Expense]
+    @Query(sort: \MoneyAddition.date, order: .reverse) private var moneyAdditions: [MoneyAddition]
 
     @State private var digits = ""
     @State private var title = ""
@@ -22,11 +24,27 @@ struct NewExpenseView: View {
 
     private var amount: Double { LumeCurrency.amount(fromDigits: digits) }
 
+    init(eventToLink: CalendarEvent? = nil, expenseToEdit: Expense? = nil) {
+        self.eventToLink = eventToLink
+        self.expenseToEdit = expenseToEdit
+        _digits = State(initialValue: expenseToEdit.map { String(Int(($0.amount * 100).rounded())) } ?? "")
+        _title = State(initialValue: expenseToEdit?.title ?? "")
+        _category = State(initialValue: expenseToEdit?.category ?? .mercado)
+    }
+
     private var availableBalance: Double {
         guard let profile = profiles.first else { return 0 }
         let cycleStart = profile.currentCycleStart()
-        let spent = allExpenses.filter { $0.date >= cycleStart }.reduce(0) { $0 + $1.amount }
-        return profile.allowanceAmount - spent
+        let spent = allExpenses
+            .filter { expense in
+                let isEditing = expenseToEdit.map { $0.persistentModelID == expense.persistentModelID } ?? false
+                return expense.date >= cycleStart && !isEditing
+            }
+            .reduce(0) { $0 + $1.amount }
+        let added = moneyAdditions
+            .filter { $0.date >= cycleStart }
+            .reduce(0) { $0 + $1.amount }
+        return profile.allowanceAmount + added - spent
     }
 
     private var remaining: Double { availableBalance - amount }
@@ -35,7 +53,7 @@ struct NewExpenseView: View {
         VStack(spacing: 0) {
             LumeSheetHeader(
                 leadingTitle: "Cancelar",
-                title: "Novo gasto",
+                title: expenseToEdit == nil ? "Novo gasto" : "Editar gasto",
                 trailingTitle: "Salvar",
                 trailingEnabled: amount > 0,
                 onLeading: { dismiss() },
@@ -100,8 +118,13 @@ struct NewExpenseView: View {
     private func save() {
         guard amount > 0 else { return }
         let name = title.trimmingCharacters(in: .whitespaces).isEmpty ? category.label : title
-        let expense = Expense(title: name, amount: amount, category: category)
-        modelContext.insert(expense)
+        if let expenseToEdit {
+            expenseToEdit.title = name
+            expenseToEdit.amount = amount
+            expenseToEdit.category = category
+        } else {
+            modelContext.insert(Expense(title: name, amount: amount, category: category))
+        }
         if let eventToLink {
             eventToLink.loggedExpense = true
         }

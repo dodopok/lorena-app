@@ -44,6 +44,11 @@ enum LumeColor {
     static let greenBar = Color(hex: "CFE2D6")
     static let greenOrb = Color(hex: "A8D4C4")
 
+    // MARK: Water
+    static let waterBlue = Color(hex: "4A9BC5")
+    static let waterBlueLight = Color(hex: "8BCBE5")
+    static let waterBlueText = Color(hex: "246486")
+
     // MARK: Terracotta / âmbar (mesada, trabalho)
     static let amberOrb = Color(hex: "E9C79A")
     static let amberAccent = Color(hex: "C1894A")
@@ -116,7 +121,7 @@ enum AgendaCategory: String, CaseIterable, Codable, Identifiable, Hashable {
 
 /// Finance categories used on expenses and the Finanças filter chips.
 enum FinanceCategory: String, CaseIterable, Codable, Identifiable, Hashable {
-    case mercado, casa, transporte, saude, lazer
+    case mercado, casa, transporte, saude, lazer, outros
 
     var id: String { rawValue }
 
@@ -127,6 +132,7 @@ enum FinanceCategory: String, CaseIterable, Codable, Identifiable, Hashable {
         case .transporte: "Transporte"
         case .saude: "Saúde"
         case .lazer: "Lazer"
+        case .outros: "Outros"
         }
     }
 
@@ -137,6 +143,7 @@ enum FinanceCategory: String, CaseIterable, Codable, Identifiable, Hashable {
         case .transporte: LumeColor.lavenderChipBgFaint
         case .saude: LumeColor.greenChipBg
         case .lazer: LumeColor.roseSoft
+        case .outros: LumeColor.amberChipBg
         }
     }
 
@@ -147,6 +154,7 @@ enum FinanceCategory: String, CaseIterable, Codable, Identifiable, Hashable {
         case .transporte: "car.fill"
         case .saude: "cross.case.fill"
         case .lazer: "sparkles"
+        case .outros: "ellipsis.circle.fill"
         }
     }
 }

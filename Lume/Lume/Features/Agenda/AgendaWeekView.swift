@@ -3,6 +3,7 @@ import SwiftUI
 struct AgendaWeekView: View {
     @Binding var selectedDate: Date
     var itemsProvider: (Date, Date) -> [AgendaItem]
+    var onSelect: (AgendaItem) -> Void
 
     private let startHour = 7
     private let endHour = 21
@@ -65,6 +66,7 @@ struct AgendaWeekView: View {
             }
             .foregroundStyle(isSelected ? LumeColor.brand : LumeColor.ink)
             .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -102,15 +104,22 @@ struct AgendaWeekView: View {
     }
 
     private func eventBlock(_ item: AgendaItem, hourHeight: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
-            .fill(item.category.chipBackground)
-            .overlay(alignment: .leading) {
-                Rectangle().fill(item.category.accent).frame(width: 3)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .frame(height: blockHeight(item, hourHeight: hourHeight))
-            .frame(maxWidth: .infinity)
-            .offset(y: yOffset(for: item.start, hourHeight: hourHeight))
+        Button {
+            onSelect(item)
+        } label: {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(item.category.chipBackground)
+                .overlay(alignment: .leading) {
+                    Rectangle().fill(item.category.accent).frame(width: 3)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .frame(height: blockHeight(item, hourHeight: hourHeight))
+                .frame(maxWidth: .infinity)
+                .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(item.title)
+        .offset(y: yOffset(for: item.start, hourHeight: hourHeight))
     }
 
     private func yOffset(for date: Date, hourHeight: CGFloat) -> CGFloat {

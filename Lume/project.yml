@@ -17,9 +17,9 @@ settings:
     ASSETSCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     SWIFT_EMIT_LOC_STRINGS: YES
     GENERATE_INFOPLIST_FILE: NO
-    MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
-    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "9"
+    DEVELOPMENT_TEAM: "R573HPN65Q"
     CODE_SIGN_STYLE: Automatic
 
 targets:
@@ -31,17 +31,18 @@ targets:
       - path: Shared
     resources:
       - path: Lume/Resources/Assets.xcassets
-    info:
-      path: Lume/Info.plist
     entitlements:
       path: Lume/Lume.entitlements
     dependencies:
       - target: LumeWidgets
         embed: true
+      - target: LumeShare
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dodopok.lume
         PRODUCT_NAME: Lume
+        TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_ENTITLEMENTS: Lume/Lume.entitlements
         INFOPLIST_FILE: Lume/Info.plist
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -55,16 +56,32 @@ targets:
       - path: Shared
     resources:
       - path: LumeWidgets/Resources/Assets.xcassets
-    info:
-      path: LumeWidgets/Info.plist
     entitlements:
       path: LumeWidgets/LumeWidgets.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dodopok.lume.widgets
         PRODUCT_NAME: LumeWidgets
+        TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_ENTITLEMENTS: LumeWidgets/LumeWidgets.entitlements
         INFOPLIST_FILE: LumeWidgets/Info.plist
+        SKIP_INSTALL: YES
+
+  LumeShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: LumeShare
+    entitlements:
+      path: LumeShare/LumeShare.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dodopok.lume.share
+        PRODUCT_NAME: LumeShare
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: LumeShare/Info.plist
+        CODE_SIGN_ENTITLEMENTS: LumeShare/LumeShare.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
         SKIP_INSTALL: YES
 
 schemes:

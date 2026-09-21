@@ -1,0 +1,1087 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0111A1511690FC1CB3FE7709 /* LumeMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1812C408D90AC2513A02B931 /* LumeMotion.swift */; };
+		06B1590BF8112715E5E38747 /* GratitudeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A0E800B883420E91BA6CB07 /* GratitudeEntry.swift */; };
+		08B046EA6C43A0B0CA637B4C /* LumeShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67B714B9B188A26078253D1A /* LumeShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		0CDC31C311D76FA54A4D03C1 /* NewMoneyAdditionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FF90914177CACAFBB0D67E /* NewMoneyAdditionView.swift */; };
+		0E66911AA7D5B8C42D37094B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3B3D1A501408C99B7BF573AB /* Assets.xcassets */; };
+		12F873B758200398DD0F1180 /* CornerContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E77BFEA54AF0AA44E194C4B9 /* CornerContainerView.swift */; };
+		14A666B48C4C617D102BAA74 /* WaterLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 660E687493268FDEA144E2F3 /* WaterLiveActivityWidget.swift */; };
+		17BD0BE948B0D6F591865B63 /* MoneyAddition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D59F8E1B99F3A69B2F4C2D0 /* MoneyAddition.swift */; };
+		19E7A76ABE8E507564C50E27 /* OnboardingDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494D3A47C07E76ADAC373D6D /* OnboardingDraft.swift */; };
+		1ABAB9B0C84F1E481D56A1D0 /* AgendaDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D7B1B1221D5A2AFC11A1C4 /* AgendaDayView.swift */; };
+		1CAC956BF6F95A5FC964F4F7 /* WelcomeStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F5F6E7EEDFFBE54A18793F /* WelcomeStepView.swift */; };
+		1CC9959BE51B562C1E211D5C /* WaterFillRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE6ED6C26F3B1FE59470D5F /* WaterFillRing.swift */; };
+		1F2258FA55727EBF149C654A /* LumeLogoMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909C96990AF369B73D9E64C6 /* LumeLogoMark.swift */; };
+		1FB5827336FED8ED59A3BF19 /* AgendaWeekView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7728BC0E2BE015A09C8821DF /* AgendaWeekView.swift */; };
+		2124E5090460B7D907D3EF63 /* LumeTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60290571348876A792E6E662 /* LumeTabBar.swift */; };
+		22740FA2C868476DD1CA3F5C /* NewExpenseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 507881FB51DA87268839D69A /* NewExpenseView.swift */; };
+		22B9D12E54B23C78824D5895 /* LumeStarRating.swift in Sources */ = {isa = PBXBuildFile; fileRef = E221874CAE456DB441B4F5F2 /* LumeStarRating.swift */; };
+		22C26BBDB1E451A4EEDD4338 /* WishlistTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98AAB85D11B739186B9F3B95 /* WishlistTabView.swift */; };
+		2847FD1E7E2958497BBF58E2 /* NewEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B234DBED52334661EB428888 /* NewEventSheet.swift */; };
+		2CE6ABDA579FA71881B3E687 /* GratitudeTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA33AE4528FF80C77BE4EAE /* GratitudeTabView.swift */; };
+		2E25E554146CBBE3B5598A9F /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708F6F70B25F5D5C403D3546 /* LiveActivityController.swift */; };
+		336B3A4BEBB651C9666E7B76 /* AgendaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4DC08CDF3B7CEED7D52097 /* AgendaItem.swift */; };
+		34F82FAD551BCE2FA01D0137 /* CalendarSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54A7ADCBAB0BA8D9415A63B3 /* CalendarSyncService.swift */; };
+		399C42CCD5F9648AFD688C26 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E972AB2F4CEB6BAC3620CD79 /* OnboardingContainerView.swift */; };
+		4D4CBB2DCF861EF0CD688975 /* ShoppingList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67B068C987236C5122C3E29 /* ShoppingList.swift */; };
+		4E05CB8A64C969F07A404488 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7A84A7C025B308D6CD70E1 /* Book.swift */; };
+		4F7867ED156C4E682B1105A6 /* LumeColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00BC2AB53207CBE5D736A2C /* LumeColor.swift */; };
+		53F78D5979B2B4F6F596F4CC /* LogWaterIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73DB8AFEF453CC80018DD27 /* LogWaterIntent.swift */; };
+		55798607BDA496887897A71C /* LumeDateFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = D746D1859003BA61C735AD49 /* LumeDateFormat.swift */; };
+		56B62865A27713F0A45A4308 /* LumeRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60BC5533A4CE94898888ED08 /* LumeRoute.swift */; };
+		57FEA614E802936277FCFD71 /* ShoppingList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67B068C987236C5122C3E29 /* ShoppingList.swift */; };
+		58C205F9D49F9131BE27FE4A /* Expense.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1564AB93B39A08F1FA1E47B7 /* Expense.swift */; };
+		59607B5CA3D6AFF268AD6FD8 /* WaterEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391593B506C0745F094EA923 /* WaterEntry.swift */; };
+		5CEDBBDD7994951B7068576E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 02747FD53B999CD5EF11E0BA /* Assets.xcassets */; };
+		5CEE47446D2CC71FA937C9B8 /* LumeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAAD0E15130F320D494A9715 /* LumeType.swift */; };
+		609104C5ACE12A7EBD2B2D09 /* LumeDateFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = D746D1859003BA61C735AD49 /* LumeDateFormat.swift */; };
+		621D26710F0532DC31315DB5 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708F6F70B25F5D5C403D3546 /* LiveActivityController.swift */; };
+		679083C00DB19F9F74A80EF3 /* EntertainmentSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F8F6865BF1936FBB1030E9 /* EntertainmentSearchService.swift */; };
+		69FD5B950DB96F5CD44436A7 /* MovieShow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C86F135A5D84A3928FBFD79 /* MovieShow.swift */; };
+		6B6C40CA7DC5ACEDE85E80AD /* WaterActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592FCB2448FDC2F584256A62 /* WaterActivityAttributes.swift */; };
+		6B70C36606110A3FD7E39C1D /* LumeButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5418434DF271DC94821E0FB3 /* LumeButtons.swift */; };
+		6DA1DB1E97D18286F4792170 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7A84A7C025B308D6CD70E1 /* Book.swift */; };
+		6F1F8D21282E0F0DAF91380D /* CalendarEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC8EFB5FF6294F270D1B16A1 /* CalendarEvent.swift */; };
+		7174D7CFF1F30E0E71AC9050 /* LumeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03BEE23B93A94D105C0A987F /* LumeApp.swift */; };
+		7B46424CE48519D84D350764 /* CalendarEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC8EFB5FF6294F270D1B16A1 /* CalendarEvent.swift */; };
+		7CFB287C921B7C6250D70833 /* AddBookSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C1E6444E3F4158A70A36DC /* AddBookSheet.swift */; };
+		7E0ECC65300C7B96431FD308 /* LumeModelContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03085E5ACC90A0FE7EAC1C4 /* LumeModelContainer.swift */; };
+		7E5C31FF549946A9E9ACCA3C /* AgendaContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E85A8396E27A89F56665871 /* AgendaContainerView.swift */; };
+		7E60D308DB208FE63C441695 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5B9C52E9C3FF4BF88220FD /* TodayView.swift */; };
+		86D0FA60CB2DD75F45418A67 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA03F45FAE503A494EDB36 /* ExerciseEntry.swift */; };
+		86E8751E2EFCB32269F35113 /* LumeColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00BC2AB53207CBE5D736A2C /* LumeColor.swift */; };
+		888B20CDF87FEDC06769C857 /* MovieShow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C86F135A5D84A3928FBFD79 /* MovieShow.swift */; };
+		8E790C626E5563E32FF47123 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC6D66C7C09478C2D060496 /* UserProfile.swift */; };
+		8F175C69E19B78ED5CDFEF04 /* GoogleBooksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC48264AA5A0AAF007626D77 /* GoogleBooksService.swift */; };
+		917DAEED24C569234FDEF2DC /* WaterGoalStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EAFED64156BB9CB84A31CAD /* WaterGoalStepView.swift */; };
+		91ABC7BCD39125593C2AD4B5 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A04AABAB16CF4492203BD1 /* Color+Hex.swift */; };
+		91E32A35D876F47A14DC6332 /* WaterHistorySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0577595AD4F08857B150A960 /* WaterHistorySheet.swift */; };
+		92A0C3E0467A8056C2FE89E2 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A04AABAB16CF4492203BD1 /* Color+Hex.swift */; };
+		93036515572D4B70946E65A8 /* GratitudeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A0E800B883420E91BA6CB07 /* GratitudeEntry.swift */; };
+		9385F9FB168AFAE796DF8800 /* LumeGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F2CE74BC07FF4AC5D8486C /* LumeGlass.swift */; };
+		9420598A0A0E984F6EBD108D /* LinkMetadataFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = D72071DE2C2F2EF933C01AB3 /* LinkMetadataFetcher.swift */; };
+		95E46FCDB213026CA146BCCB /* ExerciseComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77386C02FF57221FCED54A /* ExerciseComposerView.swift */; };
+		9C81A2E35FA8A70C43E83D97 /* LumeWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2EFE586D7FF9AA577064438A /* LumeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A132932D583E698B45D5C004 /* WaterActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592FCB2448FDC2F584256A62 /* WaterActivityAttributes.swift */; };
+		A1AFD371A62402808D9F4156 /* LumeShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6521409E3F16FCC0B5EB067 /* LumeShareViewController.swift */; };
+		A28C7DF2853F92656489948C /* MoreSettingsDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 695970A3FCF8A4FD5DBA5545 /* MoreSettingsDetailView.swift */; };
+		A3075F2067B348F0305B6A29 /* LumeModelContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03085E5ACC90A0FE7EAC1C4 /* LumeModelContainer.swift */; };
+		A416B27C7A9CFA45C65264D3 /* BathroomSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EDD705D02FC26C94C9B8F0D /* BathroomSheetView.swift */; };
+		A775ECE1C90A662EEDA5CC87 /* BathroomEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AECF552700FA1F9763BB986E /* BathroomEntry.swift */; };
+		A7AD74B374F6D6C889876803 /* DailyTodo.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29DE73F9EF476D0CA7CC00F /* DailyTodo.swift */; };
+		A8F68DD546B41DBA5B9D0786 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEE4CB2FD3C9ADF1D23DF700 /* SettingsView.swift */; };
+		AAA10422F016F61E3237B0B0 /* LumeAmountField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 121A7E00DAFCFC8B25836335 /* LumeAmountField.swift */; };
+		ABC86FC2F5A9A108012E3502 /* AllowanceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCE7F30FB7D1E0BC1D151A32 /* AllowanceDetailView.swift */; };
+		AF13497650DEC3FDDFFCED33 /* GratitudeComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F25D8D0E958419075C7121 /* GratitudeComposerView.swift */; };
+		B2014777EFC69262AFD3711A /* LumeWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B4C9B5E24D9B3FB0B8A7D1 /* LumeWidgetsBundle.swift */; };
+		B78138CF7D6AEEA2875F51DA /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC6D66C7C09478C2D060496 /* UserProfile.swift */; };
+		B7990CDA255602DB9C7EE642 /* FinanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7126FAE4B8D2EF5155D008AF /* FinanceView.swift */; };
+		B99FA168056B3180569C5AB9 /* AgendaMonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC843A0F0C59353D287E001A /* AgendaMonthView.swift */; };
+		BB21629D637944B8160789A2 /* DataExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28D06D692E4B8F078E71FE69 /* DataExportService.swift */; };
+		BDA5C36B62D43A241225EFDC /* TodayComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03B3BF4884CE98A715CEF839 /* TodayComponents.swift */; };
+		C2FF5703CCC869C0BBF80254 /* Expense.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1564AB93B39A08F1FA1E47B7 /* Expense.swift */; };
+		CB69F9D8E6559E4085A1E0F4 /* WaterGoalDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A05A8BE9D2936D7E5C0644B /* WaterGoalDetailView.swift */; };
+		CC776A6E2C6A53AC7B8DE5FB /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97D096A2C15629A39CFCA9E /* NotificationScheduler.swift */; };
+		CDAA321C5182DB0EEAAC9C2F /* WishlistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 963461BD2718494BC31820C6 /* WishlistItem.swift */; };
+		D5386CC7EBE932A172240BF3 /* WaterEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391593B506C0745F094EA923 /* WaterEntry.swift */; };
+		D5CADE2E8B586B823125CCEC /* BemEstarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB7623DA312909A4C963F95 /* BemEstarView.swift */; };
+		D68A1719887BB82816596A86 /* WishlistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 963461BD2718494BC31820C6 /* WishlistItem.swift */; };
+		D6989FBA076955FEEE5ACA65 /* LumeSheetHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1698EE4C06554AAFA32808CC /* LumeSheetHeader.swift */; };
+		D6CB3909210AAA6877B46A10 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA03F45FAE503A494EDB36 /* ExerciseEntry.swift */; };
+		D8823EC12313143F149F5391 /* BathroomEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AECF552700FA1F9763BB986E /* BathroomEntry.swift */; };
+		D9FCC0240675D289D119718A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BD33722199521AF66C9AE2C /* RootView.swift */; };
+		DEA3CB4942F4C1E50BA5BA65 /* RootTabContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5315E05467E8D8408CC53BA /* RootTabContainer.swift */; };
+		DF81304E56F81437523B085C /* BooksTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A9A3DC4D4D077704D2448E3 /* BooksTabView.swift */; };
+		DFBC17A448B8DD5E007FE565 /* LumeCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1BF235E84ED836D2CD1ECB /* LumeCurrency.swift */; };
+		E1A0197ABEB322CFD4FF350F /* DailyTodo.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29DE73F9EF476D0CA7CC00F /* DailyTodo.swift */; };
+		E4161139C7BB0670C7E34F48 /* MoneyAddition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D59F8E1B99F3A69B2F4C2D0 /* MoneyAddition.swift */; };
+		E63A2F5341457B943FB7154A /* AppLockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5845ACFC9B80105160922E3F /* AppLockController.swift */; };
+		E81E711EB11C03772562E382 /* WishlistLinkCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595A24716FB87E97CCFB4B79 /* WishlistLinkCaptureView.swift */; };
+		F5DCF8EA3C85822DB6EF09CB /* AllowanceStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939323F5A1AB94C21C13D122 /* AllowanceStepView.swift */; };
+		F956454B0D5D966393E8C51B /* MoviesTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E071BA9AD12EBD901F631E /* MoviesTabView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		05FED328581E5031FFE5415B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A37DE961BCDB8E1D52678C1B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5DB38A48A039CD79F832A380;
+			remoteInfo = LumeWidgets;
+		};
+		2B2EE66589CFF08475E94E0F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A37DE961BCDB8E1D52678C1B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C984423A2F7E48CE386BDB56;
+			remoteInfo = LumeShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E6126CCFBC8B90BE34230E85 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9C81A2E35FA8A70C43E83D97 /* LumeWidgets.appex in Embed Foundation Extensions */,
+				08B046EA6C43A0B0CA637B4C /* LumeShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		02747FD53B999CD5EF11E0BA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		03B3BF4884CE98A715CEF839 /* TodayComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayComponents.swift; sourceTree = "<group>"; };
+		03BEE23B93A94D105C0A987F /* LumeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeApp.swift; sourceTree = "<group>"; };
+		04E071BA9AD12EBD901F631E /* MoviesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoviesTabView.swift; sourceTree = "<group>"; };
+		0577595AD4F08857B150A960 /* WaterHistorySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterHistorySheet.swift; sourceTree = "<group>"; };
+		0EDD705D02FC26C94C9B8F0D /* BathroomSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BathroomSheetView.swift; sourceTree = "<group>"; };
+		0FFE4586B021941AF3F4C1C4 /* Lume.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Lume.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		121A7E00DAFCFC8B25836335 /* LumeAmountField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeAmountField.swift; sourceTree = "<group>"; };
+		1564AB93B39A08F1FA1E47B7 /* Expense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expense.swift; sourceTree = "<group>"; };
+		1698EE4C06554AAFA32808CC /* LumeSheetHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeSheetHeader.swift; sourceTree = "<group>"; };
+		1812C408D90AC2513A02B931 /* LumeMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeMotion.swift; sourceTree = "<group>"; };
+		1BC6D66C7C09478C2D060496 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		26ADC87DEC44F460428AC1B3 /* LumeWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LumeWidgets.entitlements; sourceTree = "<group>"; };
+		27FF90914177CACAFBB0D67E /* NewMoneyAdditionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMoneyAdditionView.swift; sourceTree = "<group>"; };
+		28D06D692E4B8F078E71FE69 /* DataExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportService.swift; sourceTree = "<group>"; };
+		29CA03F45FAE503A494EDB36 /* ExerciseEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseEntry.swift; sourceTree = "<group>"; };
+		2C5B9C52E9C3FF4BF88220FD /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		2D59F8E1B99F3A69B2F4C2D0 /* MoneyAddition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyAddition.swift; sourceTree = "<group>"; };
+		2EAFED64156BB9CB84A31CAD /* WaterGoalStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterGoalStepView.swift; sourceTree = "<group>"; };
+		2EFE586D7FF9AA577064438A /* LumeWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = LumeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F7A84A7C025B308D6CD70E1 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		391593B506C0745F094EA923 /* WaterEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterEntry.swift; sourceTree = "<group>"; };
+		3A0E800B883420E91BA6CB07 /* GratitudeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GratitudeEntry.swift; sourceTree = "<group>"; };
+		3B3D1A501408C99B7BF573AB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3BD33722199521AF66C9AE2C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		41C1E6444E3F4158A70A36DC /* AddBookSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddBookSheet.swift; sourceTree = "<group>"; };
+		45F8F6865BF1936FBB1030E9 /* EntertainmentSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntertainmentSearchService.swift; sourceTree = "<group>"; };
+		494D3A47C07E76ADAC373D6D /* OnboardingDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDraft.swift; sourceTree = "<group>"; };
+		4C86F135A5D84A3928FBFD79 /* MovieShow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieShow.swift; sourceTree = "<group>"; };
+		507881FB51DA87268839D69A /* NewExpenseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewExpenseView.swift; sourceTree = "<group>"; };
+		5418434DF271DC94821E0FB3 /* LumeButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeButtons.swift; sourceTree = "<group>"; };
+		54A7ADCBAB0BA8D9415A63B3 /* CalendarSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSyncService.swift; sourceTree = "<group>"; };
+		5845ACFC9B80105160922E3F /* AppLockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockController.swift; sourceTree = "<group>"; };
+		592FCB2448FDC2F584256A62 /* WaterActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterActivityAttributes.swift; sourceTree = "<group>"; };
+		595A24716FB87E97CCFB4B79 /* WishlistLinkCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishlistLinkCaptureView.swift; sourceTree = "<group>"; };
+		59A5E9455B66D70CADA3931C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5A05A8BE9D2936D7E5C0644B /* WaterGoalDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterGoalDetailView.swift; sourceTree = "<group>"; };
+		5E85A8396E27A89F56665871 /* AgendaContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaContainerView.swift; sourceTree = "<group>"; };
+		60290571348876A792E6E662 /* LumeTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeTabBar.swift; sourceTree = "<group>"; };
+		60BC5533A4CE94898888ED08 /* LumeRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeRoute.swift; sourceTree = "<group>"; };
+		660E687493268FDEA144E2F3 /* WaterLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterLiveActivityWidget.swift; sourceTree = "<group>"; };
+		67B714B9B188A26078253D1A /* LumeShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = LumeShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		695970A3FCF8A4FD5DBA5545 /* MoreSettingsDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreSettingsDetailView.swift; sourceTree = "<group>"; };
+		6F1BF235E84ED836D2CD1ECB /* LumeCurrency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeCurrency.swift; sourceTree = "<group>"; };
+		708F6F70B25F5D5C403D3546 /* LiveActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityController.swift; sourceTree = "<group>"; };
+		7126FAE4B8D2EF5155D008AF /* FinanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceView.swift; sourceTree = "<group>"; };
+		7728BC0E2BE015A09C8821DF /* AgendaWeekView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaWeekView.swift; sourceTree = "<group>"; };
+		83D7B1B1221D5A2AFC11A1C4 /* AgendaDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaDayView.swift; sourceTree = "<group>"; };
+		84F5F6E7EEDFFBE54A18793F /* WelcomeStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeStepView.swift; sourceTree = "<group>"; };
+		87A04AABAB16CF4492203BD1 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		8AB7623DA312909A4C963F95 /* BemEstarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BemEstarView.swift; sourceTree = "<group>"; };
+		909C96990AF369B73D9E64C6 /* LumeLogoMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeLogoMark.swift; sourceTree = "<group>"; };
+		939323F5A1AB94C21C13D122 /* AllowanceStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllowanceStepView.swift; sourceTree = "<group>"; };
+		963461BD2718494BC31820C6 /* WishlistItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishlistItem.swift; sourceTree = "<group>"; };
+		98AAB85D11B739186B9F3B95 /* WishlistTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishlistTabView.swift; sourceTree = "<group>"; };
+		99F2CE74BC07FF4AC5D8486C /* LumeGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeGlass.swift; sourceTree = "<group>"; };
+		9A9A3DC4D4D077704D2448E3 /* BooksTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BooksTabView.swift; sourceTree = "<group>"; };
+		9BE6ED6C26F3B1FE59470D5F /* WaterFillRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterFillRing.swift; sourceTree = "<group>"; };
+		9CA33AE4528FF80C77BE4EAE /* GratitudeTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GratitudeTabView.swift; sourceTree = "<group>"; };
+		9F4DC08CDF3B7CEED7D52097 /* AgendaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaItem.swift; sourceTree = "<group>"; };
+		A03085E5ACC90A0FE7EAC1C4 /* LumeModelContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeModelContainer.swift; sourceTree = "<group>"; };
+		A6521409E3F16FCC0B5EB067 /* LumeShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeShareViewController.swift; sourceTree = "<group>"; };
+		A67B068C987236C5122C3E29 /* ShoppingList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingList.swift; sourceTree = "<group>"; };
+		AECF552700FA1F9763BB986E /* BathroomEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BathroomEntry.swift; sourceTree = "<group>"; };
+		B234DBED52334661EB428888 /* NewEventSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewEventSheet.swift; sourceTree = "<group>"; };
+		B624BDCDB864D403E30C3117 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B73DB8AFEF453CC80018DD27 /* LogWaterIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWaterIntent.swift; sourceTree = "<group>"; };
+		BAAD0E15130F320D494A9715 /* LumeType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeType.swift; sourceTree = "<group>"; };
+		BC8EFB5FF6294F270D1B16A1 /* CalendarEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvent.swift; sourceTree = "<group>"; };
+		BD77386C02FF57221FCED54A /* ExerciseComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseComposerView.swift; sourceTree = "<group>"; };
+		BE1F17940E28F0E444A42F06 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C5315E05467E8D8408CC53BA /* RootTabContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabContainer.swift; sourceTree = "<group>"; };
+		D00BC2AB53207CBE5D736A2C /* LumeColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeColor.swift; sourceTree = "<group>"; };
+		D29DE73F9EF476D0CA7CC00F /* DailyTodo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTodo.swift; sourceTree = "<group>"; };
+		D72071DE2C2F2EF933C01AB3 /* LinkMetadataFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkMetadataFetcher.swift; sourceTree = "<group>"; };
+		D746D1859003BA61C735AD49 /* LumeDateFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeDateFormat.swift; sourceTree = "<group>"; };
+		D8E01E437A6464AC50E13CCB /* LumeShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LumeShare.entitlements; sourceTree = "<group>"; };
+		DCE7F30FB7D1E0BC1D151A32 /* AllowanceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllowanceDetailView.swift; sourceTree = "<group>"; };
+		E221874CAE456DB441B4F5F2 /* LumeStarRating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeStarRating.swift; sourceTree = "<group>"; };
+		E77BFEA54AF0AA44E194C4B9 /* CornerContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerContainerView.swift; sourceTree = "<group>"; };
+		E972AB2F4CEB6BAC3620CD79 /* OnboardingContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingContainerView.swift; sourceTree = "<group>"; };
+		E9B4C9B5E24D9B3FB0B8A7D1 /* LumeWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeWidgetsBundle.swift; sourceTree = "<group>"; };
+		F4F25D8D0E958419075C7121 /* GratitudeComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GratitudeComposerView.swift; sourceTree = "<group>"; };
+		F59E31F93D55C74E563B9736 /* Lume.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lume.entitlements; sourceTree = "<group>"; };
+		F97D096A2C15629A39CFCA9E /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
+		FC48264AA5A0AAF007626D77 /* GoogleBooksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleBooksService.swift; sourceTree = "<group>"; };
+		FC843A0F0C59353D287E001A /* AgendaMonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaMonthView.swift; sourceTree = "<group>"; };
+		FEE4CB2FD3C9ADF1D23DF700 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0140F8C0DBBB4333295E18AC /* Lume */ = {
+			isa = PBXGroup;
+			children = (
+				BE1F17940E28F0E444A42F06 /* Info.plist */,
+				F59E31F93D55C74E563B9736 /* Lume.entitlements */,
+				377369C59B8F39916FC0215A /* App */,
+				1A0E4D3596F262B8BC3EC8C4 /* Design */,
+				F44BA776020BB8AB72CDD3FB /* Features */,
+				3B08E0A497DF553FA81E3036 /* Resources */,
+				1A8C32AA3AFCDC14D1F0DA47 /* Services */,
+				09BEE591A48CEBF1FB2433FB /* Utilities */,
+			);
+			path = Lume;
+			sourceTree = "<group>";
+		};
+		09BEE591A48CEBF1FB2433FB /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				6F1BF235E84ED836D2CD1ECB /* LumeCurrency.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		0CE35D5F8F8ACB44E07BB212 /* LumeShare */ = {
+			isa = PBXGroup;
+			children = (
+				59A5E9455B66D70CADA3931C /* Info.plist */,
+				D8E01E437A6464AC50E13CCB /* LumeShare.entitlements */,
+				A6521409E3F16FCC0B5EB067 /* LumeShareViewController.swift */,
+			);
+			path = LumeShare;
+			sourceTree = "<group>";
+		};
+		0D31E5F57E6ECA99367F7319 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AECF552700FA1F9763BB986E /* BathroomEntry.swift */,
+				2F7A84A7C025B308D6CD70E1 /* Book.swift */,
+				BC8EFB5FF6294F270D1B16A1 /* CalendarEvent.swift */,
+				D29DE73F9EF476D0CA7CC00F /* DailyTodo.swift */,
+				29CA03F45FAE503A494EDB36 /* ExerciseEntry.swift */,
+				1564AB93B39A08F1FA1E47B7 /* Expense.swift */,
+				3A0E800B883420E91BA6CB07 /* GratitudeEntry.swift */,
+				2D59F8E1B99F3A69B2F4C2D0 /* MoneyAddition.swift */,
+				4C86F135A5D84A3928FBFD79 /* MovieShow.swift */,
+				A67B068C987236C5122C3E29 /* ShoppingList.swift */,
+				1BC6D66C7C09478C2D060496 /* UserProfile.swift */,
+				391593B506C0745F094EA923 /* WaterEntry.swift */,
+				963461BD2718494BC31820C6 /* WishlistItem.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		19D0BF22209513A9176149FE /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				02747FD53B999CD5EF11E0BA /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		1A0E4D3596F262B8BC3EC8C4 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				99F2CE74BC07FF4AC5D8486C /* LumeGlass.swift */,
+				1812C408D90AC2513A02B931 /* LumeMotion.swift */,
+				BAAD0E15130F320D494A9715 /* LumeType.swift */,
+				D7D839112F49B16B5C117179 /* Components */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		1A8C32AA3AFCDC14D1F0DA47 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				54A7ADCBAB0BA8D9415A63B3 /* CalendarSyncService.swift */,
+				28D06D692E4B8F078E71FE69 /* DataExportService.swift */,
+				45F8F6865BF1936FBB1030E9 /* EntertainmentSearchService.swift */,
+				FC48264AA5A0AAF007626D77 /* GoogleBooksService.swift */,
+				D72071DE2C2F2EF933C01AB3 /* LinkMetadataFetcher.swift */,
+				F97D096A2C15629A39CFCA9E /* NotificationScheduler.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		377369C59B8F39916FC0215A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5845ACFC9B80105160922E3F /* AppLockController.swift */,
+				03BEE23B93A94D105C0A987F /* LumeApp.swift */,
+				60BC5533A4CE94898888ED08 /* LumeRoute.swift */,
+				C5315E05467E8D8408CC53BA /* RootTabContainer.swift */,
+				3BD33722199521AF66C9AE2C /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		3B08E0A497DF553FA81E3036 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				3B3D1A501408C99B7BF573AB /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		48DE8E240A34C531E0AB4258 /* Wellness */ = {
+			isa = PBXGroup;
+			children = (
+				8AB7623DA312909A4C963F95 /* BemEstarView.swift */,
+				0577595AD4F08857B150A960 /* WaterHistorySheet.swift */,
+			);
+			path = Wellness;
+			sourceTree = "<group>";
+		};
+		580298F980C0D8602E19180F /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				A03085E5ACC90A0FE7EAC1C4 /* LumeModelContainer.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		5F02AC32925040A73C46DC34 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0FFE4586B021941AF3F4C1C4 /* Lume.app */,
+				67B714B9B188A26078253D1A /* LumeShare.appex */,
+				2EFE586D7FF9AA577064438A /* LumeWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		845DEFB97DC67663D8D139A1 /* Corner */ = {
+			isa = PBXGroup;
+			children = (
+				41C1E6444E3F4158A70A36DC /* AddBookSheet.swift */,
+				9A9A3DC4D4D077704D2448E3 /* BooksTabView.swift */,
+				E77BFEA54AF0AA44E194C4B9 /* CornerContainerView.swift */,
+				F4F25D8D0E958419075C7121 /* GratitudeComposerView.swift */,
+				9CA33AE4528FF80C77BE4EAE /* GratitudeTabView.swift */,
+				04E071BA9AD12EBD901F631E /* MoviesTabView.swift */,
+				595A24716FB87E97CCFB4B79 /* WishlistLinkCaptureView.swift */,
+				98AAB85D11B739186B9F3B95 /* WishlistTabView.swift */,
+			);
+			path = Corner;
+			sourceTree = "<group>";
+		};
+		87F98F7146F53F9021B73C78 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				DCE7F30FB7D1E0BC1D151A32 /* AllowanceDetailView.swift */,
+				695970A3FCF8A4FD5DBA5545 /* MoreSettingsDetailView.swift */,
+				FEE4CB2FD3C9ADF1D23DF700 /* SettingsView.swift */,
+				5A05A8BE9D2936D7E5C0644B /* WaterGoalDetailView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		B3B99EB35190171E485AC5A3 /* Finance */ = {
+			isa = PBXGroup;
+			children = (
+				7126FAE4B8D2EF5155D008AF /* FinanceView.swift */,
+				507881FB51DA87268839D69A /* NewExpenseView.swift */,
+				27FF90914177CACAFBB0D67E /* NewMoneyAdditionView.swift */,
+			);
+			path = Finance;
+			sourceTree = "<group>";
+		};
+		B76956923102631DC3F68AE0 /* Agenda */ = {
+			isa = PBXGroup;
+			children = (
+				5E85A8396E27A89F56665871 /* AgendaContainerView.swift */,
+				83D7B1B1221D5A2AFC11A1C4 /* AgendaDayView.swift */,
+				9F4DC08CDF3B7CEED7D52097 /* AgendaItem.swift */,
+				FC843A0F0C59353D287E001A /* AgendaMonthView.swift */,
+				7728BC0E2BE015A09C8821DF /* AgendaWeekView.swift */,
+				B234DBED52334661EB428888 /* NewEventSheet.swift */,
+			);
+			path = Agenda;
+			sourceTree = "<group>";
+		};
+		B89952D9302205B64A0D622C /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				708F6F70B25F5D5C403D3546 /* LiveActivityController.swift */,
+				592FCB2448FDC2F584256A62 /* WaterActivityAttributes.swift */,
+				F95B7B552B47DEB17747B48F /* Design */,
+				0D31E5F57E6ECA99367F7319 /* Models */,
+				580298F980C0D8602E19180F /* Persistence */,
+				E6C8EE5E704BA3A16C1F4040 /* Utilities */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		BED523621EC2FCF9F2DE5CBB /* Exercise */ = {
+			isa = PBXGroup;
+			children = (
+				BD77386C02FF57221FCED54A /* ExerciseComposerView.swift */,
+			);
+			path = Exercise;
+			sourceTree = "<group>";
+		};
+		C2358255B6405E2CB603E22B = {
+			isa = PBXGroup;
+			children = (
+				0140F8C0DBBB4333295E18AC /* Lume */,
+				0CE35D5F8F8ACB44E07BB212 /* LumeShare */,
+				FAAD63B154463DE3A44CAD6B /* LumeWidgets */,
+				B89952D9302205B64A0D622C /* Shared */,
+				5F02AC32925040A73C46DC34 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D26BEC29094196724DD76A3B /* Bathroom */ = {
+			isa = PBXGroup;
+			children = (
+				0EDD705D02FC26C94C9B8F0D /* BathroomSheetView.swift */,
+			);
+			path = Bathroom;
+			sourceTree = "<group>";
+		};
+		D7A86C2E922EB41A4BFDBEB5 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				939323F5A1AB94C21C13D122 /* AllowanceStepView.swift */,
+				909C96990AF369B73D9E64C6 /* LumeLogoMark.swift */,
+				E972AB2F4CEB6BAC3620CD79 /* OnboardingContainerView.swift */,
+				494D3A47C07E76ADAC373D6D /* OnboardingDraft.swift */,
+				2EAFED64156BB9CB84A31CAD /* WaterGoalStepView.swift */,
+				84F5F6E7EEDFFBE54A18793F /* WelcomeStepView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		D7D839112F49B16B5C117179 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				121A7E00DAFCFC8B25836335 /* LumeAmountField.swift */,
+				5418434DF271DC94821E0FB3 /* LumeButtons.swift */,
+				1698EE4C06554AAFA32808CC /* LumeSheetHeader.swift */,
+				E221874CAE456DB441B4F5F2 /* LumeStarRating.swift */,
+				60290571348876A792E6E662 /* LumeTabBar.swift */,
+				9BE6ED6C26F3B1FE59470D5F /* WaterFillRing.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		E3B282A61EF8AFD6CD9A6E18 /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				03B3BF4884CE98A715CEF839 /* TodayComponents.swift */,
+				2C5B9C52E9C3FF4BF88220FD /* TodayView.swift */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+		E6C8EE5E704BA3A16C1F4040 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				D746D1859003BA61C735AD49 /* LumeDateFormat.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		F44BA776020BB8AB72CDD3FB /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				B76956923102631DC3F68AE0 /* Agenda */,
+				D26BEC29094196724DD76A3B /* Bathroom */,
+				845DEFB97DC67663D8D139A1 /* Corner */,
+				BED523621EC2FCF9F2DE5CBB /* Exercise */,
+				B3B99EB35190171E485AC5A3 /* Finance */,
+				D7A86C2E922EB41A4BFDBEB5 /* Onboarding */,
+				87F98F7146F53F9021B73C78 /* Settings */,
+				E3B282A61EF8AFD6CD9A6E18 /* Today */,
+				48DE8E240A34C531E0AB4258 /* Wellness */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		F95B7B552B47DEB17747B48F /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				87A04AABAB16CF4492203BD1 /* Color+Hex.swift */,
+				D00BC2AB53207CBE5D736A2C /* LumeColor.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		FAAD63B154463DE3A44CAD6B /* LumeWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				B624BDCDB864D403E30C3117 /* Info.plist */,
+				B73DB8AFEF453CC80018DD27 /* LogWaterIntent.swift */,
+				26ADC87DEC44F460428AC1B3 /* LumeWidgets.entitlements */,
+				E9B4C9B5E24D9B3FB0B8A7D1 /* LumeWidgetsBundle.swift */,
+				660E687493268FDEA144E2F3 /* WaterLiveActivityWidget.swift */,
+				19D0BF22209513A9176149FE /* Resources */,
+			);
+			path = LumeWidgets;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5DB38A48A039CD79F832A380 /* LumeWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EE078621BCA4BED84EC30180 /* Build configuration list for PBXNativeTarget "LumeWidgets" */;
+			buildPhases = (
+				644DAA2D42DDC4C7E248163F /* Sources */,
+				25936A7E29E44EBE746B35E4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LumeWidgets;
+			packageProductDependencies = (
+			);
+			productName = LumeWidgets;
+			productReference = 2EFE586D7FF9AA577064438A /* LumeWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		6781F12CAACF93EAAB4D46AE /* Lume */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BDC0374DA059459A7CA769D1 /* Build configuration list for PBXNativeTarget "Lume" */;
+			buildPhases = (
+				4D16448F18F79829F8FAB167 /* Sources */,
+				1D179C034E0DCB7561277CD0 /* Resources */,
+				E6126CCFBC8B90BE34230E85 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BC6D0D8255356E412237F0C6 /* PBXTargetDependency */,
+				85C309E75314E4E3F9AF80D8 /* PBXTargetDependency */,
+			);
+			name = Lume;
+			packageProductDependencies = (
+			);
+			productName = Lume;
+			productReference = 0FFE4586B021941AF3F4C1C4 /* Lume.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C984423A2F7E48CE386BDB56 /* LumeShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DED9158D8EF9B04AAFC81E5A /* Build configuration list for PBXNativeTarget "LumeShare" */;
+			buildPhases = (
+				114C28AAD70ABE6902AA61E4 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LumeShare;
+			packageProductDependencies = (
+			);
+			productName = LumeShare;
+			productReference = 67B714B9B188A26078253D1A /* LumeShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A37DE961BCDB8E1D52678C1B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					5DB38A48A039CD79F832A380 = {
+						DevelopmentTeam = R573HPN65Q;
+						ProvisioningStyle = Automatic;
+					};
+					6781F12CAACF93EAAB4D46AE = {
+						DevelopmentTeam = R573HPN65Q;
+						ProvisioningStyle = Automatic;
+					};
+					C984423A2F7E48CE386BDB56 = {
+						DevelopmentTeam = R573HPN65Q;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 63EE9F5397CD472FFAE326F3 /* Build configuration list for PBXProject "Lume" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = C2358255B6405E2CB603E22B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5F02AC32925040A73C46DC34 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6781F12CAACF93EAAB4D46AE /* Lume */,
+				5DB38A48A039CD79F832A380 /* LumeWidgets */,
+				C984423A2F7E48CE386BDB56 /* LumeShare */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1D179C034E0DCB7561277CD0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0E66911AA7D5B8C42D37094B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		25936A7E29E44EBE746B35E4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5CEDBBDD7994951B7068576E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		114C28AAD70ABE6902AA61E4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1AFD371A62402808D9F4156 /* LumeShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D16448F18F79829F8FAB167 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7CFB287C921B7C6250D70833 /* AddBookSheet.swift in Sources */,
+				7E5C31FF549946A9E9ACCA3C /* AgendaContainerView.swift in Sources */,
+				1ABAB9B0C84F1E481D56A1D0 /* AgendaDayView.swift in Sources */,
+				336B3A4BEBB651C9666E7B76 /* AgendaItem.swift in Sources */,
+				B99FA168056B3180569C5AB9 /* AgendaMonthView.swift in Sources */,
+				1FB5827336FED8ED59A3BF19 /* AgendaWeekView.swift in Sources */,
+				ABC86FC2F5A9A108012E3502 /* AllowanceDetailView.swift in Sources */,
+				F5DCF8EA3C85822DB6EF09CB /* AllowanceStepView.swift in Sources */,
+				E63A2F5341457B943FB7154A /* AppLockController.swift in Sources */,
+				D8823EC12313143F149F5391 /* BathroomEntry.swift in Sources */,
+				A416B27C7A9CFA45C65264D3 /* BathroomSheetView.swift in Sources */,
+				D5CADE2E8B586B823125CCEC /* BemEstarView.swift in Sources */,
+				4E05CB8A64C969F07A404488 /* Book.swift in Sources */,
+				DF81304E56F81437523B085C /* BooksTabView.swift in Sources */,
+				7B46424CE48519D84D350764 /* CalendarEvent.swift in Sources */,
+				34F82FAD551BCE2FA01D0137 /* CalendarSyncService.swift in Sources */,
+				91ABC7BCD39125593C2AD4B5 /* Color+Hex.swift in Sources */,
+				12F873B758200398DD0F1180 /* CornerContainerView.swift in Sources */,
+				E1A0197ABEB322CFD4FF350F /* DailyTodo.swift in Sources */,
+				BB21629D637944B8160789A2 /* DataExportService.swift in Sources */,
+				679083C00DB19F9F74A80EF3 /* EntertainmentSearchService.swift in Sources */,
+				95E46FCDB213026CA146BCCB /* ExerciseComposerView.swift in Sources */,
+				86D0FA60CB2DD75F45418A67 /* ExerciseEntry.swift in Sources */,
+				58C205F9D49F9131BE27FE4A /* Expense.swift in Sources */,
+				B7990CDA255602DB9C7EE642 /* FinanceView.swift in Sources */,
+				8F175C69E19B78ED5CDFEF04 /* GoogleBooksService.swift in Sources */,
+				AF13497650DEC3FDDFFCED33 /* GratitudeComposerView.swift in Sources */,
+				93036515572D4B70946E65A8 /* GratitudeEntry.swift in Sources */,
+				2CE6ABDA579FA71881B3E687 /* GratitudeTabView.swift in Sources */,
+				9420598A0A0E984F6EBD108D /* LinkMetadataFetcher.swift in Sources */,
+				2E25E554146CBBE3B5598A9F /* LiveActivityController.swift in Sources */,
+				AAA10422F016F61E3237B0B0 /* LumeAmountField.swift in Sources */,
+				7174D7CFF1F30E0E71AC9050 /* LumeApp.swift in Sources */,
+				6B70C36606110A3FD7E39C1D /* LumeButtons.swift in Sources */,
+				4F7867ED156C4E682B1105A6 /* LumeColor.swift in Sources */,
+				DFBC17A448B8DD5E007FE565 /* LumeCurrency.swift in Sources */,
+				55798607BDA496887897A71C /* LumeDateFormat.swift in Sources */,
+				9385F9FB168AFAE796DF8800 /* LumeGlass.swift in Sources */,
+				1F2258FA55727EBF149C654A /* LumeLogoMark.swift in Sources */,
+				7E0ECC65300C7B96431FD308 /* LumeModelContainer.swift in Sources */,
+				0111A1511690FC1CB3FE7709 /* LumeMotion.swift in Sources */,
+				56B62865A27713F0A45A4308 /* LumeRoute.swift in Sources */,
+				D6989FBA076955FEEE5ACA65 /* LumeSheetHeader.swift in Sources */,
+				22B9D12E54B23C78824D5895 /* LumeStarRating.swift in Sources */,
+				2124E5090460B7D907D3EF63 /* LumeTabBar.swift in Sources */,
+				5CEE47446D2CC71FA937C9B8 /* LumeType.swift in Sources */,
+				17BD0BE948B0D6F591865B63 /* MoneyAddition.swift in Sources */,
+				A28C7DF2853F92656489948C /* MoreSettingsDetailView.swift in Sources */,
+				888B20CDF87FEDC06769C857 /* MovieShow.swift in Sources */,
+				F956454B0D5D966393E8C51B /* MoviesTabView.swift in Sources */,
+				2847FD1E7E2958497BBF58E2 /* NewEventSheet.swift in Sources */,
+				22740FA2C868476DD1CA3F5C /* NewExpenseView.swift in Sources */,
+				0CDC31C311D76FA54A4D03C1 /* NewMoneyAdditionView.swift in Sources */,
+				CC776A6E2C6A53AC7B8DE5FB /* NotificationScheduler.swift in Sources */,
+				399C42CCD5F9648AFD688C26 /* OnboardingContainerView.swift in Sources */,
+				19E7A76ABE8E507564C50E27 /* OnboardingDraft.swift in Sources */,
+				DEA3CB4942F4C1E50BA5BA65 /* RootTabContainer.swift in Sources */,
+				D9FCC0240675D289D119718A /* RootView.swift in Sources */,
+				A8F68DD546B41DBA5B9D0786 /* SettingsView.swift in Sources */,
+				4D4CBB2DCF861EF0CD688975 /* ShoppingList.swift in Sources */,
+				BDA5C36B62D43A241225EFDC /* TodayComponents.swift in Sources */,
+				7E60D308DB208FE63C441695 /* TodayView.swift in Sources */,
+				8E790C626E5563E32FF47123 /* UserProfile.swift in Sources */,
+				6B6C40CA7DC5ACEDE85E80AD /* WaterActivityAttributes.swift in Sources */,
+				59607B5CA3D6AFF268AD6FD8 /* WaterEntry.swift in Sources */,
+				1CC9959BE51B562C1E211D5C /* WaterFillRing.swift in Sources */,
+				CB69F9D8E6559E4085A1E0F4 /* WaterGoalDetailView.swift in Sources */,
+				917DAEED24C569234FDEF2DC /* WaterGoalStepView.swift in Sources */,
+				91E32A35D876F47A14DC6332 /* WaterHistorySheet.swift in Sources */,
+				1CAC956BF6F95A5FC964F4F7 /* WelcomeStepView.swift in Sources */,
+				D68A1719887BB82816596A86 /* WishlistItem.swift in Sources */,
+				E81E711EB11C03772562E382 /* WishlistLinkCaptureView.swift in Sources */,
+				22C26BBDB1E451A4EEDD4338 /* WishlistTabView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		644DAA2D42DDC4C7E248163F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A775ECE1C90A662EEDA5CC87 /* BathroomEntry.swift in Sources */,
+				6DA1DB1E97D18286F4792170 /* Book.swift in Sources */,
+				6F1F8D21282E0F0DAF91380D /* CalendarEvent.swift in Sources */,
+				92A0C3E0467A8056C2FE89E2 /* Color+Hex.swift in Sources */,
+				A7AD74B374F6D6C889876803 /* DailyTodo.swift in Sources */,
+				D6CB3909210AAA6877B46A10 /* ExerciseEntry.swift in Sources */,
+				C2FF5703CCC869C0BBF80254 /* Expense.swift in Sources */,
+				06B1590BF8112715E5E38747 /* GratitudeEntry.swift in Sources */,
+				621D26710F0532DC31315DB5 /* LiveActivityController.swift in Sources */,
+				53F78D5979B2B4F6F596F4CC /* LogWaterIntent.swift in Sources */,
+				86E8751E2EFCB32269F35113 /* LumeColor.swift in Sources */,
+				609104C5ACE12A7EBD2B2D09 /* LumeDateFormat.swift in Sources */,
+				A3075F2067B348F0305B6A29 /* LumeModelContainer.swift in Sources */,
+				B2014777EFC69262AFD3711A /* LumeWidgetsBundle.swift in Sources */,
+				E4161139C7BB0670C7E34F48 /* MoneyAddition.swift in Sources */,
+				69FD5B950DB96F5CD44436A7 /* MovieShow.swift in Sources */,
+				57FEA614E802936277FCFD71 /* ShoppingList.swift in Sources */,
+				B78138CF7D6AEEA2875F51DA /* UserProfile.swift in Sources */,
+				A132932D583E698B45D5C004 /* WaterActivityAttributes.swift in Sources */,
+				D5386CC7EBE932A172240BF3 /* WaterEntry.swift in Sources */,
+				14A666B48C4C617D102BAA74 /* WaterLiveActivityWidget.swift in Sources */,
+				CDAA321C5182DB0EEAAC9C2F /* WishlistItem.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		85C309E75314E4E3F9AF80D8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C984423A2F7E48CE386BDB56 /* LumeShare */;
+			targetProxy = 2B2EE66589CFF08475E94E0F /* PBXContainerItemProxy */;
+		};
+		BC6D0D8255356E412237F0C6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5DB38A48A039CD79F832A380 /* LumeWidgets */;
+			targetProxy = 05FED328581E5031FFE5415B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		324E3EA6F774D15A7CBE4740 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LumeShare/LumeShare.entitlements;
+				INFOPLIST_FILE = LumeShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dodopok.lume.share;
+				PRODUCT_NAME = LumeShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		65613724C64F68BEB640F8FE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LumeWidgets/LumeWidgets.entitlements;
+				INFOPLIST_FILE = LumeWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dodopok.lume.widgets;
+				PRODUCT_NAME = LumeWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		7FC603D81BF0D86186871A96 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Lume/Lume.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Lume/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lume;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dodopok.lume;
+				PRODUCT_NAME = Lume;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		864901ED695DC7B6556BD812 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETSCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETSCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 9;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = R573HPN65Q;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A2B836027FA4F456FFAED631 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETSCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETSCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 9;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = R573HPN65Q;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C54C01410957D607158FF8CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Lume/Lume.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Lume/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lume;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dodopok.lume;
+				PRODUCT_NAME = Lume;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		DA2E9B6A7C6284F64E3384D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LumeShare/LumeShare.entitlements;
+				INFOPLIST_FILE = LumeShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dodopok.lume.share;
+				PRODUCT_NAME = LumeShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E024679D40B8AD6BE1EB3FF8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LumeWidgets/LumeWidgets.entitlements;
+				INFOPLIST_FILE = LumeWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dodopok.lume.widgets;
+				PRODUCT_NAME = LumeWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		63EE9F5397CD472FFAE326F3 /* Build configuration list for PBXProject "Lume" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A2B836027FA4F456FFAED631 /* Debug */,
+				864901ED695DC7B6556BD812 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BDC0374DA059459A7CA769D1 /* Build configuration list for PBXNativeTarget "Lume" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C54C01410957D607158FF8CC /* Debug */,
+				7FC603D81BF0D86186871A96 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DED9158D8EF9B04AAFC81E5A /* Build configuration list for PBXNativeTarget "LumeShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				324E3EA6F774D15A7CBE4740 /* Debug */,
+				DA2E9B6A7C6284F64E3384D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EE078621BCA4BED84EC30180 /* Build configuration list for PBXNativeTarget "LumeWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				65613724C64F68BEB640F8FE /* Debug */,
+				E024679D40B8AD6BE1EB3FF8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A37DE961BCDB8E1D52678C1B /* Project object */;
+}

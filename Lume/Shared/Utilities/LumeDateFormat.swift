@@ -3,7 +3,7 @@ import Foundation
 enum LumeDateFormat {
     static let ptBR = Locale(identifier: "pt_BR")
 
-    static var calendar: Calendar = {
+    static let calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
         cal.locale = ptBR
         cal.firstWeekday = 2 // segunda-feira

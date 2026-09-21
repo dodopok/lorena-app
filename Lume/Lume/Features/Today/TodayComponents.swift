@@ -86,16 +86,17 @@ struct WaterQuickCard: View {
                 .foregroundStyle(filled ? .white : LumeColor.greenText)
                 .frame(maxWidth: .infinity)
                 .frame(height: 46)
+                .background {
+                    let shape = RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    if filled {
+                        shape.fill(LumeColor.greenDeep)
+                    } else {
+                        shape.fill(.white.opacity(0.55)).overlay(shape.strokeBorder(.white.opacity(0.8), lineWidth: 1))
+                    }
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
         }
         .buttonStyle(.plain)
-        .background {
-            let shape = RoundedRectangle(cornerRadius: 15, style: .continuous)
-            if filled {
-                shape.fill(LumeColor.greenDeep)
-            } else {
-                shape.fill(.white.opacity(0.55)).overlay(shape.strokeBorder(.white.opacity(0.8), lineWidth: 1))
-            }
-        }
     }
 }
 
@@ -134,9 +135,81 @@ struct QuickTapTile: View {
             }
             .padding(EdgeInsets(top: 16, leading: 12, bottom: 14, trailing: 12))
             .frame(maxWidth: .infinity, minHeight: 116, alignment: .topLeading)
+            .lumeSoftGlass(cornerRadius: 24, shadow: false)
+            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(.plain)
-        .lumeSoftGlass(cornerRadius: 24, shadow: false)
+    }
+}
+
+/// A contextual next step for the home screen. It adds guidance without
+/// repeating the water, bathroom and exercise cards above it.
+struct TodayFocusCard: View {
+    var waterML: Int
+    var waterGoalML: Int
+    var exerciseLogged: Bool
+    var onWater: () -> Void
+    var onExercise: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: focusIcon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(focusTint)
+                .frame(width: 42, height: 42)
+                .background(Circle().fill(focusBackground))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Um pequeno foco")
+                    .font(LumeType.sans(14, weight: .heavy))
+                    .foregroundStyle(LumeColor.ink)
+                Text(focusMessage)
+                    .font(LumeType.sans(13.5))
+                    .foregroundStyle(LumeColor.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button(action: focusAction) {
+                Text(focusButton)
+                    .font(LumeType.sans(12.5, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(LumeColor.brand))
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(18)
+        .lumeSoftGlass(cornerRadius: 26, shadow: false)
+    }
+
+    private var focusIcon: String {
+        exerciseLogged ? "drop.fill" : "figure.walk"
+    }
+
+    private var focusTint: Color {
+        exerciseLogged ? LumeColor.waterBlueText : LumeColor.lavenderText
+    }
+
+    private var focusBackground: Color {
+        exerciseLogged ? LumeColor.waterBlueLight.opacity(0.28) : LumeColor.lavenderChipBgFaint
+    }
+
+    private var focusMessage: String {
+        if exerciseLogged {
+            return waterML < waterGoalML ? "Uma pausa para água quando der mantém o dia leve." : "Você já cuidou do movimento e da água hoje."
+        }
+        return "Uma caminhada curta já conta — sem precisar fazer muito."
+    }
+
+    private var focusButton: String {
+        exerciseLogged ? "Adicionar água" : "Registrar"
+    }
+
+    private var focusAction: () -> Void {
+        exerciseLogged ? onWater : onExercise
     }
 }
 
@@ -145,24 +218,46 @@ struct AvailableBalanceCard: View {
     var available: Double
     var subtitle: String
     var showsSheen: Bool = true
+    var subtitleBelowAmount: Bool = false
+    var bottomInset: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             LumeEyebrow(text: "Disponível", color: LumeColor.brandOnPlumLabel)
-            HStack(alignment: .lastTextBaseline) {
-                Text(LumeCurrency.full(available))
-                    .font(LumeType.serif(44))
-                    .foregroundStyle(.white)
-                Spacer()
-                Text(subtitle)
-                    .font(LumeType.sans(13.5))
-                    .foregroundStyle(LumeColor.brandOnPlumLabel)
+            if subtitleBelowAmount {
+                VStack(alignment: .leading, spacing: 2) {
+                    balanceText
+                    subtitleText
+                }
+            } else {
+                HStack(alignment: .lastTextBaseline, spacing: 12) {
+                    balanceText
+                    Spacer(minLength: 0)
+                    subtitleText
+                }
             }
         }
-        .padding(20)
+        .padding(.top, 20)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 20 + bottomInset)
         .frame(maxWidth: .infinity, alignment: .leading)
         .lumePlumCard()
         .modifier(OptionalSheen(enabled: showsSheen))
+    }
+
+    private var balanceText: some View {
+        Text(LumeCurrency.full(available))
+            .font(LumeType.serif(44))
+            .foregroundStyle(.white)
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var subtitleText: some View {
+        Text(subtitle)
+            .font(LumeType.sans(13.5))
+            .foregroundStyle(LumeColor.brandOnPlumLabel)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 

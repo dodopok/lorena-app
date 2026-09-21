@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 enum TodaySheet: String, Identifiable {
-    case bathroom, newExpense, exercise
+    case bathroom, newExpense, exercise, water
     var id: String { rawValue }
 }
 
@@ -12,6 +12,7 @@ struct TodayView: View {
     @Query(sort: \WaterEntry.date, order: .reverse) private var waterEntries: [WaterEntry]
     @Query(sort: \BathroomEntry.date, order: .reverse) private var bathroomEntries: [BathroomEntry]
     @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
+    @Query(sort: \MoneyAddition.date, order: .reverse) private var moneyAdditions: [MoneyAddition]
     @Query(sort: \CalendarEvent.startDate) private var events: [CalendarEvent]
     @Query(sort: \ExerciseEntry.date, order: .reverse) private var exerciseEntries: [ExerciseEntry]
 
@@ -91,6 +92,15 @@ struct TodayView: View {
                         }
                         .lumeRiseIn(delay: 0.18)
 
+                        TodayFocusCard(
+                            waterML: todayWaterTotal,
+                            waterGoalML: profile?.waterGoalML ?? 2000,
+                            exerciseLogged: exerciseEntries.contains(where: \.date.isToday),
+                            onWater: { activeSheet = .water },
+                            onExercise: { activeSheet = .exercise }
+                        )
+                        .lumeRiseIn(delay: 0.22)
+
                         AvailableBalanceCard(
                             available: availableBalance,
                             subtitle: "até \(shortDate(profile?.nextAllowanceDate() ?? .now))"
@@ -108,6 +118,7 @@ struct TodayView: View {
                 case .bathroom: BathroomSheetView()
                 case .newExpense: NewExpenseView()
                 case .exercise: ExerciseComposerView()
+                case .water: AddWaterSheet(onSave: logWater)
                 }
             }
         }
@@ -165,7 +176,8 @@ struct TodayView: View {
         guard let profile else { return 0 }
         let cycleStart = profile.currentCycleStart()
         let spent = expenses.filter { $0.date >= cycleStart }.reduce(0) { $0 + $1.amount }
-        return profile.allowanceAmount - spent
+        let added = moneyAdditions.filter { $0.date >= cycleStart }.reduce(0) { $0 + $1.amount }
+        return profile.allowanceAmount + added - spent
     }
 
     private func shortDate(_ date: Date) -> String {
@@ -177,5 +189,65 @@ struct TodayView: View {
         modelContext.insert(entry)
         try? modelContext.save()
         LiveActivityController.shared.logWater(totalML: todayWaterTotal, goalML: profile?.waterGoalML ?? 2000)
+    }
+}
+
+private struct AddWaterSheet: View {
+    var onSave: (Int) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var amountText = "300"
+
+    private var amount: Int { Int(amountText.filter(\.isNumber)) ?? 0 }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            LumeSheetHeader(
+                leadingTitle: "Cancelar",
+                title: "Adicionar água",
+                trailingTitle: "Salvar",
+                trailingEnabled: amount > 0,
+                onLeading: { dismiss() },
+                onTrailing: save
+            )
+            .padding(.horizontal, 24)
+            .padding(.top, 18)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Quanto você bebeu?")
+                    .font(LumeType.sans(15, weight: .semibold))
+                    .foregroundStyle(LumeColor.textMuted)
+                HStack(alignment: .lastTextBaseline, spacing: 10) {
+                    TextField("300", text: $amountText)
+                        .font(LumeType.serif(54))
+                        .foregroundStyle(LumeColor.ink)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.leading)
+                    Text("ml")
+                        .font(LumeType.sans(20, weight: .bold))
+                        .foregroundStyle(LumeColor.waterBlueText)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 18)
+                .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.white.opacity(0.72)))
+                .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.9), lineWidth: 1))
+
+                Text("Você pode informar qualquer quantidade, não só um copo cheio.")
+                    .font(LumeType.sans(13.5))
+                    .foregroundStyle(LumeColor.textFaint)
+            }
+            .padding(24)
+
+            Spacer()
+        }
+        .background(LumeColor.canvas.ignoresSafeArea())
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func save() {
+        guard amount > 0 else { return }
+        onSave(amount)
+        dismiss()
     }
 }

@@ -23,8 +23,13 @@ final class Book {
     var currentPage: Int
     var totalPages: Int
     var rating: Int
+    var review: String?
     /// Seed hex color used to derive the two-stop cover gradient.
     var coverColorHex: String
+    /// Optional cover selected from Google Books. The color remains as a local fallback.
+    var coverURLString: String?
+    /// Optional photo chosen manually from the user's library.
+    @Attribute(.externalStorage) var coverImageData: Data?
     var dateAdded: Date
 
     init(
@@ -34,7 +39,10 @@ final class Book {
         currentPage: Int = 0,
         totalPages: Int = 0,
         rating: Int = 0,
+        review: String? = nil,
         coverColorHex: String = "E4D6E6",
+        coverURLString: String? = nil,
+        coverImageData: Data? = nil,
         dateAdded: Date = .now
     ) {
         self.title = title
@@ -43,7 +51,10 @@ final class Book {
         self.currentPage = currentPage
         self.totalPages = totalPages
         self.rating = rating
+        self.review = review
         self.coverColorHex = coverColorHex
+        self.coverURLString = coverURLString
+        self.coverImageData = coverImageData
         self.dateAdded = dateAdded
     }
 

@@ -3,6 +3,7 @@ import SwiftUI
 /// The five-tab shell, floating glass bar over whichever tab is active.
 struct RootTabContainer: View {
     @State private var selection: LumeTab = .hoje
+    @EnvironmentObject private var route: LumeRoute
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -19,6 +20,11 @@ struct RootTabContainer: View {
 
             LumeTabBar(selection: $selection)
                 .padding(.bottom, 6)
+        }
+        .onChange(of: route.pendingSharedURL) { _, newURL in
+            if newURL != nil {
+                selection = .cantinho
+            }
         }
     }
 }

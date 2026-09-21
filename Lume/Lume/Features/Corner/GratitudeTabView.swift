@@ -15,6 +15,22 @@ struct GratitudeTabView: View {
                 Button { showingComposer = true } label: {
                     VStack(alignment: .leading, spacing: 14) {
                         LumeEyebrow(text: "Hoje")
+                        if let data = todayEntry?.photoData, let ui = UIImage(data: data) {
+                            Image(uiImage: ui)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 190)
+                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                                .overlay(alignment: .bottomTrailing) {
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .padding(10)
+                                        .background(.black.opacity(0.35), in: Circle())
+                                        .padding(10)
+                                }
+                        }
                         if let todayEntry, !todayEntry.text.isEmpty {
                             Text(todayEntry.text)
                                 .font(LumeType.serif(20))
@@ -33,20 +49,6 @@ struct GratitudeTabView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
                                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(LumeColor.brand))
-
-                            if todayEntry?.photoData != nil, let data = todayEntry?.photoData, let ui = UIImage(data: data) {
-                                Image(uiImage: ui)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 58, height: 50)
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            } else {
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(.white.opacity(0.6))
-                                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.9), lineWidth: 1))
-                                    .overlay(Image(systemName: "camera").font(.system(size: 16)).foregroundStyle(LumeColor.brand))
-                                    .frame(width: 58, height: 50)
-                            }
                         }
                     }
                     .padding(24)

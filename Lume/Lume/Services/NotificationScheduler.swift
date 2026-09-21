@@ -4,6 +4,7 @@ import UserNotifications
 /// Local-only notifications — water nudges through the day, a nightly
 /// gratitude prompt, and per-event "did you log that expense?" reminders.
 /// Nothing here talks to a server; everything is scheduled on-device.
+@MainActor
 final class NotificationScheduler {
     static let shared = NotificationScheduler()
     private let center = UNUserNotificationCenter.current()

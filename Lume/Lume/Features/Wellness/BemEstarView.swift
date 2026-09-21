@@ -65,18 +65,28 @@ struct BemEstarView: View {
                     Button {
                         logWater(300)
                     } label: {
-                        Text("+300").font(LumeType.sans(14, weight: .heavy)).foregroundStyle(LumeColor.greenText)
-                            .frame(maxWidth: .infinity).frame(height: 44)
+                        Text("+300")
+                            .font(LumeType.sans(14, weight: .heavy))
+                            .foregroundStyle(LumeColor.greenText)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.55)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.85), lineWidth: 1)))
+                            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                     .buttonStyle(.plain)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.55)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.85), lineWidth: 1)))
 
-                    Button("Histórico") { showingWaterHistory = true }
-                        .font(LumeType.sans(14, weight: .heavy))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity).frame(height: 44)
-                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LumeColor.greenDeep))
-                        .buttonStyle(.plain)
+                    Button {
+                        showingWaterHistory = true
+                    } label: {
+                        Text("Histórico")
+                            .font(LumeType.sans(14, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LumeColor.greenDeep))
+                            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.top, 10)
             }
@@ -119,9 +129,10 @@ struct BemEstarView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(LumeColor.greenDeep))
+                    .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .buttonStyle(.plain)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(LumeColor.greenDeep))
             .padding(.top, 16)
         }
         .padding(22)
@@ -133,9 +144,17 @@ struct BemEstarView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Exercício").font(LumeType.sans(17, weight: .heavy)).foregroundStyle(LumeColor.ink)
                 Spacer()
-                Button("Novo") { showingExercise = true }
-                    .font(LumeType.sans(13.5, weight: .bold))
-                    .foregroundStyle(LumeColor.brand)
+                Button {
+                    showingExercise = true
+                } label: {
+                    Text("Novo")
+                        .font(LumeType.sans(13.5, weight: .bold))
+                        .foregroundStyle(LumeColor.brand)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
 
             if let last = exerciseEntries.first {

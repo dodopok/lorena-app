@@ -7,10 +7,14 @@ struct MoreSettingsDetailView: View {
     @Query private var waterEntries: [WaterEntry]
     @Query private var bathroomEntries: [BathroomEntry]
     @Query private var expenses: [Expense]
+    @Query private var moneyAdditions: [MoneyAddition]
     @Query private var events: [CalendarEvent]
+    @Query private var todos: [DailyTodo]
     @Query private var gratitudeEntries: [GratitudeEntry]
     @Query private var books: [Book]
+    @Query private var movies: [MovieShow]
     @Query private var wishlistItems: [WishlistItem]
+    @Query private var shoppingLists: [ShoppingList]
     @Query private var exerciseEntries: [ExerciseEntry]
 
     @State private var exportURL: URL?
@@ -69,8 +73,9 @@ struct MoreSettingsDetailView: View {
     private func refreshExport() {
         let snapshot = DataExportService.build(
             profile: profile, water: waterEntries, bathroom: bathroomEntries,
-            expenses: expenses, events: events, gratitude: gratitudeEntries,
-            books: books, wishlist: wishlistItems, exercise: exerciseEntries
+            expenses: expenses, moneyAdditions: moneyAdditions, events: events,
+            todos: todos, gratitude: gratitudeEntries, books: books, movies: movies,
+            wishlist: wishlistItems, shoppingLists: shoppingLists, exercise: exerciseEntries
         )
         exportURL = DataExportService.writeTempFile(snapshot)
     }

@@ -1,9 +1,17 @@
 import SwiftUI
+import SwiftData
 
 struct AgendaDayView: View {
     @Binding var selectedDate: Date
     var allItems: [AgendaItem]
+    var onSelect: (AgendaItem) -> Void
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \DailyTodo.createdAt, order: .forward) private var allTodos: [DailyTodo]
     @State private var calendarSync = CalendarSyncService.shared
+    @State private var showingNewTodo = false
+    @State private var todoToEdit: DailyTodo?
+    @State private var todoToDelete: DailyTodo?
+    @State private var showingTodoDeleteConfirmation = false
 
     private var weekDates: [Date] {
         let start = LumeDateFormat.calendar.dateInterval(of: .weekOfYear, for: selectedDate)?.start ?? selectedDate
@@ -19,12 +27,14 @@ struct AgendaDayView: View {
                     }
                 }
 
+                todoChecklist
+
                 LumeEyebrow(text: LumeDateFormat.shortWeekdayDayUppercased(selectedDate))
                     .padding(.top, 8)
 
                 VStack(spacing: 10) {
                     ForEach(Array(allItems.enumerated()), id: \.element.id) { index, item in
-                        AgendaEventCard(item: item)
+                        AgendaEventCard(item: item, onSelect: onSelect)
                             .lumeRiseIn(delay: Double(index) * 0.06)
                     }
 
@@ -44,6 +54,81 @@ struct AgendaDayView: View {
                 Color.clear.frame(height: 30)
             }
         }
+        .sheet(isPresented: $showingNewTodo) {
+            DailyTodoSheet(date: selectedDate)
+        }
+        .sheet(item: $todoToEdit) { todo in
+            DailyTodoSheet(date: todo.date, todoToEdit: todo)
+        }
+        .confirmationDialog("Remover esta tarefa?", isPresented: $showingTodoDeleteConfirmation, titleVisibility: .visible) {
+            Button("Remover", role: .destructive) {
+                deletePendingTodo()
+            }
+            Button("Cancelar", role: .cancel) {}
+        }
+    }
+
+    private var dayTodos: [DailyTodo] {
+        allTodos.filter { $0.date.isSameDay(as: selectedDate) }
+    }
+
+    private var todoChecklist: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                LumeEyebrow(text: "TAREFAS DO DIA")
+                Spacer()
+                Button {
+                    showingNewTodo = true
+                } label: {
+                    Label("Adicionar", systemImage: "plus")
+                        .font(LumeType.sans(13, weight: .bold))
+                        .foregroundStyle(LumeColor.brand)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(LumeColor.brandPillLight))
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            if dayTodos.isEmpty {
+                Button {
+                    showingNewTodo = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checklist")
+                            .foregroundStyle(LumeColor.lavenderText)
+                        Text("Adicione uma tarefa para este dia")
+                            .font(LumeType.sans(13.5))
+                            .foregroundStyle(LumeColor.textMuted)
+                        Spacer()
+                    }
+                    .padding(16)
+                    .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .lumeSoftGlass(cornerRadius: 20, opacity: 0.48, shadow: false)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(dayTodos.enumerated()), id: \.element.persistentModelID) { index, todo in
+                        if index > 0 {
+                            Divider()
+                                .overlay(LumeColor.brandPlumStart.opacity(0.08))
+                                .padding(.leading, 58)
+                        }
+                        DailyTodoRow(
+                            todo: todo,
+                            onEdit: { todoToEdit = todo },
+                            onDelete: {
+                                todoToDelete = todo
+                                showingTodoDeleteConfirmation = true
+                            }
+                        )
+                    }
+                }
+                .lumeSoftGlass(cornerRadius: 20, opacity: 0.48, shadow: false)
+            }
+        }
     }
 
     private func dayCell(_ day: Date) -> some View {
@@ -61,6 +146,7 @@ struct AgendaDayView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
         .background {
@@ -93,10 +179,113 @@ struct AgendaDayView: View {
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.white.opacity(0.4)))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(LumeColor.brand.opacity(0.32), style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
     }
+
+    private func deletePendingTodo() {
+        guard let todoToDelete else { return }
+        modelContext.delete(todoToDelete)
+        try? modelContext.save()
+        self.todoToDelete = nil
+    }
+}
+
+private struct DailyTodoRow: View {
+    var todo: DailyTodo
+    var onEdit: () -> Void
+    var onDelete: () -> Void
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        Button {
+            todo.isCompleted.toggle()
+            try? modelContext.save()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundStyle(todo.isCompleted ? LumeColor.greenDeep : LumeColor.textFainter)
+                Text(todo.title)
+                    .font(LumeType.sans(15.5, weight: .semibold))
+                    .foregroundStyle(todo.isCompleted ? LumeColor.textFainter : LumeColor.ink)
+                    .strikethrough(todo.isCompleted, color: LumeColor.textFainter)
+                    .lineLimit(2)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button("Editar") { onEdit() }
+            Button("Remover", role: .destructive) { onDelete() }
+        }
+    }
+}
+
+private struct DailyTodoSheet: View {
+    let date: Date
+    var todoToEdit: DailyTodo?
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @State private var title = ""
+
+    init(date: Date, todoToEdit: DailyTodo? = nil) {
+        self.date = date
+        self.todoToEdit = todoToEdit
+        _title = State(initialValue: todoToEdit?.title ?? "")
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            LumeSheetHeader(
+                leadingTitle: "Cancelar",
+                title: todoToEdit == nil ? "Nova tarefa" : "Editar tarefa",
+                trailingTitle: "Salvar",
+                trailingEnabled: !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                onLeading: { dismiss() },
+                onTrailing: save
+            )
+            .padding(.horizontal, 24)
+            .padding(.top, 18)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(LumeDateFormat.shortWeekdayDayUppercased(date))
+                    .font(LumeType.sans(12.5, weight: .bold))
+                    .foregroundStyle(LumeColor.textFaint)
+                TextField("O que precisa ser feito?", text: $title)
+                    .font(LumeType.sans(17, weight: .semibold))
+                    .foregroundStyle(LumeColor.ink)
+                    .padding(18)
+                    .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white.opacity(0.72)))
+                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(.white.opacity(0.9), lineWidth: 1))
+            }
+            .padding(24)
+
+            Spacer()
+        }
+        .background(LumeColor.canvas.ignoresSafeArea())
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func save() {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if let todoToEdit {
+            todoToEdit.title = trimmed
+            todoToEdit.date = date.startOfDay
+        } else {
+            modelContext.insert(DailyTodo(title: trimmed, date: date))
+        }
+        try? modelContext.save()
+        dismiss()
+    }
 }
 
 struct AgendaEventCard: View {
     var item: AgendaItem
+    var onSelect: (AgendaItem) -> Void
     @State private var showingExpenseSheet = false
 
     var body: some View {
@@ -104,21 +293,30 @@ struct AgendaEventCard: View {
             Capsule().fill(item.category.accent).frame(width: 4)
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(item.title)
-                        .font(LumeType.sans(16, weight: .heavy))
-                        .foregroundStyle(LumeColor.ink)
-                        .lineLimit(1)
-                    if item.isExternal {
-                        Image(systemName: "icloud")
-                            .font(.system(size: 11))
-                            .foregroundStyle(LumeColor.textFainter)
+                Button {
+                    onSelect(item)
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text(item.title)
+                                .font(LumeType.sans(16, weight: .heavy))
+                                .foregroundStyle(LumeColor.ink)
+                                .lineLimit(1)
+                            if item.isExternal {
+                                Image(systemName: "icloud")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(LumeColor.textFainter)
+                            }
+                        }
+                        Text(item.location.map { "\(item.timeRangeLabel) · \($0)" } ?? item.timeRangeLabel)
+                            .font(LumeType.sans(13.5))
+                            .foregroundStyle(LumeColor.textMuted)
+                            .lineLimit(1)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
-                Text(item.location.map { "\(item.timeRangeLabel) · \($0)" } ?? item.timeRangeLabel)
-                    .font(LumeType.sans(13.5))
-                    .foregroundStyle(LumeColor.textMuted)
-                    .lineLimit(1)
+                .buttonStyle(.plain)
 
                 if item.remindToLogExpense {
                     Button {
@@ -146,5 +344,110 @@ struct AgendaEventCard: View {
         .sheet(isPresented: $showingExpenseSheet) {
             NewExpenseView(eventToLink: item.sourceEvent)
         }
+    }
+}
+
+struct AgendaEventDetailSheet: View {
+    let item: AgendaItem
+    let onDelete: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var eventToEdit: CalendarEvent?
+
+    private var displayedItem: AgendaItem {
+        guard let event = item.sourceEvent else { return item }
+        return AgendaItem(event: event)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            LumeSheetHeader(
+                leadingTitle: "Fechar",
+                title: "Detalhes",
+                trailingTitle: displayedItem.isExternal ? " " : "Editar",
+                trailingEnabled: !displayedItem.isExternal,
+                onLeading: { dismiss() },
+                onTrailing: { eventToEdit = displayedItem.sourceEvent }
+            )
+            .padding(.horizontal, 24)
+            .padding(.top, 18)
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 10) {
+                            Circle()
+                                .fill(displayedItem.category.accent)
+                                .frame(width: 12, height: 12)
+                            Text(displayedItem.category.label)
+                                .font(LumeType.sans(13.5, weight: .bold))
+                                .foregroundStyle(LumeColor.textMuted)
+                            Spacer()
+                            if displayedItem.isExternal {
+                                Image(systemName: "icloud")
+                                    .foregroundStyle(LumeColor.textFainter)
+                            }
+                        }
+
+                        Text(displayedItem.title)
+                            .font(LumeType.serif(30))
+                            .foregroundStyle(LumeColor.ink)
+
+                        detailRow(systemImage: "calendar", text: LumeDateFormat.shortWeekdayDayUppercased(displayedItem.start))
+                        detailRow(systemImage: "clock", text: displayedItem.timeRangeLabel)
+
+                        if let location = displayedItem.location, !location.isEmpty {
+                            detailRow(systemImage: "mappin.and.ellipse", text: location)
+                        }
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .lumeSoftGlass(cornerRadius: 26, opacity: 0.62, shadow: false)
+
+                    if displayedItem.remindToLogExpense {
+                        HStack(spacing: 10) {
+                            Image(systemName: displayedItem.loggedExpense ? "checkmark.circle.fill" : "bell.fill")
+                                .foregroundStyle(LumeColor.brand)
+                            Text(displayedItem.loggedExpense ? "Gasto anotado" : "Lembrete de gasto ativado")
+                                .font(LumeType.sans(14, weight: .semibold))
+                                .foregroundStyle(LumeColor.brandDeep)
+                            Spacer()
+                        }
+                        .padding(16)
+                        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(LumeColor.brandPillLight))
+                    }
+
+                    if !displayedItem.isExternal {
+                        LumeGlassButton(
+                            title: "Apagar compromisso",
+                            textColor: LumeColor.errorText
+                        ) {
+                            onDelete()
+                        }
+                    } else {
+                        Text("Este compromisso veio do Calendário do iPhone e não pode ser alterado no Lume.")
+                            .font(LumeType.sans(13.5))
+                            .foregroundStyle(LumeColor.textFaint)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 14)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 14)
+                .padding(.bottom, 30)
+            }
+        }
+        .background(LumeColor.canvas.ignoresSafeArea())
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .sheet(item: $eventToEdit) { event in
+            NewEventSheet(initialDate: event.startDate, eventToEdit: event)
+        }
+    }
+
+    private func detailRow(systemImage: String, text: String) -> some View {
+        Label(text, systemImage: systemImage)
+            .font(LumeType.sans(15, weight: .semibold))
+            .foregroundStyle(LumeColor.textSecondary)
     }
 }

@@ -17,6 +17,7 @@ struct GratitudeComposerView: View {
     @State private var workingEntry: GratitudeEntry?
     @State private var saveTask: Task<Void, Never>?
     @State private var didSaveOnce: Bool
+    @State private var showingCamera = false
 
     init(existing: GratitudeEntry?) {
         self.existing = existing
@@ -32,7 +33,7 @@ struct GratitudeComposerView: View {
                 leadingTitle: "Fechar",
                 title: "Gratidão de hoje",
                 trailingTitle: "Salvar",
-                trailingEnabled: !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                trailingEnabled: !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || photoData != nil,
                 onLeading: { persist(); dismiss() },
                 onTrailing: { persist(); dismiss() }
             )
@@ -50,14 +51,15 @@ struct GratitudeComposerView: View {
                         .lumeSoftGlass(cornerRadius: 26, shadow: false)
                         .onChange(of: text) { _, _ in scheduleAutosave() }
 
-                    HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 10) {
                         if let photoData, let uiImage = UIImage(data: photoData) {
                             ZStack(alignment: .topTrailing) {
                                 Image(uiImage: uiImage)
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 96, height: 96)
-                                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 190)
+                                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                                 Button {
                                     self.photoData = nil
                                     scheduleAutosave()
@@ -65,28 +67,40 @@ struct GratitudeComposerView: View {
                                     Image(systemName: "xmark.circle.fill")
                                         .symbolRenderingMode(.palette)
                                         .foregroundStyle(.white, .black.opacity(0.5))
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Circle())
                                 }
                                 .padding(6)
                             }
+                            .frame(maxWidth: .infinity)
                         }
 
-                        PhotosPicker(selection: $photoItem, matching: .images) {
-                            VStack(spacing: 6) {
-                                Image(systemName: "camera")
-                                    .font(.system(size: 20))
-                                Text("Foto").font(LumeType.sans(11.5, weight: .bold))
+                        HStack(spacing: 10) {
+                            PhotosPicker(selection: $photoItem, matching: .images) {
+                                Label("Escolher foto", systemImage: "photo.on.rectangle")
+                                    .font(LumeType.sans(14, weight: .bold))
+                                    .foregroundStyle(LumeColor.brand)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 52)
+                                    .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                             }
-                            .foregroundStyle(LumeColor.brand)
-                            .frame(width: 96, height: 96)
-                        }
-                        .buttonStyle(.plain)
-                        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white.opacity(0.5)))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .strokeBorder(LumeColor.brand.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
-                        )
+                            .buttonStyle(.plain)
+                            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.55)))
+                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.9), lineWidth: 1))
 
-                        Spacer()
+                            Button {
+                                showingCamera = true
+                            } label: {
+                                Label("Tirar foto", systemImage: "camera")
+                                    .font(LumeType.sans(14, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 52)
+                                    .background(LumeColor.brand, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
 
                     HStack(spacing: 8) {
@@ -104,6 +118,12 @@ struct GratitudeComposerView: View {
         .background(LumeColor.canvas.ignoresSafeArea())
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $showingCamera) {
+            CameraImagePicker { image in
+                photoData = image.jpegData(compressionQuality: 0.86)
+                scheduleAutosave()
+            }
+        }
         .onChange(of: photoItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -137,5 +157,45 @@ struct GratitudeComposerView: View {
         }
         try? modelContext.save()
         didSaveOnce = true
+    }
+}
+
+private struct CameraImagePicker: UIViewControllerRepresentable {
+    var onImage: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImage: onImage, dismiss: dismiss)
+    }
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let controller = UIImagePickerController()
+        controller.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera) ? .camera : .photoLibrary
+        controller.delegate = context.coordinator
+        controller.allowsEditing = false
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIImagePickerController, context: Context) {}
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let onImage: (UIImage) -> Void
+        let dismiss: DismissAction
+
+        init(onImage: @escaping (UIImage) -> Void, dismiss: DismissAction) {
+            self.onImage = onImage
+            self.dismiss = dismiss
+        }
+
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                onImage(image)
+            }
+            dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            dismiss()
+        }
     }
 }

@@ -6,10 +6,14 @@ enum AgendaMode: String, Hashable {
 }
 
 struct AgendaContainerView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \CalendarEvent.startDate) private var lumeEvents: [CalendarEvent]
     @State private var mode: AgendaMode = .day
     @State private var selectedDate = Date.now
     @State private var showingNewEvent = false
+    @State private var selectedItem: AgendaItem?
+    @State private var eventToDelete: CalendarEvent?
+    @State private var showingDeleteConfirmation = false
     @State private var calendarSync = CalendarSyncService.shared
 
     private let orbs: [OrbSpec] = [
@@ -45,11 +49,23 @@ struct AgendaContainerView: View {
                     Group {
                         switch mode {
                         case .day:
-                            AgendaDayView(selectedDate: $selectedDate, allItems: allItems(for: selectedDate.startOfDay, to: selectedDate.adding(days: 1)))
+                            AgendaDayView(
+                                selectedDate: $selectedDate,
+                                allItems: allItems(for: selectedDate.startOfDay, to: selectedDate.adding(days: 1)),
+                                onSelect: showDetails
+                            )
                         case .week:
-                            AgendaWeekView(selectedDate: $selectedDate, itemsProvider: { start, end in allItems(for: start, to: end) })
+                            AgendaWeekView(
+                                selectedDate: $selectedDate,
+                                itemsProvider: { start, end in allItems(for: start, to: end) },
+                                onSelect: showDetails
+                            )
                         case .month:
-                            AgendaMonthView(selectedDate: $selectedDate, itemsProvider: { start, end in allItems(for: start, to: end) })
+                            AgendaMonthView(
+                                selectedDate: $selectedDate,
+                                itemsProvider: { start, end in allItems(for: start, to: end) },
+                                onSelect: showDetails
+                            )
                         }
                     }
                     .padding(.horizontal, 20)
@@ -62,6 +78,25 @@ struct AgendaContainerView: View {
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingNewEvent) {
                 NewEventSheet(initialDate: selectedDate)
+            }
+            .sheet(item: $selectedItem) { item in
+                AgendaEventDetailSheet(
+                    item: item,
+                    onDelete: {
+                        guard let event = item.sourceEvent else { return }
+                        selectedItem = nil
+                        eventToDelete = event
+                        showingDeleteConfirmation = true
+                    }
+                )
+            }
+            .confirmationDialog("Apagar este compromisso?", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+                Button("Apagar", role: .destructive) {
+                    deletePendingEvent()
+                }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("Essa ação não pode ser desfeita.")
             }
             .task {
                 if CalendarSyncService.currentStatus == .fullAccess || CalendarSyncService.currentStatus == .authorized {
@@ -83,5 +118,19 @@ struct AgendaContainerView: View {
         let lume = lumeEvents.filter { $0.startDate >= start && $0.startDate < end }
         let external = calendarSync.events(from: start, to: end)
         return AgendaItem.merged(lumeEvents: lume, external: external)
+    }
+
+    private func showDetails(_ item: AgendaItem) {
+        selectedItem = item
+    }
+
+    private func deletePendingEvent() {
+        guard let eventToDelete else { return }
+        NotificationScheduler.shared.cancelExpenseReminder(for: eventToDelete)
+        // Deleting a Lume event intentionally does not delete any expense
+        // already logged from it.
+        modelContext.delete(eventToDelete)
+        try? modelContext.save()
+        self.eventToDelete = nil
     }
 }

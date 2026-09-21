@@ -9,10 +9,14 @@ struct SettingsView: View {
     @Query private var waterEntries: [WaterEntry]
     @Query private var bathroomEntries: [BathroomEntry]
     @Query private var expenses: [Expense]
+    @Query private var moneyAdditions: [MoneyAddition]
     @Query private var events: [CalendarEvent]
+    @Query private var todos: [DailyTodo]
     @Query private var gratitudeEntries: [GratitudeEntry]
     @Query private var books: [Book]
+    @Query private var movies: [MovieShow]
     @Query private var wishlistItems: [WishlistItem]
+    @Query private var shoppingLists: [ShoppingList]
     @Query private var exerciseEntries: [ExerciseEntry]
 
     @State private var showingEraseConfirm = false
@@ -40,6 +44,9 @@ struct SettingsView: View {
                         }
                         .font(LumeType.sans(15.5, weight: .bold))
                         .foregroundStyle(LumeColor.brand)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 10)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
 
@@ -207,10 +214,14 @@ struct SettingsView: View {
         for entry in waterEntries { modelContext.delete(entry) }
         for entry in bathroomEntries { modelContext.delete(entry) }
         for entry in expenses { modelContext.delete(entry) }
+        for entry in moneyAdditions { modelContext.delete(entry) }
         for entry in events { modelContext.delete(entry) }
+        for entry in todos { modelContext.delete(entry) }
         for entry in gratitudeEntries { modelContext.delete(entry) }
         for entry in books { modelContext.delete(entry) }
+        for entry in movies { modelContext.delete(entry) }
         for entry in wishlistItems { modelContext.delete(entry) }
+        for entry in shoppingLists { modelContext.delete(entry) }
         for entry in exerciseEntries { modelContext.delete(entry) }
         try? modelContext.save()
     }

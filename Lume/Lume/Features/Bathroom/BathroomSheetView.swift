@@ -29,7 +29,7 @@ struct BathroomSheetView: View {
                         .foregroundStyle(LumeColor.textMuted)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
-                        .padding(.top, 6)
+                        .padding(.top, 18)
 
                     ZStack {
                         Circle().fill(.ultraThinMaterial)
@@ -58,9 +58,10 @@ struct BathroomSheetView: View {
                                 .font(LumeType.sans(17, weight: .heavy))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
+                                .frame(height: 60)
+                                .background(LumeColor.greenDeep, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                                .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         }
-                        .frame(height: 60)
-                        .background(LumeColor.greenDeep, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .buttonStyle(.plain)
                     }
 
@@ -80,6 +81,9 @@ struct BathroomSheetView: View {
                                         Button("desfazer") { undo(entry) }
                                             .font(LumeType.sans(13.5))
                                             .foregroundStyle(LumeColor.textFaint)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 8)
+                                            .contentShape(Rectangle())
                                             .buttonStyle(.plain)
                                     }
                                     .padding(.horizontal, 18)
@@ -91,7 +95,7 @@ struct BathroomSheetView: View {
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 6)
+                .padding(.top, 16)
                 .padding(.bottom, 24)
             }
         }

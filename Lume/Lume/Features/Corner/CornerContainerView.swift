@@ -1,11 +1,12 @@
 import SwiftUI
 
 enum CornerTab: String, Hashable {
-    case gratitude, books, wishlist
+    case gratitude, books, movies, wishlist
 }
 
 struct CornerContainerView: View {
     @State private var tab: CornerTab = .gratitude
+    @EnvironmentObject private var route: LumeRoute
 
     private let orbs: [OrbSpec] = [
         OrbSpec(color: LumeColor.roseOrb, size: 300, opacity: 0.5, blur: 58, alignment: .topLeading, offset: CGSize(width: -70, height: -50), duration: 17),
@@ -27,7 +28,7 @@ struct CornerContainerView: View {
                         .lumeRiseIn()
 
                     LumeSegmentedControl(
-                        options: [(CornerTab.gratitude, "Gratidão"), (.books, "Livros"), (.wishlist, "Desejos")],
+                        options: [(CornerTab.gratitude, "Gratidão"), (.books, "Livros"), (.movies, "Filmes"), (.wishlist, "Desejos")],
                         selection: $tab
                     )
                     .padding(.horizontal, 20)
@@ -36,6 +37,7 @@ struct CornerContainerView: View {
                         switch tab {
                         case .gratitude: GratitudeTabView()
                         case .books: BooksTabView()
+                        case .movies: MoviesTabView()
                         case .wishlist: WishlistTabView()
                         }
                     }
@@ -43,6 +45,16 @@ struct CornerContainerView: View {
                 .padding(.top, 4)
             }
             .toolbar(.hidden, for: .navigationBar)
+        }
+        .onAppear {
+            if route.pendingSharedURL != nil {
+                tab = .wishlist
+            }
+        }
+        .onChange(of: route.pendingSharedURL) { _, newURL in
+            if newURL != nil {
+                tab = .wishlist
+            }
         }
     }
 }

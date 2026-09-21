@@ -26,9 +26,12 @@ struct ExerciseComposerView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     LumeEyebrow(text: "O que você fez")
-                    HStack(spacing: 8) {
-                        ForEach(ExerciseType.allCases) { option in
-                            LumeChip(title: option.rawValue, isSelected: type == option) { type = option }
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(ExerciseType.allCases) { option in
+                                LumeChip(title: option.rawValue, isSelected: type == option) { type = option }
+                                    .fixedSize(horizontal: true, vertical: false)
+                            }
                         }
                     }
 
@@ -61,6 +64,7 @@ struct ExerciseComposerView: View {
                                                 .fill(duration == preset ? LumeColor.greenDeep : .white.opacity(0.7))
                                                 .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(duration == preset ? 0 : 0.95), lineWidth: 1))
                                         }
+                                        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -93,9 +97,10 @@ struct ExerciseComposerView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
+                    .background(LumeColor.greenDeep, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             .buttonStyle(.plain)
-            .background(LumeColor.greenDeep, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .padding(.horizontal, 24)
             .padding(.bottom, 20)
         }

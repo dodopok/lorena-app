@@ -5,9 +5,12 @@ import UIKit
 /// Screens 13 + 14 — paste a link, watch it read itself, edit anything that
 /// didn't come through automatically.
 struct WishlistLinkCaptureView: View {
+    private let initialURL: URL?
+    private let itemToEdit: WishlistItem?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WishlistItem.dateAdded, order: .reverse) private var existingItems: [WishlistItem]
+    @Query(sort: \ShoppingList.dateCreated, order: .forward) private var shoppingLists: [ShoppingList]
 
     @State private var urlString = ""
     @State private var isLoading = false
@@ -19,9 +22,25 @@ struct WishlistLinkCaptureView: View {
     @State private var listName = "Geral"
     @State private var notifyOnDrop = true
     @State private var sourceHost: String?
+    @State private var showingNewList = false
+
+    init(initialURL: URL? = nil, itemToEdit: WishlistItem? = nil) {
+        self.initialURL = initialURL
+        self.itemToEdit = itemToEdit
+        _urlString = State(initialValue: itemToEdit?.sourceURLString ?? initialURL?.absoluteString ?? "")
+        _hasFetched = State(initialValue: itemToEdit != nil)
+        _title = State(initialValue: itemToEdit?.name ?? "")
+        _priceDigits = State(initialValue: itemToEdit.map { String(Int(($0.price * 100).rounded())) } ?? "")
+        _originalPriceDigits = State(initialValue: itemToEdit?.originalPrice.map { String(Int(($0 * 100).rounded())) } ?? "")
+        _imageData = State(initialValue: itemToEdit?.imageData)
+        _listName = State(initialValue: itemToEdit?.listName ?? "Geral")
+        _notifyOnDrop = State(initialValue: itemToEdit?.notifyOnPriceDrop ?? true)
+        _sourceHost = State(initialValue: itemToEdit?.sourceHost)
+    }
 
     private var listNames: [String] {
         var names = Set(existingItems.map(\.listName))
+        names.formUnion(shoppingLists.map(\.name))
         names.insert("Geral")
         return names.sorted()
     }
@@ -30,7 +49,7 @@ struct WishlistLinkCaptureView: View {
         VStack(spacing: 0) {
             LumeSheetHeader(
                 leadingTitle: "Cancelar",
-                title: "Novo desejo",
+                title: itemToEdit == nil ? "Novo desejo" : "Editar desejo",
                 trailingTitle: "Salvar",
                 trailingEnabled: hasFetched && !title.trimmingCharacters(in: .whitespaces).isEmpty,
                 onLeading: { dismiss() },
@@ -66,6 +85,9 @@ struct WishlistLinkCaptureView: View {
                         }
                         .font(LumeType.sans(14, weight: .bold))
                         .foregroundStyle(LumeColor.brand)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .contentShape(Rectangle())
                     }
                 }
                 .padding(.horizontal, 24)
@@ -76,6 +98,16 @@ struct WishlistLinkCaptureView: View {
         .background(LumeColor.canvas.ignoresSafeArea())
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $showingNewList) {
+            NewShoppingListSheet(existingNames: listNames) { newName in
+                listName = newName
+            }
+        }
+        .onAppear {
+            if itemToEdit == nil && initialURL != nil && !hasFetched {
+                fetch()
+            }
+        }
     }
 
     private var linkField: some View {
@@ -89,9 +121,17 @@ struct WishlistLinkCaptureView: View {
                 .autocorrectionDisabled()
                 .lineLimit(1)
                 .onSubmit(fetch)
-            Button("Colar") { pasteFromClipboard() }
-                .font(LumeType.sans(13.5, weight: .heavy))
-                .foregroundStyle(LumeColor.brand)
+            Button {
+                pasteFromClipboard()
+            } label: {
+                Text("Colar")
+                    .font(LumeType.sans(13.5, weight: .heavy))
+                    .foregroundStyle(LumeColor.brand)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 15)
@@ -162,6 +202,10 @@ struct WishlistLinkCaptureView: View {
                 Picker("Lista", selection: $listName) {
                     ForEach(listNames, id: \.self) { Text($0).tag($0) }
                 }
+                Divider()
+                Button("Criar nova lista", systemImage: "plus") {
+                    showingNewList = true
+                }
             } label: {
                 labeledCard(label: "Lista", value: "\(listName) ▾")
             }
@@ -185,6 +229,7 @@ struct WishlistLinkCaptureView: View {
         .padding(.vertical, 13)
         .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.6)))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.9), lineWidth: 1))
+        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private var originalPriceValue: Double? {
@@ -207,12 +252,17 @@ struct WishlistLinkCaptureView: View {
         }
         sourceHost = url.host?.replacingOccurrences(of: "www.", with: "")
         isLoading = true
+        hasFetched = false
+        title = ""
+        priceDigits = ""
+        originalPriceDigits = ""
+        imageData = nil
         Task {
             let result = await LinkMetadataFetcher.fetch(url: url)
             await MainActor.run {
                 isLoading = false
                 hasFetched = true
-                title = result.title ?? ""
+                title = meaningfulTitle(result.title) ?? fallbackTitle(from: url)
                 imageData = result.imageData
                 if let price = result.price {
                     priceDigits = centsDigits(price)
@@ -222,6 +272,40 @@ struct WishlistLinkCaptureView: View {
                 }
             }
         }
+    }
+
+    private func meaningfulTitle(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let normalized = value
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .replacingOccurrences(of: " ", with: "")
+        if normalized == "mercadolivre" || normalized == "mercadolibre" {
+            return nil
+        }
+        return value
+    }
+
+    private func fallbackTitle(from url: URL) -> String {
+        let components = url.path
+            .split(separator: "/")
+            .map(String.init)
+            .filter { !$0.isEmpty }
+
+        let candidate: String
+        if let upIndex = components.firstIndex(where: { $0.lowercased() == "up" }),
+           upIndex > 0 {
+            candidate = components[upIndex - 1]
+        } else {
+            candidate = components.last ?? url.host ?? "Produto"
+        }
+
+        let decoded = candidate.removingPercentEncoding ?? candidate
+        let words = decoded
+            .replacingOccurrences(of: "-", with: " ")
+            .replacingOccurrences(of: "_", with: " ")
+            .split(whereSeparator: { $0.isWhitespace })
+            .map(String.init)
+        return words.joined(separator: " ").capitalized
     }
 
     private func normalizedURL(from raw: String) -> URL? {
@@ -238,16 +322,26 @@ struct WishlistLinkCaptureView: View {
     private func save() {
         let trimmedTitle = title.trimmingCharacters(in: .whitespaces)
         guard !trimmedTitle.isEmpty else { return }
-        let item = WishlistItem(
-            name: trimmedTitle,
-            price: LumeCurrency.amount(fromDigits: priceDigits),
-            originalPrice: originalPriceValue,
-            sourceURLString: normalizedURL(from: urlString)?.absoluteString,
-            imageData: imageData,
-            listName: listName,
-            notifyOnPriceDrop: notifyOnDrop
-        )
-        modelContext.insert(item)
+        if let itemToEdit {
+            itemToEdit.name = trimmedTitle
+            itemToEdit.price = LumeCurrency.amount(fromDigits: priceDigits)
+            itemToEdit.originalPrice = originalPriceValue
+            itemToEdit.sourceURLString = normalizedURL(from: urlString)?.absoluteString
+            itemToEdit.imageData = imageData
+            itemToEdit.listName = listName
+            itemToEdit.notifyOnPriceDrop = notifyOnDrop
+        } else {
+            let item = WishlistItem(
+                name: trimmedTitle,
+                price: LumeCurrency.amount(fromDigits: priceDigits),
+                originalPrice: originalPriceValue,
+                sourceURLString: normalizedURL(from: urlString)?.absoluteString,
+                imageData: imageData,
+                listName: listName,
+                notifyOnPriceDrop: notifyOnDrop
+            )
+            modelContext.insert(item)
+        }
         try? modelContext.save()
         dismiss()
     }

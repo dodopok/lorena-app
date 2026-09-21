@@ -34,6 +34,7 @@ final class WordGameModel {
     private(set) var openCells: Set<WordPuzzle.Cell>
     private(set) var hintCells: Set<WordPuzzle.Cell>
     private(set) var hintsUsed: Int
+    private(set) var lastHintAt: Date?
     private(set) var outcome: Outcome = .idle
 
     /// Peças da roda na ordem em que aparecem no círculo.
@@ -49,6 +50,7 @@ final class WordGameModel {
         self.found = Set(progress.foundWords)
         self.bonusFound = Set(progress.bonusWords)
         self.hintsUsed = progress.hintsUsed
+        self.lastHintAt = progress.lastHintAt
         self.wheel = puzzle.letters.enumerated()
             .map { WheelLetter(id: $0.offset, letter: $0.element) }
             .shuffled()
@@ -70,8 +72,24 @@ final class WordGameModel {
     var totalWords: Int { puzzle.entries.count }
     var foundCount: Int { found.count }
     var isComplete: Bool { found.count == puzzle.entries.count }
-    var hintsAvailable: Int { max(0, WordDayProgress.hintsPerDay + bonusFound.count - hintsUsed) }
-    var canUseHint: Bool { hintsAvailable > 0 && !isComplete }
+
+    /// Quanto falta para a próxima dica liberar. As dicas não acabam — só
+    /// esperam.
+    func hintCooldownRemaining(at date: Date = .now) -> TimeInterval {
+        guard let lastHintAt else { return 0 }
+        return max(0, WordDayProgress.hintCooldown - date.timeIntervalSince(lastHintAt))
+    }
+
+    /// Ainda há letra escondida em alguma palavra que falta?
+    var hasHiddenLetters: Bool {
+        puzzle.entries.contains { entry in
+            !found.contains(entry.word) && entry.cells.contains { !openCells.contains($0) }
+        }
+    }
+
+    func canUseHint(at date: Date = .now) -> Bool {
+        !isComplete && hasHiddenLetters && hintCooldownRemaining(at: date) <= 0
+    }
 
     /// Células de uma palavra que ainda não estão abertas — o que vai voar
     /// da roda para a grade.
@@ -139,10 +157,11 @@ final class WordGameModel {
     /// destacá-la.
     @discardableResult
     func useHint() -> WordPuzzle.Cell? {
-        guard canUseHint else { return nil }
+        guard canUseHint() else { return nil }
         for entry in puzzle.entries where !found.contains(entry.word) {
             guard let cell = entry.cells.first(where: { !openCells.contains($0) }) else { continue }
             hintsUsed += 1
+            lastHintAt = .now
             hintCells.insert(cell)
             openCells.insert(cell)
             persist()
@@ -186,6 +205,7 @@ final class WordGameModel {
         progress.foundWords = Array(found)
         progress.bonusWords = Array(bonusFound)
         progress.hintsUsed = hintsUsed
+        progress.lastHintAt = lastHintAt
         progress.revealedByHint = hintCells.map(Self.key(for:))
         if isComplete, progress.completedAt == nil {
             progress.completedAt = .now

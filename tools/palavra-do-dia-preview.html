@@ -1,0 +1,820 @@
+<title>Palavra do Dia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..600&family=Nunito+Sans:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --paper:#FBF3F0; --ground:#EFE7E2;
+    --ink:#2B2124; --ink-soft:#4A3F42;
+    --faint:#8C7B7F; --fainter:#9A8A8E;
+    --brand:#A44266; --brand-deep:#7A294B; --brand-pill:#F7E3E7;
+    --plum-a:#5E2438; --plum-b:#7C304A;
+    --green:#3F7D68; --green-soft:#DCE9E0;
+    --amber:#C1894A; --amber-soft:#F7DFC4;
+    --lav:#7C6BB0; --lav-soft:#E7E6F2;
+    --orb-rose:#F3B7C8; --orb-amber:#E9C79A; --orb-lav:#C9BEE4; --orb-mint:#A8D4C4;
+    --serif:"Newsreader",Georgia,"Times New Roman",serif;
+    --sans:"Nunito Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .orbs{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden}
+  .orb{position:absolute; border-radius:999px; filter:blur(58px); opacity:.5}
+  .o1{width:320px;height:320px;background:var(--orb-rose);top:-70px;left:-90px;animation:drift 17s ease-in-out infinite}
+  .o2{width:280px;height:280px;background:var(--orb-amber);top:42%;right:-110px;animation:drift 21s ease-in-out infinite reverse}
+  .o3{width:300px;height:300px;background:var(--orb-lav);bottom:-90px;left:-70px;animation:drift 25s ease-in-out infinite}
+  .o4{width:240px;height:240px;background:var(--orb-mint);top:18%;right:-80px;opacity:.38;animation:drift 19s ease-in-out infinite reverse}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-26px) scale(1.12)}}
+
+  .wrap{position:relative; z-index:1; max-width:430px; margin:0 auto; padding-inline:16px; padding-block:22px 40px}
+
+  .eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0}
+  .page-head{display:flex; flex-direction:column; gap:6px; margin-bottom:16px}
+  .page-head h1{margin:0; font-family:var(--serif); font-weight:400; font-size:30px; line-height:1.08; letter-spacing:.01em}
+  .page-head p{margin:0; font-size:13.5px; line-height:1.5; color:var(--ink-soft); max-width:36ch}
+
+  /* ---------- game screen ---------- */
+  .screen{
+    position:relative; border-radius:34px; padding:18px 16px 20px;
+    background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.52));
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 24px 58px rgba(70,40,48,.16), inset 0 1px 0 rgba(255,255,255,.95);
+    backdrop-filter:blur(22px) saturate(180%); -webkit-backdrop-filter:blur(22px) saturate(180%);
+    overflow:hidden;
+  }
+  .screen-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+  .screen-head h2{margin:4px 0 0; font-family:var(--serif); font-weight:400; font-size:26px; line-height:1}
+  .streak{
+    display:flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px;
+    background:var(--amber-soft); color:#6B5540; font-size:12.5px; font-weight:800; white-space:nowrap;
+  }
+  .streak .flame{width:7px;height:7px;border-radius:999px;background:var(--amber)}
+  .streak.bump{animation:bump .5s cubic-bezier(.22,1,.36,1)}
+  @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.16)}100%{transform:scale(1)}}
+
+  .progress-line{display:flex; align-items:center; gap:8px; margin-top:12px}
+  .bar{flex:1; height:6px; border-radius:99px; background:rgba(94,36,56,.12); overflow:hidden}
+  .bar i{display:block; height:100%; width:0; border-radius:99px; background:var(--brand); transition:width .5s cubic-bezier(.22,1,.36,1)}
+  .bar-label{font-family:var(--mono); font-size:10.5px; color:var(--faint); white-space:nowrap}
+
+  /* ---------- grid ---------- */
+  .grid-wrap{display:flex; justify-content:center; padding:18px 0 6px}
+  .grid{display:grid; gap:4px; width:100%; max-width:330px}
+  .cell{position:relative; aspect-ratio:1; border-radius:8px}
+  .cell.empty{visibility:hidden}
+  .cell.slot{
+    background:rgba(94,36,56,.07); border:1px solid rgba(94,36,56,.13);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .cell span{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-size:clamp(13px,3.6vw,19px); color:var(--ink); opacity:0;
+  }
+  .cell.open{background:#fff; border-color:rgba(164,66,102,.3); box-shadow:0 4px 12px rgba(94,36,56,.12)}
+  .cell.open span{opacity:1}
+  .cell.flip{animation:flip .46s cubic-bezier(.22,1,.36,1) both}
+  @keyframes flip{
+    0%{transform:rotateX(88deg) scale(.86)}
+    62%{transform:rotateX(-10deg) scale(1.07)}
+    100%{transform:none}
+  }
+  .cell.hinted{background:var(--amber-soft); border-color:rgba(193,137,74,.4)}
+  .cell.pulse{animation:cellPulse .5s ease-out}
+  @keyframes cellPulse{0%{box-shadow:0 0 0 0 rgba(164,66,102,.4)}100%{box-shadow:0 0 0 12px rgba(164,66,102,0)}}
+  .grid.celebrate .cell.open{animation:shimmer .9s ease-out both}
+  @keyframes shimmer{
+    0%{transform:none;background:#fff}
+    40%{transform:translateY(-5px);background:var(--brand-pill)}
+    100%{transform:none;background:#fff}
+  }
+
+  /* ---------- rail: placar à esquerda, ação à direita ---------- */
+  .rail{display:flex; align-items:center; gap:12px; min-height:46px}
+  .stat{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--faint)}
+  .stat b{font-family:var(--serif); font-weight:500; font-size:17px; color:var(--ink); font-variant-numeric:tabular-nums}
+  .stat .dot{width:7px; height:7px; border-radius:999px; background:var(--green)}
+  .stat.got{animation:bump .45s cubic-bezier(.22,1,.36,1)}
+  .hint-btn{
+    margin-left:auto; display:flex; align-items:center; gap:7px; padding:11px 18px;
+    border:0; border-radius:999px; background:var(--brand); color:#fff;
+    font-family:var(--sans); font-size:14px; font-weight:800; cursor:pointer;
+    box-shadow:0 4px 12px rgba(164,66,102,.32);
+    transition:transform .12s ease, background .2s ease, box-shadow .2s ease;
+  }
+  .hint-btn:active{transform:scale(.96)}
+  .hint-btn:disabled{background:var(--fainter); box-shadow:none; cursor:default}
+  .hint-btn svg{width:15px; height:15px}
+  .hint-btn .num{font-variant-numeric:tabular-nums}
+  :focus-visible{outline:2.5px solid var(--brand); outline-offset:3px; border-radius:12px}
+
+  /* ---------- bubble + wheel ---------- */
+  .dock{margin-top:14px; display:flex; flex-direction:column; align-items:center; gap:10px}
+  .bubble{
+    min-height:44px; display:flex; align-items:center; justify-content:center;
+    padding:8px 20px; border-radius:999px; font-family:var(--serif); font-size:26px; letter-spacing:.12em;
+    color:var(--ink); background:transparent; opacity:0; transform:translateY(6px);
+    transition:opacity .18s ease, transform .18s ease, background .18s ease, color .18s ease;
+  }
+  .bubble.on{opacity:1; transform:none; background:rgba(255,255,255,.8)}
+  .bubble.ok{background:var(--brand); color:#fff}
+  .bubble.bonus{background:var(--green); color:#fff}
+  .bubble.dup{background:var(--amber-soft); color:#6B5540}
+  .bubble.bad{background:#F3DAD9; color:#9E3C3A; animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
+  @keyframes shake{10%,90%{transform:translateX(-3px)}20%,80%{transform:translateX(5px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}
+
+  .wheel{
+    position:relative; width:min(272px,80vw); aspect-ratio:1; border-radius:999px; touch-action:none;
+    background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.92),rgba(255,255,255,.55));
+    border:1px solid rgba(255,255,255,.95);
+    box-shadow:0 18px 40px rgba(94,36,56,.14), inset 0 2px 0 rgba(255,255,255,.95);
+  }
+  .wheel.nope{animation:wheelNope .4s ease-out}
+  @keyframes wheelNope{0%{box-shadow:0 0 0 0 rgba(158,60,58,.35),0 18px 40px rgba(94,36,56,.14)}100%{box-shadow:0 0 0 18px rgba(158,60,58,0),0 18px 40px rgba(94,36,56,.14)}}
+  .trail{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+  .trail polyline{fill:none; stroke:rgba(164,66,102,.45); stroke-width:7; stroke-linecap:round; stroke-linejoin:round}
+  .tile{
+    position:absolute; left:50%; top:50%; width:54px; height:54px; margin:0; padding:0;
+    display:flex; align-items:center; justify-content:center; border-radius:999px; cursor:pointer;
+    font-family:var(--serif); font-size:25px; color:var(--ink); background:#fff;
+    border:1px solid rgba(94,36,56,.1); box-shadow:0 6px 14px rgba(94,36,56,.12);
+    transition:transform .42s cubic-bezier(.22,1,.36,1), background .16s ease, color .16s ease, box-shadow .16s ease;
+    user-select:none; -webkit-user-select:none;
+  }
+  .tile.sel{background:var(--brand); color:#fff; border-color:var(--brand); box-shadow:0 8px 20px rgba(164,66,102,.4)}
+  .tile.pop{animation:tilePop .5s cubic-bezier(.22,1,.36,1) both}
+  @keyframes tilePop{0%{opacity:0}100%{opacity:1}}
+  .wheel-tools{display:flex; gap:10px; margin-top:2px}
+  .tool{
+    width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.95); cursor:pointer;
+    color:var(--brand); box-shadow:0 6px 14px rgba(94,36,56,.1); transition:transform .3s cubic-bezier(.22,1,.36,1);
+  }
+  .tool:active{transform:scale(.94)}
+  .tool.spin{transform:rotate(360deg)}
+  .tool svg{width:20px;height:20px}
+
+  /* ---------- flying letters + confetti ---------- */
+  .flight{position:fixed; inset:0; pointer-events:none; z-index:60}
+  .fly{
+    position:fixed; width:42px; height:42px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-size:20px; color:#fff; background:var(--brand);
+    box-shadow:0 10px 22px rgba(164,66,102,.4);
+  }
+  canvas.confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:70}
+
+  /* ---------- done panel ---------- */
+  .done{
+    position:absolute; left:14px; right:14px; bottom:14px; padding:20px 20px 18px; border-radius:28px; color:#fff;
+    background:linear-gradient(135deg,var(--plum-a),var(--plum-b));
+    border:1px solid rgba(255,255,255,.22); box-shadow:0 20px 44px rgba(94,36,56,.34);
+    transform:translateY(130%); transition:transform .55s cubic-bezier(.22,1,.36,1);
+  }
+  .done.show{transform:none}
+  .done .eyebrow{color:#EFC6D5}
+  .done h3{margin:8px 0 0; font-family:var(--serif); font-weight:400; font-size:27px; line-height:1.1}
+  .done p{margin:7px 0 0; font-size:13.5px; line-height:1.5; color:#F0D2DC}
+  .done-actions{display:flex; gap:9px; margin-top:16px}
+  .done button{
+    flex:1; height:46px; border-radius:15px; border:0; cursor:pointer; font-family:var(--sans); font-size:14.5px; font-weight:800;
+  }
+  .btn-light{background:#FDF4F6; color:var(--plum-a)}
+  .btn-ghost{background:rgba(253,244,246,.16); color:#FDF4F6; border:1px solid rgba(255,255,255,.3)!important}
+
+  /* ---------- archive ---------- */
+  .section{margin-top:26px}
+  .section > .eyebrow{margin-bottom:10px}
+  .days{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin}
+  .day{
+    flex:0 0 auto; width:62px; padding:10px 0 9px; border-radius:18px; text-align:center; cursor:pointer;
+    background:rgba(255,255,255,.6); border:1px solid rgba(255,255,255,.95); transition:transform .15s ease;
+    font-family:var(--sans);
+  }
+  .day:active{transform:scale(.96)}
+  .day .d-w{font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; color:var(--faint); text-transform:uppercase}
+  .day .d-n{font-family:var(--serif); font-size:19px; margin-top:2px}
+  .day .d-s{margin:5px auto 0; width:7px; height:7px; border-radius:999px; background:rgba(94,36,56,.16)}
+  .day.done .d-s{background:var(--green)}
+  .day.today{background:var(--brand); border-color:var(--brand); box-shadow:0 8px 18px rgba(164,66,102,.28)}
+  .day.today .d-w{color:#F3CBD9} .day.today .d-n{color:#fff} .day.today .d-s{background:rgba(255,255,255,.55)}
+  .day.today.done .d-s{background:#fff}
+
+  /* ---------- integration mocks ---------- */
+  .mock{
+    border-radius:24px; padding:16px 18px; background:rgba(255,255,255,.6);
+    border:1px solid rgba(255,255,255,.95); box-shadow:0 10px 26px rgba(94,36,56,.08);
+  }
+  .mock + .mock{margin-top:10px}
+  .mock-row{display:flex; align-items:center; gap:14px}
+  .mock-ico{
+    width:44px;height:44px;border-radius:999px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    background:var(--brand-pill); color:var(--brand-deep); font-family:var(--serif); font-size:19px;
+  }
+  .mock-txt{flex:1; min-width:0}
+  .mock-txt b{display:block; font-size:15px; color:var(--ink)}
+  .mock-txt span{display:block; font-size:12.5px; color:var(--faint); margin-top:2px}
+  .mock-cta{font-size:13px; font-weight:800; color:var(--brand); white-space:nowrap}
+  .subtabs{display:flex; gap:5px; padding:5px; border-radius:999px; background:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.9)}
+  .subtabs span{flex:1; text-align:center; padding:8px 0; border-radius:999px; font-size:12.5px; font-weight:700; color:var(--faint)}
+  .subtabs span.active{background:var(--brand); color:#fff}
+  .note{margin:10px 2px 0; font-size:12.5px; line-height:1.55; color:var(--faint)}
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important}
+  }
+</style>
+
+<div class="orbs" aria-hidden="true">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="orb o4"></div>
+</div>
+
+<div class="wrap">
+  <header class="page-head">
+    <p class="eyebrow">Lume · proposta de jogo</p>
+    <h1>Palavra do dia</h1>
+    <p>Um puzzle por dia, em português. Arraste pelas letras para formar as palavras da grade. Palavra válida que não está nela conta como bônus.</p>
+  </header>
+
+  <main class="screen" id="screen">
+    <div class="screen-head">
+      <div>
+        <p class="eyebrow" id="dateLabel">Sexta, 20 de setembro</p>
+        <h2 id="mainWord">Palavra do dia</h2>
+      </div>
+      <div class="streak" id="streak" title="dias seguidos"><span class="flame"></span><span id="streakN">0</span> dias</div>
+    </div>
+
+    <div class="progress-line">
+      <div class="bar"><i id="barFill"></i></div>
+      <span class="bar-label" id="progressLabel">0 / 0</span>
+    </div>
+
+    <div class="grid-wrap"><div class="grid" id="grid"></div></div>
+
+    <div class="rail">
+      <div class="stat" id="bonusStat"><span class="dot"></span><b id="bonusN">0</b> bônus</div>
+      <button class="hint-btn" id="hintBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+        </svg>
+        <span id="hintLabel">Dica</span>
+      </button>
+    </div>
+
+    <div class="dock">
+      <div class="bubble" id="bubble"></div>
+      <div class="wheel" id="wheel">
+        <svg class="trail" id="trailSvg" aria-hidden="true"><polyline id="trailLine" points=""></polyline></svg>
+      </div>
+      <div class="wheel-tools">
+        <button class="tool" id="shuffleBtn" type="button" aria-label="Embaralhar letras">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="done" id="done">
+      <p class="eyebrow">Puzzle de hoje</p>
+      <h3 id="doneTitle">Todas as palavras!</h3>
+      <p id="doneText">Volte amanhã para a próxima. Sua sequência continua.</p>
+      <div class="done-actions">
+        <button class="btn-light" id="doneArchive" type="button">Jogar dias anteriores</button>
+        <button class="btn-ghost" id="doneClose" type="button">Ver a grade</button>
+      </div>
+    </div>
+  </main>
+
+  <section class="section">
+    <p class="eyebrow">Dias anteriores</p>
+    <div class="days" id="days"></div>
+  </section>
+
+  <section class="section">
+    <p class="eyebrow">Onde ela entra no app</p>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-ico">P</div>
+        <div class="mock-txt"><b>Palavra do dia</b><span id="mockStatus">3 de 6 palavras · sequência de 4 dias</span></div>
+        <span class="mock-cta">Jogar</span>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="subtabs">
+        <span>Gratidão</span><span>Livros</span><span>Filmes</span><span>Desejos</span><span class="active">Palavras</span>
+      </div>
+    </div>
+    <p class="note">Card na tela <b>Hoje</b> como chamada do dia, e uma sub-aba no <b>Cantinho</b> para voltar nos puzzles antigos — as cinco abas principais continuam as mesmas.</p>
+  </section>
+</div>
+
+<div class="flight" id="flight"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PUZZLES = [{"id":"amores","letters":["A","M","O","R","E","S"],"w":6,"h":7,"words":[{"word":"AMORES","row":3,"col":0,"dir":"h"},{"word":"MESA","row":0,"col":0,"dir":"v"},{"word":"REMO","row":0,"col":2,"dir":"v"},{"word":"ROSA","row":0,"col":2,"dir":"h"},{"word":"SOMA","row":3,"col":5,"dir":"v"},{"word":"MAR","row":3,"col":1,"dir":"v"}],"bonus":["ERAMOS","SERMAO","AMORE","MARES","MERAS","MEROS","MORAS","MORES","MORSA","MORSE","RAMOS","REMOS","SERAO","SOMAR","AMES","AMOR","AMOS","ARES","ARME","AROS","EMAS","ERAM","ERAS","ERMO","EROS","MAES","MAOS","MARE","MERA","MERO","MOER","MORA","ORAM","ORAS","OREM","RAMO","RASO","REMA","ROMA","ROSE","SAEM","SEMA","SERA","SOAM","SOAR","SOME","SORA","AME","AMO","AOS","ARO","ASO","EMA","ERA","MAE","MAO","MAS","MES","MOA","MOR","ORA","ORE","RAS","RES","ROM","SAO","SEM","SER","SOA","SOE","SOM","SOR"]},{"id":"calor","letters":["C","A","L","O","R"],"w":5,"h":8,"words":[{"word":"CALOR","row":3,"col":0,"dir":"h"},{"word":"CLARO","row":3,"col":0,"dir":"v"},{"word":"ARCO","row":5,"col":0,"dir":"h"},{"word":"RALO","row":0,"col":3,"dir":"v"},{"word":"COR","row":5,"col":2,"dir":"v"},{"word":"LAR","row":0,"col":1,"dir":"h"}],"bonus":["COLAR","CORAL","LORCA","CALO","CARO","COLA","CORA","LACO","LOCA","LORA","ORAL","ORCA","ORLA","ROCA","ROLA","ACO","ALO","ARO","CAL","CAO","CLA","COA","LAO","LOA","OCA","OLA","ORA","ROL"]},{"id":"flores","letters":["F","L","O","R","E","S"],"w":7,"h":8,"words":[{"word":"FLORES","row":5,"col":0,"dir":"h"},{"word":"ELOS","row":4,"col":1,"dir":"v"},{"word":"FLOR","row":2,"col":3,"dir":"v"},{"word":"FOLE","row":2,"col":3,"dir":"h"},{"word":"SELO","row":7,"col":1,"dir":"h"},{"word":"SOL","row":0,"col":5,"dir":"v"}],"bonus":["ELFOS","FOLES","FORES","SOFRE","ELFO","EROS","LERO","ROLE","ROSE","ELO","FEL","FOR","LER","LOS","OLE","ORE","RES","ROL","SER","SOE","SOR"]},{"id":"caminho","letters":["C","A","M","I","N","H","O"],"w":10,"h":5,"words":[{"word":"CAMINHO","row":4,"col":0,"dir":"h"},{"word":"MINHA","row":0,"col":1,"dir":"v"},{"word":"NICHO","row":0,"col":6,"dir":"v"},{"word":"CHAO","row":2,"col":6,"dir":"h"},{"word":"MAO","row":0,"col":1,"dir":"h"}],"bonus":["MINHOCA","MOCINHA","MONICA","ANIMO","CHAMO","CHINA","CHINO","CIANO","COMIA","INCHA","MACHO","MACIO","MANCO","OICAM","ACHO","CAIM","CAIO","CANO","CHAI","CHAM","CHIA","CHOI","CIMA","CIMO","COMA","COMI","CONA","HINO","INCA","MACO","MAIO","MANI","MANO","MICA","MICO","MINA","MINO","MOCA","MONA","MONI","NICA","NICO","ONCA","ACO","AHN","AIO","AMO","ANO","CAI","CAO","CHA","CHI","CIA","CIO","COA","COM","HAN","HAO","IAM","ICA","ICO","IMA","INO","ION","MAI","MCA","MIA","MIN","MIO","MOA","MOI","NAI","NAO","NIM","NOA","OCA","OHM"]},{"id":"vidas","letters":["V","I","D","A","S"],"w":6,"h":6,"words":[{"word":"VIDAS","row":3,"col":1,"dir":"h"},{"word":"DIAS","row":2,"col":2,"dir":"v"},{"word":"VIDA","row":0,"col":4,"dir":"v"},{"word":"VISA","row":5,"col":0,"dir":"h"},{"word":"DIA","row":1,"col":3,"dir":"h"},{"word":"SAI","row":3,"col":5,"dir":"v"}],"bonus":["DIVAS","ADIS","AIDS","DIVA","IDAS","SIDA","VAIS","VIAS","ADI","AIS","ASI","DAI","DAS","IAS","IDA","ISA","IVA","SIA","VAI","VAS","VIA","VIS"]},{"id":"livros","letters":["L","I","V","R","O","S"],"w":7,"h":5,"words":[{"word":"LIVROS","row":0,"col":1,"dir":"h"},{"word":"LIVRO","row":0,"col":1,"dir":"v"},{"word":"SILO","row":0,"col":6,"dir":"v"},{"word":"RIO","row":0,"col":4,"dir":"v"},{"word":"SOL","row":4,"col":0,"dir":"h"}],"bonus":["SIRVO","VISOR","LISO","RIOS","RISO","SIRO","VIRO","LIS","LOS","ORI","RIS","ROL","SOR","VIL","VIR","VIS","VOS"]},{"id":"praia","letters":["P","R","A","I","A"],"w":8,"h":5,"words":[{"word":"PRAIA","row":1,"col":2,"dir":"h"},{"word":"ARIA","row":0,"col":3,"dir":"v"},{"word":"PARA","row":0,"col":6,"dir":"v"},{"word":"RAIA","row":3,"col":0,"dir":"h"},{"word":"IRA","row":2,"col":0,"dir":"v"},{"word":"PAI","row":3,"col":5,"dir":"h"}],"bonus":["PAIRA","PARIA","IARA","PARI","PIRA","RAPA","AIA","APA","ARA","PAR","PIA","PRA","RAI","RIA"]},{"id":"jardim","letters":["J","A","R","D","I","M"],"w":6,"h":6,"words":[{"word":"JARDIM","row":3,"col":0,"dir":"h"},{"word":"MIRA","row":0,"col":1,"dir":"v"},{"word":"DAR","row":3,"col":3,"dir":"v"},{"word":"DIA","row":1,"col":0,"dir":"h"},{"word":"RIM","row":1,"col":5,"dir":"v"}],"bonus":["MIJAR","ADIR","AMIR","DIMA","DIRA","IRAM","IRMA","MARI","MIJA","RAMI","RIAM","RIJA","RIMA","ADI","DAI","IAM","IDA","IMA","IRA","JAR","JIA","MAI","MAR","MIA","RAD","RAI","RIA"]},{"id":"beijos","letters":["B","E","I","J","O","S"],"w":7,"h":5,"words":[{"word":"BEIJOS","row":0,"col":1,"dir":"h"},{"word":"BEIJO","row":0,"col":1,"dir":"v"},{"word":"BIS","row":2,"col":0,"dir":"h"},{"word":"BOI","row":4,"col":0,"dir":"h"},{"word":"SEI","row":0,"col":6,"dir":"v"}],"bonus":["BIOS","BOIS","IOES","SEBO","SEIO","SOBE","BEI","BIO","BOE","BOS","EIS","OBI","SIE","SOB","SOE"]},{"id":"caneta","letters":["C","A","N","E","T","A"],"w":6,"h":6,"words":[{"word":"CANETA","row":1,"col":0,"dir":"h"},{"word":"CANTA","row":1,"col":0,"dir":"v"},{"word":"ANTE","row":1,"col":5,"dir":"v"},{"word":"CENA","row":0,"col":3,"dir":"v"},{"word":"NATA","row":3,"col":0,"dir":"h"},{"word":"ATA","row":5,"col":0,"dir":"h"}],"bonus":["ACENA","CANTE","ACNE","ANCA","ANTA","CANA","CATA","CATE","NECA","NETA","TACA","TECA","ACA","ANA","ATE","ECA","ENA","ETA","ETC","NET"]},{"id":"carinho","letters":["C","A","R","I","N","H","O"],"w":7,"h":5,"words":[{"word":"CARINHO","row":0,"col":0,"dir":"h"},{"word":"CHORA","row":0,"col":0,"dir":"v"},{"word":"NICHO","row":0,"col":4,"dir":"v"},{"word":"ARCO","row":2,"col":2,"dir":"h"},{"word":"RIO","row":4,"col":2,"dir":"h"}],"bonus":["ROCINHA","CORINA","CRANIO","INCHAR","RANCHO","RIACHO","RINCAO","CAIRO","CHINA","CHINO","CIANO","CRINA","HONRA","ICARO","INCHA","RACIO","RANCO","RANHO","ROCHA","RONCA","ACHO","CAIO","CAIR","CANO","CARO","CHAI","CHAO","CHIA","CHOI","CONA","CORA","CORI","CRIA","CRIO","HARI","HINO","HORA","INCA","IRAO","NAIR","NICA","NICO","NOIR","NORA","ONCA","ORCA","RAIO","RANI","RICA","RICO","RINA","RINO","ROCA","ACO","AHN","AIO","ANO","ARO","CAI","CAO","CHA","CHI","CIA","CIO","COA","COR","CRI","HAN","HAO","ICA","ICO","INO","ION","IRA","NAI","NAO","NOA","OCA","ORA","ORI","RAI","RIA"]},{"id":"verdade","letters":["V","E","R","D","A","D","E"],"w":8,"h":5,"words":[{"word":"VERDADE","row":0,"col":1,"dir":"h"},{"word":"VERDE","row":0,"col":1,"dir":"v"},{"word":"ARDE","row":0,"col":5,"dir":"v"},{"word":"REDE","row":0,"col":3,"dir":"v"},{"word":"VER","row":4,"col":0,"dir":"h"}],"bonus":["DEVERA","VEREDA","ADERE","DEVER","DEDE","DERA","DEVA","DEVE","ERVA","RAVE","REVE","VEDA","VEDE","VERA","ADE","AVE","DAR","DER","ERA","EVA","EVE","RAD","VAR"]},{"id":"janela","letters":["J","A","N","E","L","A"],"w":6,"h":4,"words":[{"word":"JANELA","row":0,"col":0,"dir":"h"},{"word":"ANEL","row":0,"col":1,"dir":"v"},{"word":"ALA","row":0,"col":5,"dir":"v"},{"word":"ELA","row":0,"col":3,"dir":"v"}],"bonus":["ANAL","ANJA","JANA","JANE","LAJE","LANA","LANE","LENA","NAJA","NELA","AJA","ANA","ENA","JAN"]},{"id":"musica","letters":["M","U","S","I","C","A"],"w":8,"h":5,"words":[{"word":"MUSICA","row":2,"col":1,"dir":"h"},{"word":"SUMIA","row":0,"col":1,"dir":"v"},{"word":"CAIS","row":0,"col":4,"dir":"v"},{"word":"CIMA","row":0,"col":4,"dir":"h"},{"word":"SAI","row":4,"col":0,"dir":"h"}],"bonus":["CISMA","SUICA","CAIM","CAIU","CUIA","IMAS","ISCA","MAIS","MAUS","MIAU","MICA","MISA","MUSA","SACI","SAIU","SIAM","SICA","SIMA","SUMA","SUMI","UMAS","USAM","AIS","AMU","ASI","CAI","CIA","CIS","CSI","CUS","IAM","IAS","ICA","IMA","ISA","MAI","MAS","MAU","MCA","MIA","MUI","SIA","SIC","SIM","SUA","SUI","UAI","UCI","UMA","USA"]},{"id":"domingo","letters":["D","O","M","I","N","G","O"],"w":7,"h":5,"words":[{"word":"DOMINGO","row":2,"col":0,"dir":"h"},{"word":"GNOMO","row":0,"col":1,"dir":"v"},{"word":"INDO","row":1,"col":4,"dir":"v"},{"word":"MODO","row":1,"col":6,"dir":"v"},{"word":"DOM","row":4,"col":0,"dir":"h"}],"bonus":["DOMINO","DIGNO","MOGNO","MOIDO","MONDO","MONGO","DIGO","DINO","DOMO","DONO","GOMO","IODO","MINO","MONI","MONO","ODIO","DOI","DOO","GIM","GIO","IDO","INO","ION","MIN","MIO","MOI","MOO","NIM","ODO","OMO","ONO"]},{"id":"abraco","letters":["A","B","R","A","C","O"],"w":6,"h":5,"words":[{"word":"ABRACO","row":1,"col":0,"dir":"h"},{"word":"BARCO","row":0,"col":0,"dir":"v"},{"word":"CABRA","row":0,"col":3,"dir":"v"},{"word":"ARCO","row":3,"col":2,"dir":"h"}],"bonus":["CABRAO","ACABO","BARAO","BARCA","BRACO","BROCA","COBRA","RACAO","ABRA","ABRO","ACAO","ARAO","ARCA","BACO","BOCA","BORA","BROA","CABO","CARA","CARO","CORA","OBRA","ORCA","RABO","RACA","ROCA","ABA","ABC","ABO","ABR","ACA","ACO","ARA","ARO","BAR","BOA","CAO","COA","COR","OBA","OCA","ORA"]},{"id":"caderno","letters":["C","A","D","E","R","N","O"],"w":7,"h":6,"words":[{"word":"CADERNO","row":5,"col":0,"dir":"h"},{"word":"ORDENA","row":0,"col":1,"dir":"v"},{"word":"CEDRO","row":1,"col":6,"dir":"v"},{"word":"RENDA","row":3,"col":0,"dir":"h"},{"word":"DONA","row":0,"col":0,"dir":"h"}],"bonus":["ACENDO","ACORDE","CORNEA","CRENDO","DECANO","DECORA","DOENCA","ENCARO","RECADO","ACENO","ADORE","ANDOR","AONDE","CARNE","CERDA","CONDE","CORDA","CREDO","DANCE","DANCO","DRENA","DRENO","ECOAR","RANCO","RENDO","RONCA","RONDA","ACNE","ACRE","ADRO","ANDE","ANDO","ARCO","ARDE","CADE","CANO","CARO","CEDA","CEDO","CENA","CERA","CERO","CODA","CONA","CONE","CORA","CORE","DANE","DANO","DERA","DOAR","DOCA","DOCE","DOER","DORA","ECOA","ECRA","ENDO","NADO","NECA","NERD","NERO","NORA","OCRE","ONCA","ONDA","ONDE","ORCA","RECO","RENA","RENO","ROCA","RODA","ACO","ADE","ADO","ANO","ARO","CAO","CER","COA","COE","COR","CRE","DAO","DAR","DER","DOA","DOE","DOR","ECA","ECO","ENA","ERA","NAO","NEO","NOA","NOE","OCA","ODA","ODE","ORA","ORE","RAD"]},{"id":"estrela","letters":["E","S","T","R","E","L","A"],"w":7,"h":7,"words":[{"word":"ESTRELA","row":3,"col":0,"dir":"h"},{"word":"LESTE","row":2,"col":0,"dir":"v"},{"word":"RESTA","row":2,"col":4,"dir":"v"},{"word":"SETA","row":5,"col":2,"dir":"h"},{"word":"TELA","row":0,"col":6,"dir":"v"}],"bonus":["ESTELAR","ALTERE","LETRAS","TERESA","ALTER","ARTES","ERETA","ESTAR","LARES","LASER","LETRA","RELES","RESTE","RETAL","RETAS","SALTE","SELAR","SERTA","TALES","TEASE","TELAS","TELES","TERAS","TERES","TESLA","TRELA","ARES","ARTE","ATER","ELAS","ELES","ERAS","ERES","ESTA","ESTE","ETER","LERA","LESA","REAL","RELA","RELE","RETA","SELA","SELE","SERA","SETE","TELE","TERA","TESE","TRAS","TRES","ATE","ELA","ELE","ERA","ETA","LAR","LAS","LER","RAS","RES","SAL","SER","STA","TAL","TAS","TER"]},{"id":"floresta","letters":["F","L","O","R","E","S","T","A"],"w":9,"h":6,"words":[{"word":"FLORESTA","row":0,"col":0,"dir":"h"},{"word":"FLORES","row":0,"col":0,"dir":"v"},{"word":"SOLTAR","row":0,"col":5,"dir":"v"},{"word":"RESTA","row":0,"col":3,"dir":"v"},{"word":"TELA","row":3,"col":5,"dir":"h"}],"bonus":["FATORES","OFERTAS","RELATOS","AFETOS","ATORES","FARELO","FARTOS","FORTES","FROTAS","LETRAS","OFERTA","RELATO","ROLETA","SERTAO","TOLERA","AFETO","ALTER","ALTOS","ARTES","ASTRO","ELFOS","ESTAO","ESTAR","FALSO","FALTE","FAROL","FARTO","FATOR","FATOS","FERAS","FESTA","FETAL","FETOS","FLORA","FORES","FORTE","FOSTE","FRASE","FROTA","LARES","LASER","LESAO","LETRA","LOTES","RATOS","RESTO","RETAS","RETOS","ROTAS","SALTO","SELAR","SERAO","SETOR","SOFRA","SOFRE","SOLAR","SOLTA","SOLTE","SORTE","TALES","TARSO","TELAO","TELAS","TERAO","TERAS","TESAO","TESLA","AFRO","ALTO","ARES","ARTE","ATOR","ATOS","ELAS","ELFO","ELOS","ERAS","EROS","ESTA","ESTO","FALE","FALO","FARO","FASE","FATO","FERA","FETO","FLOR","FORA","LAOS","LATO","LEAO","LEOA","LESA","LETO","LOTE","ORAL","ORAS","ORFA","ORLA","RALO","RASO","RATO","REAL","RETA","RETO","ROLA","ROSA","ROSE","ROTA","SELA","SELO","SERA","SETA","SOAR","SOFA","SOLA","SORA","TALO","TARO","TEOR","TERA","TOLA","TORA","TRAS","TRES","ALO","AOS","ARO","ATE","ATO","ELA","ELO","ERA","ETA","FAS","LAO","LAR","LAS","LER","LOS","OLA","ORA","ORE","OTA","ROL","SAL","SAO","SER","SOA","SOE","SOL","SOR","STA","TAL","TAO","TAS","TER","TOA","TOS"]},{"id":"canela","letters":["C","A","N","E","L","A"],"w":9,"h":5,"words":[{"word":"CANELA","row":3,"col":3,"dir":"h"},{"word":"LANCE","row":0,"col":3,"dir":"v"},{"word":"ALCA","row":0,"col":8,"dir":"v"},{"word":"ANEL","row":1,"col":6,"dir":"v"},{"word":"CENA","row":1,"col":0,"dir":"h"}],"bonus":["ACENA","CANAL","LANCA","ACNE","ALCE","ANAL","ANCA","CALA","CALE","CANA","CELA","LACA","LACE","LANA","LANE","LENA","NECA","NELA","ACA","ALA","ANA","CAL","CLA","ECA","ELA","ENA"]},{"id":"passeio","letters":["P","A","S","S","E","I","O"],"w":7,"h":7,"words":[{"word":"PASSEIO","row":2,"col":0,"dir":"h"},{"word":"PASSE","row":2,"col":0,"dir":"v"},{"word":"PAIS","row":0,"col":5,"dir":"v"},{"word":"PISO","row":0,"col":2,"dir":"v"},{"word":"SAPO","row":5,"col":0,"dir":"h"}],"bonus":["POESIAS","ESPIAO","ESPOSA","PAISES","PASSEI","PESSOA","POESIA","APOIE","ESPIA","OASIS","OSSEA","PASSO","PESOS","PISAO","PISOS","POSES","POSSA","POSSE","SAPOS","SEIOS","SOPAS","SOSIA","AIPO","APOS","ASES","ESSA","IOES","IPES","ISSO","PAES","PAIO","PEAO","PESA","PESO","PIAO","PIAS","PISA","PISE","POIS","POSA","POSE","SAIO","SAIS","SAOS","SEIO","SEIS","SIAO","SISO","SOIS","SOPA","SOPE","SOSA","SPAS","AIE","AIO","AIS","AOS","APE","APO","ASI","ASO","EIA","EIS","EPA","IAS","IPE","IPO","IPS","ISA","OPA","OPS","PAI","PAO","PAS","PES","PIA","PIO","POA","POE","POS","PSI","SAI","SAO","SEI","SIA","SIE","SOA","SOE","SOS","SPA"]},{"id":"pipoca","letters":["P","I","P","O","C","A"],"w":7,"h":4,"words":[{"word":"PIPOCA","row":2,"col":0,"dir":"h"},{"word":"COPA","row":0,"col":0,"dir":"v"},{"word":"PICO","row":0,"col":4,"dir":"v"},{"word":"CAI","row":0,"col":0,"dir":"h"},{"word":"PIA","row":0,"col":4,"dir":"h"}],"bonus":["COPIA","AIPO","CAIO","CAPO","CIPO","PACO","PAIO","PAPO","PIAO","PICA","PIPA","PIPO","POCA","POPA","ACO","AIO","APO","CAO","CIA","CIO","COA","ICA","ICO","IPO","OCA","OPA","PAI","PAO","PIO","POA","POP"]},{"id":"noticia","letters":["N","O","T","I","C","I","A"],"w":9,"h":6,"words":[{"word":"NOTICIA","row":2,"col":2,"dir":"h"},{"word":"TONICA","row":0,"col":2,"dir":"v"},{"word":"CANTO","row":1,"col":8,"dir":"v"},{"word":"CONTA","row":4,"col":2,"dir":"h"},{"word":"NOTA","row":0,"col":0,"dir":"h"}],"bonus":["INCITA","IONICA","CIANO","CINTA","CINTO","COTIA","INATO","OTICA","ANTI","CAIO","CANO","CATO","CITA","CITO","CONA","COTA","INCA","NATO","NICA","NICO","NITA","ONCA","TACO","TIAO","TICO","TINA","TINO","TOCA","TONA","ACO","AIO","ANO","ATI","ATO","CAI","CAO","CIA","CIO","COA","ICA","ICI","ICO","INO","ION","ITA","NAI","NAO","NOA","OCA","OTA","TAI","TAO","TIA","TIO","TOA"]},{"id":"tarde","letters":["T","A","R","D","E"],"w":5,"h":4,"words":[{"word":"TARDE","row":0,"col":0,"dir":"h"},{"word":"ARDE","row":0,"col":1,"dir":"v"},{"word":"DAR","row":0,"col":3,"dir":"v"},{"word":"TER","row":3,"col":0,"dir":"h"}],"bonus":["ARTE","ATER","DERA","RETA","TERA","ADE","ATE","DER","ERA","ETA","RAD"]},{"id":"bolacha","letters":["B","O","L","A","C","H","A"],"w":8,"h":5,"words":[{"word":"BOLACHA","row":2,"col":1,"dir":"h"},{"word":"CALHA","row":0,"col":3,"dir":"v"},{"word":"ACHO","row":1,"col":5,"dir":"v"},{"word":"BOLA","row":4,"col":0,"dir":"h"},{"word":"CABO","row":1,"col":7,"dir":"v"}],"bonus":["BALCAO","ABALO","ACABO","ACOLA","BALAO","BOCAL","BOCHA","BOLHA","CABAL","CALAO","COALA","ACAO","ACHA","ALBA","ALCA","ALHO","BAAL","BACO","BALA","BOCA","CALA","CALO","CHAO","COLA","HALA","HALO","HOLA","LACA","LACO","LOBA","LOCA","OLHA","ABA","ABC","ABO","ACA","ACO","ALA","ALO","BAL","BLA","BOA","CAL","CAO","CHA","CLA","COA","HAO","LAO","LHA","LHO","LOA","OBA","OCA","OLA"]},{"id":"feijoada","letters":["F","E","I","J","O","A","D","A"],"w":8,"h":5,"words":[{"word":"FEIJOADA","row":2,"col":0,"dir":"h"},{"word":"ODEIA","row":0,"col":1,"dir":"v"},{"word":"FADA","row":1,"col":5,"dir":"v"},{"word":"JOIA","row":0,"col":0,"dir":"h"},{"word":"DIA","row":0,"col":7,"dir":"v"}],"bonus":["AFIADO","FEIJAO","FIADA","FIADO","FODIA","ADAO","ADIA","DOEI","DOIA","FADE","FADO","FAIA","FEIA","FEIO","FODA","FODE","FODI","JADE","ODIA","ADA","ADE","ADI","ADO","AFA","AIA","AIE","AIO","AJA","AJO","DAI","DAO","DEI","DOA","DOE","DOI","EIA","FIA","FIO","FOI","IDA","IDE","IDO","JIA","ODA","ODE"]},{"id":"saudade","letters":["S","A","U","D","A","D","E"],"w":8,"h":5,"words":[{"word":"SAUDADE","row":0,"col":1,"dir":"h"},{"word":"SAUDE","row":0,"col":1,"dir":"v"},{"word":"USADA","row":0,"col":3,"dir":"v"},{"word":"SEDA","row":4,"col":0,"dir":"h"},{"word":"DAS","row":0,"col":6,"dir":"v"}],"bonus":["ADEUS","DADAS","DEUSA","SAUDA","SUADA","ADES","DADA","DEUS","DUAS","DUDA","SADA","SADE","ADA","ADE","ASA","DES","DEU","DUA","SEU","SUA","SUE","USA"]},{"id":"marido","letters":["M","A","R","I","D","O"],"w":8,"h":6,"words":[{"word":"DORMIA","row":4,"col":2,"dir":"h"},{"word":"MARIDO","row":0,"col":2,"dir":"v"},{"word":"RADIO","row":1,"col":6,"dir":"v"},{"word":"DOMA","row":0,"col":0,"dir":"h"},{"word":"MIRA","row":2,"col":4,"dir":"v"}],"bonus":["ADMIRO","AMIDO","ARIDO","DIRAO","DOMAR","DORIA","DORMI","IRADO","IRMAO","MAIOR","MAORI","MOIDA","MOIRA","MORDA","MORDI","ODIAR","RODAM","ADIR","ADRO","AMIR","AMOR","DAMO","DIMA","DIRA","DOAM","DOAR","DOIA","DORA","IRAM","IRAO","IRMA","MAIO","MARI","MIRO","MODA","MORA","MORI","ODIA","ORAM","RAIO","RAMI","RAMO","RIAM","RIMA","RODA","ROMA","ADI","ADO","AIO","AMO","ARO","DAI","DAO","DAR","DIA","DOA","DOI","DOM","DOR","IAM","IDA","IDO","IMA","IRA","MAI","MAO","MAR","MIA","MIO","MOA","MOI","MOR","ODA","ORA","ORI","RAD","RAI","RIA","RIM","RIO","ROM"]},{"id":"cadeira","letters":["C","A","D","E","I","R","A"],"w":8,"h":6,"words":[{"word":"CADEIRA","row":1,"col":1,"dir":"h"},{"word":"CEDIA","row":1,"col":1,"dir":"v"},{"word":"CARA","row":5,"col":0,"dir":"h"},{"word":"DICA","row":3,"col":1,"dir":"h"},{"word":"IRA","row":0,"col":6,"dir":"v"}],"bonus":["RECAIDA","CADEIA","CRIADA","DECAIR","ACARI","ACEDA","ACIDA","ADIAR","AREIA","ARIDA","CAIDA","CAIRA","CARDI","CARIE","CEARA","CERDA","CIARA","CIDRA","CREIA","DAREI","DARIA","ERICA","IRADA","RECAI","ACAI","ACRE","ADIA","ADIR","AIRE","ARCA","ARDA","ARDE","AREA","ARIA","CADA","CADE","CAIA","CAIR","CEDA","CEIA","CERA","CRIA","CRIE","DARA","DERA","DIRA","ECRA","EIRA","IARA","RACA","RAIA","RICA","RICE","ACA","ADA","ADE","ADI","AIA","AIE","ARA","CAI","CER","CIA","CIE","CRE","CRI","DAI","DAR","DEI","DER","DIA","ECA","EIA","ERA","ICA","IDA","IDE","RAD","RAI","REI","RIA"]},{"id":"relogio","letters":["R","E","L","O","G","I","O"],"w":7,"h":6,"words":[{"word":"RELOGIO","row":0,"col":0,"dir":"h"},{"word":"ELOGIO","row":0,"col":1,"dir":"v"},{"word":"GIRO","row":0,"col":4,"dir":"v"},{"word":"LOGO","row":5,"col":0,"dir":"h"},{"word":"OLEO","row":0,"col":6,"dir":"v"}],"bonus":["GOLEIRO","OLEIRO","GRELO","GRILO","LEIGO","LOIRE","LOIRO","REGIO","ERGO","GELO","GERI","GERO","GIRE","GOLE","GOLO","GORE","GORO","LEGO","LEIO","LERO","LIGO","LORO","OGRE","OGRO","OREI","REGI","REGO","RELI","ROGO","ROLE","ROLO","EGO","ELO","GEL","GEO","GIO","GOL","ILE","LEI","LER","OLE","ORE","ORI","ORO","REI","RIO","ROL","ROO"]}];
+
+  var WEEK = ["dom","seg","ter","qua","qui","sex","sáb"];
+  var MONTHS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  var EPOCH = Date.UTC(2026,0,1);
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function dayIndexOf(d){ return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()) - EPOCH)/864e5); }
+  function dateOfIndex(i){ var t = new Date(EPOCH + i*864e5); return new Date(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()); }
+  function puzzleFor(i){ return PUZZLES[((i % PUZZLES.length) + PUZZLES.length) % PUZZLES.length]; }
+
+  // ----- persistence (best effort; the page works without it) -----
+  var KEY = "lume.palavra.v1";
+  var HINT_COOLDOWN = 60000; // espera entre dicas
+  var save = { days:{}, streak:0, lastDone:null };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var p = JSON.parse(raw); if (p && typeof p === "object") save = Object.assign(save, p); }
+  } catch(e){}
+  function persist(){ try { localStorage.setItem(KEY, JSON.stringify(save)); } catch(e){} }
+  function dayState(i){
+    var k = String(i);
+    if (!save.days[k]) save.days[k] = { found:[], bonus:[], lastHint:0 };
+    if (save.days[k].lastHint == null) save.days[k].lastHint = 0;
+    return save.days[k];
+  }
+
+  function hintWaitMs(){
+    var elapsed = Date.now() - (dayState(cur.index).lastHint || 0);
+    return Math.max(0, HINT_COOLDOWN - elapsed);
+  }
+
+  function hasHiddenLetters(){
+    var st = dayState(cur.index);
+    return cur.puzzle.words.some(function(entry){
+      if (st.found.indexOf(entry.word) !== -1) return false;
+      return cellsOf(entry.word).some(function(c){ return c.el && !c.el.classList.contains("open"); });
+    });
+  }
+
+  // ----- elements -----
+  var el = {
+    screen: document.getElementById("screen"),
+    grid: document.getElementById("grid"),
+    wheel: document.getElementById("wheel"),
+    trail: document.getElementById("trailLine"),
+    trailSvg: document.getElementById("trailSvg"),
+    bubble: document.getElementById("bubble"),
+    bonusN: document.getElementById("bonusN"),
+    bonusStat: document.getElementById("bonusStat"),
+    hintLabel: document.getElementById("hintLabel"),
+    hintBtn: document.getElementById("hintBtn"),
+    shuffle: document.getElementById("shuffleBtn"),
+    barFill: document.getElementById("barFill"),
+    progress: document.getElementById("progressLabel"),
+    mainWord: document.getElementById("mainWord"),
+    dateLabel: document.getElementById("dateLabel"),
+    streak: document.getElementById("streak"),
+    streakN: document.getElementById("streakN"),
+    days: document.getElementById("days"),
+    done: document.getElementById("done"),
+    doneTitle: document.getElementById("doneTitle"),
+    doneText: document.getElementById("doneText"),
+    doneArchive: document.getElementById("doneArchive"),
+    doneClose: document.getElementById("doneClose"),
+    flight: document.getElementById("flight"),
+    mockStatus: document.getElementById("mockStatus")
+  };
+
+  var today = dayIndexOf(new Date());
+  var cur = { index: today, puzzle: null, cells: {}, tiles: [], order: [], sel: [] };
+
+  // ----- build a day -----
+  function loadDay(index){
+    cur.index = index;
+    cur.puzzle = puzzleFor(index);
+    cur.sel = [];
+    el.done.classList.remove("show");
+    el.grid.classList.remove("celebrate");
+    buildGrid();
+    buildWheel();
+    var d = dateOfIndex(index);
+    var FULLWEEK = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+    el.dateLabel.textContent = index === today ? "Palavra de hoje" : "Palavra do dia";
+    el.mainWord.textContent = FULLWEEK[d.getDay()] + ", " + d.getDate();
+    refresh();
+    // reveal anything already found on this day, without animation
+    dayState(index).found.forEach(function(w){ revealWord(w, false); });
+  }
+
+  function buildGrid(){
+    var p = cur.puzzle;
+    el.grid.innerHTML = "";
+    el.grid.style.gridTemplateColumns = "repeat(" + p.w + ",1fr)";
+    var letters = {};
+    p.words.forEach(function(entry){
+      for (var i=0;i<entry.word.length;i++){
+        var r = entry.row + (entry.dir === "v" ? i : 0);
+        var c = entry.col + (entry.dir === "v" ? 0 : i);
+        letters[r + ":" + c] = entry.word.charAt(i);
+      }
+    });
+    cur.cells = {};
+    for (var r=0;r<p.h;r++){
+      for (var c=0;c<p.w;c++){
+        var key = r + ":" + c;
+        var cell = document.createElement("div");
+        cell.className = "cell " + (letters[key] ? "slot" : "empty");
+        if (letters[key]){
+          var s = document.createElement("span");
+          s.textContent = letters[key];
+          cell.appendChild(s);
+          cur.cells[key] = cell;
+        }
+        el.grid.appendChild(cell);
+      }
+    }
+  }
+
+  function buildWheel(){
+    cur.tiles.forEach(function(t){ t.remove(); });
+    cur.tiles = [];
+    cur.order = cur.puzzle.letters.slice();
+    cur.order.forEach(function(ch, i){
+      var t = document.createElement("button");
+      t.type = "button";
+      t.className = "tile pop";
+      t.textContent = ch;
+      t.style.animationDelay = (i * 55) + "ms";
+      t.dataset.letter = ch;
+      el.wheel.appendChild(t);
+      cur.tiles.push(t);
+    });
+    layoutWheel();
+  }
+
+  function layoutWheel(){
+    var size = el.wheel.clientWidth || 260;
+    var R = size * 0.345;
+    var n = cur.tiles.length;
+    cur.tiles.forEach(function(t, i){
+      var a = -Math.PI/2 + (i/n) * Math.PI*2;
+      t.dataset.x = (size/2 + Math.cos(a)*R).toFixed(1);
+      t.dataset.y = (size/2 + Math.sin(a)*R).toFixed(1);
+      t.style.transform = "translate(-50%,-50%) translate(" + (Math.cos(a)*R).toFixed(1) + "px," + (Math.sin(a)*R).toFixed(1) + "px)";
+    });
+    el.trailSvg.setAttribute("viewBox", "0 0 " + size + " " + size);
+  }
+  window.addEventListener("resize", layoutWheel);
+
+  // ----- selection -----
+  var dragging = false;
+
+  function centers(){
+    return cur.tiles.map(function(t){
+      var r = t.getBoundingClientRect();
+      return { el:t, cx:r.left + r.width/2, cy:r.top + r.height/2, rad:r.width/2 };
+    });
+  }
+  var pts = [];
+
+  function startDrag(e){
+    if (el.done.classList.contains("show")) return;
+    dragging = true;
+    pts = centers();
+    cur.sel = [];
+    el.wheel.setPointerCapture && e.pointerId != null && el.wheel.setPointerCapture(e.pointerId);
+    moveDrag(e);
+  }
+
+  function moveDrag(e){
+    if (!dragging) return;
+    e.preventDefault();
+    var x = e.clientX, y = e.clientY;
+    for (var i=0;i<pts.length;i++){
+      var p = pts[i];
+      var d = Math.hypot(x - p.cx, y - p.cy);
+      if (d > p.rad * 1.05) continue;
+      var at = cur.sel.indexOf(p.el);
+      if (at === -1){
+        cur.sel.push(p.el);
+        p.el.classList.add("sel");
+        tick();
+      } else if (at === cur.sel.length - 2){
+        // dragged back one step: undo the last letter
+        var dropped = cur.sel.pop();
+        dropped.classList.remove("sel");
+      }
+      break;
+    }
+    drawTrail(x, y);
+    paintBubble();
+  }
+
+  function endDrag(){
+    if (!dragging) return;
+    dragging = false;
+    var word = cur.sel.map(function(t){ return t.dataset.letter; }).join("");
+    clearTrail();
+    submit(word);
+    cur.sel.forEach(function(t){ t.classList.remove("sel"); });
+    cur.sel = [];
+  }
+
+  el.wheel.addEventListener("pointerdown", startDrag);
+  el.wheel.addEventListener("pointermove", moveDrag);
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
+
+  function tick(){
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (e) {} }
+  }
+
+  function drawTrail(px, py){
+    var box = el.wheel.getBoundingClientRect();
+    var scale = (el.wheel.clientWidth || 260) / box.width;
+    var pointsArr = cur.sel.map(function(t){ return t.dataset.x + "," + t.dataset.y; });
+    if (cur.sel.length && px != null){
+      pointsArr.push((((px - box.left) * scale)).toFixed(1) + "," + (((py - box.top) * scale)).toFixed(1));
+    }
+    el.trail.setAttribute("points", pointsArr.join(" "));
+  }
+  function clearTrail(){ el.trail.setAttribute("points", ""); }
+
+  function paintBubble(){
+    var w = cur.sel.map(function(t){ return t.dataset.letter; }).join("");
+    el.bubble.textContent = w;
+    el.bubble.className = "bubble" + (w ? " on" : "");
+  }
+
+  // ----- submitting a word -----
+  function submit(word){
+    var st = dayState(cur.index);
+    var inGrid = cur.puzzle.words.some(function(e){ return e.word === word; });
+    var isBonus = cur.puzzle.bonus.indexOf(word) !== -1;
+
+    if (!word || word.length < 3){ fade(); return; }
+
+    if (inGrid && st.found.indexOf(word) === -1){
+      st.found.push(word);
+      persist();
+      flash("ok", word);
+      revealWord(word, true);
+      refresh();
+      if (st.found.length === cur.puzzle.words.length) finish();
+      return;
+    }
+    if (isBonus && st.bonus.indexOf(word) === -1){
+      st.bonus.push(word);
+      persist();
+      flash("bonus", word);
+      el.bonusStat.classList.add("got");
+      setTimeout(function(){ el.bonusStat.classList.remove("got"); }, 480);
+      refresh();
+      return;
+    }
+    if ((inGrid && st.found.indexOf(word) !== -1) || (isBonus && st.bonus.indexOf(word) !== -1)){
+      flash("dup", word);
+      if (inGrid) bounceWord(word);
+      return;
+    }
+    flash("bad", word);
+    el.wheel.classList.add("nope");
+    setTimeout(function(){ el.wheel.classList.remove("nope"); }, 420);
+  }
+
+  function flash(kind, word){
+    el.bubble.textContent = word;
+    el.bubble.className = "bubble on " + kind;
+    clearTimeout(flash.t);
+    flash.t = setTimeout(fade, kind === "bad" ? 620 : 520);
+  }
+  function fade(){ el.bubble.className = "bubble"; }
+
+  function cellsOf(word){
+    var entry = null;
+    for (var i=0;i<cur.puzzle.words.length;i++){ if (cur.puzzle.words[i].word === word){ entry = cur.puzzle.words[i]; break; } }
+    if (!entry) return [];
+    var out = [];
+    for (var j=0;j<entry.word.length;j++){
+      var r = entry.row + (entry.dir === "v" ? j : 0);
+      var c = entry.col + (entry.dir === "v" ? 0 : j);
+      out.push({ key: r+":"+c, el: cur.cells[r+":"+c], ch: entry.word.charAt(j) });
+    }
+    return out;
+  }
+
+  function revealWord(word, animate){
+    var list = cellsOf(word);
+    var fresh = list.filter(function(c){ return c.el && !c.el.classList.contains("open"); });
+    if (!animate || reduced){
+      fresh.forEach(function(c){ c.el.classList.add("open"); });
+      return;
+    }
+    fresh.forEach(function(c, i){
+      var from = tileFor(c.ch);
+      flyTo(c.ch, from, c.el, i * 55, function(){
+        c.el.classList.add("open","flip");
+        setTimeout(function(){ c.el.classList.remove("flip"); }, 480);
+      });
+    });
+    list.filter(function(c){ return c.el && c.el.classList.contains("open"); }).forEach(function(c){
+      c.el.classList.add("pulse");
+      setTimeout(function(){ c.el.classList.remove("pulse"); }, 520);
+    });
+  }
+
+  function bounceWord(word){
+    cellsOf(word).forEach(function(c, i){
+      if (!c.el) return;
+      setTimeout(function(){
+        c.el.classList.add("pulse");
+        setTimeout(function(){ c.el.classList.remove("pulse"); }, 500);
+      }, i * 45);
+    });
+  }
+
+  function tileFor(ch){
+    for (var i=0;i<cur.tiles.length;i++){ if (cur.tiles[i].dataset.letter === ch) return cur.tiles[i]; }
+    return cur.tiles[0];
+  }
+
+  function flyTo(ch, fromEl, toEl, delay, done){
+    if (!fromEl || !toEl){ done(); return; }
+    var a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+    var chip = document.createElement("div");
+    chip.className = "fly";
+    chip.textContent = ch;
+    chip.style.left = (a.left + a.width/2 - 21) + "px";
+    chip.style.top = (a.top + a.height/2 - 21) + "px";
+    el.flight.appendChild(chip);
+    var dx = (b.left + b.width/2) - (a.left + a.width/2);
+    var dy = (b.top + b.height/2) - (a.top + a.height/2);
+    var anim = chip.animate([
+      { transform:"translate(0,0) scale(1)", opacity:1 },
+      { transform:"translate(" + (dx*0.5) + "px," + (dy*0.5 - 26) + "px) scale(.92)", opacity:1, offset:.55 },
+      { transform:"translate(" + dx + "px," + dy + "px) scale(.5)", opacity:.15 }
+    ], { duration: 430, delay: delay, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" });
+    anim.onfinish = function(){ chip.remove(); done(); };
+  }
+
+  // ----- hint -----
+  el.hintBtn.addEventListener("click", function(){
+    if (hintWaitMs() > 0) return;
+    var st = dayState(cur.index);
+    var pending = cur.puzzle.words.filter(function(e){ return st.found.indexOf(e.word) === -1; });
+    if (!pending.length) return;
+    for (var i=0;i<pending.length;i++){
+      var hidden = cellsOf(pending[i].word).filter(function(c){ return c.el && !c.el.classList.contains("open"); });
+      if (hidden.length){
+        var target = hidden[0];
+        st.lastHint = Date.now();
+        persist();
+        target.el.classList.add("open","hinted","flip");
+        setTimeout(function(){ target.el.classList.remove("flip"); }, 480);
+        refresh();
+        return;
+      }
+    }
+  });
+
+  // ----- shuffle -----
+  el.shuffle.addEventListener("click", function(){
+    for (var i = cur.tiles.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = cur.tiles[i]; cur.tiles[i] = cur.tiles[j]; cur.tiles[j] = tmp;
+    }
+    layoutWheel();
+    el.shuffle.classList.add("spin");
+    setTimeout(function(){
+      el.shuffle.style.transition = "none";
+      el.shuffle.classList.remove("spin");
+      requestAnimationFrame(function(){ el.shuffle.style.transition = ""; });
+    }, 320);
+  });
+
+  // ----- finishing a day -----
+  function finish(){
+    var wasDone = save.lastDone;
+    if (cur.index === today && wasDone !== today){
+      save.streak = (wasDone === today - 1) ? (save.streak || 0) + 1 : 1;
+      save.lastDone = today;
+      persist();
+      el.streak.classList.add("bump");
+      setTimeout(function(){ el.streak.classList.remove("bump"); }, 520);
+    }
+    refresh();
+    el.grid.classList.add("celebrate");
+    setTimeout(function(){
+      el.done.classList.add("show");
+      el.doneTitle.textContent = cur.index === today ? "Todas as palavras!" : "Dia completo!";
+      el.doneText.textContent = cur.index === today
+        ? "Volte amanhã para a próxima. Sua sequência é de " + (save.streak || 1) + " dia" + ((save.streak || 1) > 1 ? "s" : "") + "."
+        : "Esse dia ficou completo. Pode voltar para o de hoje.";
+      confetti();
+    }, reduced ? 0 : 620);
+  }
+
+  el.doneClose.addEventListener("click", function(){ el.done.classList.remove("show"); });
+  el.doneArchive.addEventListener("click", function(){
+    el.done.classList.remove("show");
+    el.days.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+  });
+
+  // ----- confetti -----
+  function confetti(){
+    if (reduced) return;
+    var cv = document.createElement("canvas");
+    cv.className = "confetti";
+    document.body.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = window.innerWidth * dpr; cv.height = window.innerHeight * dpr;
+    ctx.scale(dpr, dpr);
+    var box = el.screen.getBoundingClientRect();
+    var colors = ["#A44266","#C1894A","#3F7D68","#7C6BB0","#F3B7C8"];
+    var parts = [];
+    for (var i=0;i<80;i++){
+      parts.push({
+        x: box.left + box.width/2 + (Math.random()-.5)*box.width*0.7,
+        y: box.top + box.height*0.42,
+        vx: (Math.random()-.5)*5.5,
+        vy: -Math.random()*7 - 2.5,
+        s: 3 + Math.random()*4,
+        c: colors[(Math.random()*colors.length)|0],
+        r: Math.random()*Math.PI,
+        vr: (Math.random()-.5)*.28,
+        life: 0
+      });
+    }
+    var start = performance.now();
+    (function frame(now){
+      var t = now - start;
+      ctx.clearRect(0,0,window.innerWidth, window.innerHeight);
+      parts.forEach(function(p){
+        p.vy += 0.17; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.globalAlpha = Math.max(0, 1 - t/1900);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s*1.6);
+        ctx.restore();
+      });
+      if (t < 1900) requestAnimationFrame(frame); else cv.remove();
+    })(start);
+  }
+
+  // ----- refresh chrome -----
+  function refresh(){
+    var st = dayState(cur.index);
+    var total = cur.puzzle.words.length;
+    var got = st.found.length;
+    el.progress.textContent = got + " / " + total + " · " + cur.puzzle.letters.length + " letras";
+    el.barFill.style.width = (total ? (got/total*100) : 0) + "%";
+    el.bonusN.textContent = st.bonus.length;
+    refreshHintButton();
+    el.streakN.textContent = save.streak || 0;
+    el.mockStatus.textContent = got + " de " + total + " palavras · sequência de " + (save.streak || 0) + " dia" + ((save.streak||0) === 1 ? "" : "s");
+    renderDays();
+  }
+
+  function renderDays(){
+    el.days.innerHTML = "";
+    for (var k = 0; k <= 6; k++){
+      (function(idx){
+        var d = dateOfIndex(idx);
+        var st = save.days[String(idx)] || { found:[] };
+        var complete = st.found.length === puzzleFor(idx).words.length;
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "day" + (idx === today ? " today" : "") + (complete ? " done" : "");
+        b.innerHTML = '<div class="d-w">' + WEEK[d.getDay()] + '</div><div class="d-n">' + d.getDate() + '</div><div class="d-s"></div>';
+        b.addEventListener("click", function(){
+          loadDay(idx);
+          el.screen.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+        });
+        el.days.appendChild(b);
+      })(today - k);
+    }
+  }
+
+  function refreshHintButton(){
+    var waiting = hintWaitMs();
+    var done = dayState(cur.index).found.length === cur.puzzle.words.length;
+    var blocked = done || !hasHiddenLetters();
+    el.hintBtn.disabled = waiting > 0 || blocked;
+    el.hintLabel.textContent = waiting > 0
+      ? Math.ceil(waiting / 1000) + "s"
+      : "Dica";
+    el.hintBtn.style.opacity = blocked ? 0.4 : 1;
+  }
+
+  setInterval(refreshHintButton, 500);
+
+  loadDay(today);
+  el.bubble.className = "bubble";
+})();
+</script>

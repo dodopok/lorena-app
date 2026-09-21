@@ -1,14 +1,36 @@
 """Gera e valida os puzzles do Palavra do dia.
 
-Cada puzzle define uma roda de letras e as palavras da grade. O empacotador
-cruza as palavras de verdade (mesma letra no cruzamento, sem palavras
-paralelas coladas) e falha alto se algo não fecha — o contrário de escrever
-coordenadas à mão e torcer.
+Duas coisas acontecem aqui:
 
-    python3 tools/wordpuzzles.py > Lume/Features/Words/WordPuzzleCatalog.swift
+1. O empacotador cruza as palavras da grade de verdade (mesma letra no
+   cruzamento, sem palavras paralelas coladas) e falha alto se algo não
+   fecha — o contrário de escrever coordenadas à mão e torcer.
+
+2. A lista de palavras bônus sai do dicionário, não da nossa cabeça: todo
+   termo do corpus pt que dá para montar com as letras da roda entra, desde
+   que o hunspell pt_BR reconheça a forma minúscula (o que derruba nome
+   próprio e sigla — "carol", "roma", "api" — e mantém "fole", "dormia").
+   Sem isso, palavra válida que a jogadora encontra é recusada como
+   inexistente.
+
+Dependências (só para gerar; o app carrega o .swift pronto):
+
+    apt-get install hunspell-pt-br
+    pip install wordfreq spylls
+
+    python3 tools/wordpuzzles.py
+
+Escreve Lume/Features/Words/WordPuzzleCatalog.swift e tools/puzzles.json
+(este último alimenta o protótipo em HTML).
 """
+import json
 import sys
+import unicodedata
 from collections import Counter
+
+MIN_ZIPF = 2.5          # abaixo disso o corpus vira ruído e sigla
+MAX_EN_LEAD = 1.0       # bem mais comum em inglês que em português = estrangeirismo
+MAX_BONUS = 160         # teto por puzzle, ordenado por frequência
 
 # (id, roda, palavras da grade, palavras bônus)
 PUZZLES = [
@@ -102,15 +124,62 @@ def pack(words, spilled):
     return grid, placed
 
 
-def build():
+def strip_accents(word):
+    decomposed = unicodedata.normalize("NFD", word)
+    return "".join(c for c in decomposed if unicodedata.category(c) != "Mn").upper()
+
+
+def load_lexicon():
+    """{FORMA_SEM_ACENTO: zipf} apenas com o que o hunspell reconhece."""
+    from spylls.hunspell import Dictionary
+    from wordfreq import top_n_list, zipf_frequency
+
+    dictionary = Dictionary.from_files("/usr/share/hunspell/pt_BR")
+    lexicon, checked = {}, {}
+    for word in top_n_list("pt", 150000):
+        plain = strip_accents(word)
+        if len(plain) < 3 or not plain.isalpha() or not plain.isascii():
+            continue
+        zipf = zipf_frequency(word, "pt")
+        if zipf < MIN_ZIPF:
+            continue
+        # "date", "trade", "rate" passam pelo hunspell pt_BR mas são inglês:
+        # o corpus inglês as usa muito mais do que o português.
+        if zipf_frequency(word, "en") - zipf > MAX_EN_LEAD:
+            continue
+        if word not in checked:
+            checked[word] = dictionary.lookup(word)
+        if not checked[word]:
+            continue
+        if zipf > lexicon.get(plain, 0):
+            lexicon[plain] = zipf
+    return lexicon
+
+
+def bonus_words(letters, grid_words, seed, lexicon):
+    """Tudo que dá para montar com a roda e não está na grade."""
+    banned = set(grid_words)
+    found = {w for w in seed if w not in banned and formable(w, letters)}
+    for word, _ in sorted(lexicon.items(), key=lambda kv: -kv[1]):
+        if word in banned or word in found:
+            continue
+        if formable(word, letters):
+            found.add(word)
+        if len(found) >= MAX_BONUS:
+            break
+    return sorted(found, key=lambda w: (-len(w), w))
+
+
+def build(lexicon):
     out, problems = [], []
     for pid, letters, words, bonus in PUZZLES:
         for w in words + bonus:
             if not formable(w, letters):
                 problems.append(f"{pid}: '{w}' não sai das letras {letters}")
         spilled = []
-        grid, placed = pack(sorted(set(words), key=len, reverse=True), spilled)
-        bonus = sorted(set(bonus) | set(spilled), key=lambda w: (-len(w), w))
+        grid, placed = pack(sorted(set(words), key=lambda w: (-len(w), w)), spilled)
+        placed_words = [p["word"] for p in placed]
+        bonus = bonus_words(letters, placed_words, set(bonus) | set(spilled), lexicon)
         if len(placed) < 4:
             problems.append(f"{pid}: só {len(placed)} palavras na grade")
         minr = min(r for r, _ in grid)
@@ -156,7 +225,9 @@ def swift(puzzles):
     return "\n".join(lines)
 
 
-puzzles, problems = build()
+lexicon = load_lexicon()
+sys.stderr.write("léxico: %d formas reconhecidas\n" % len(lexicon))
+puzzles, problems = build(lexicon)
 if problems:
     sys.stderr.write("PROBLEMAS:\n  " + "\n  ".join(problems) + "\n")
     sys.exit(1)
@@ -164,4 +235,10 @@ for p in puzzles:
     sys.stderr.write("%-9s %dx%d  %d palavras, %d bônus%s\n" % (
         p["id"], p["w"], p["h"], len(p["words"]), len(p["bonus"]),
         "  (sobrou: %s)" % ",".join(p["spilled"]) if p["spilled"] else ""))
-sys.stdout.write(swift(puzzles))
+
+with open("Lume/Features/Words/WordPuzzleCatalog.swift", "w", encoding="utf-8") as handle:
+    handle.write(swift(puzzles))
+with open("tools/puzzles.json", "w", encoding="utf-8") as handle:
+    json.dump([{k: p[k] for k in ("id", "letters", "w", "h", "words", "bonus")} for p in puzzles],
+              handle, ensure_ascii=False, separators=(",", ":"))
+sys.stderr.write("escrito: WordPuzzleCatalog.swift e tools/puzzles.json\n")

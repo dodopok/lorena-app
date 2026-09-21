@@ -176,44 +176,65 @@ struct WordGameView: View {
         return Double(model.foundCount) / Double(model.totalWords)
     }
 
+    /// Bônus é placar — texto solto, sem moldura. Dica é ação — pílula cheia,
+    /// com sombra e ícone. A diferença de forma é o que diz o que dá para tocar.
     private func railRow(_ model: WordGameModel) -> some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 9) {
-                Circle().fill(LumeColor.greenDeep).frame(width: 9, height: 9)
-                Text("bônus")
-                    .font(LumeType.sans(12.5, weight: .semibold))
-                    .foregroundStyle(LumeColor.textSecondary)
+        HStack(spacing: 12) {
+            HStack(spacing: 7) {
+                Circle().fill(LumeColor.greenDeep).frame(width: 7, height: 7)
                 Text("\(model.bonusFound.count)")
                     .font(LumeType.serif(17))
                     .foregroundStyle(LumeColor.ink)
                     .contentTransition(.numericText())
+                Text("bônus")
+                    .font(LumeType.sans(13))
+                    .foregroundStyle(LumeColor.textFaint)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 13)
-            .padding(.vertical, 11)
-            .lumeSoftGlass(cornerRadius: 16, opacity: 0.62, shadow: false)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(model.bonusFound.count) palavras bônus")
+
+            Spacer(minLength: 8)
+
+            hintButton(model)
+        }
+        .frame(height: 44)
+    }
+
+    private func hintButton(_ model: WordGameModel) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let remaining = model.hintCooldownRemaining(at: context.date)
+            let waiting = remaining > 0
+            let available = model.canUseHint(at: context.date)
 
             Button {
                 useHint(model)
             } label: {
-                HStack(spacing: 9) {
-                    Circle().fill(LumeColor.amberAccent).frame(width: 9, height: 9)
-                    Text("dica")
-                        .font(LumeType.sans(12.5, weight: .semibold))
-                        .foregroundStyle(LumeColor.textSecondary)
-                    Text("\(model.hintsAvailable)")
-                        .font(LumeType.serif(17))
-                        .foregroundStyle(LumeColor.ink)
-                        .contentTransition(.numericText())
+                HStack(spacing: 7) {
+                    Image(systemName: waiting ? "hourglass" : "lightbulb.fill")
+                        .font(.system(size: 13, weight: .bold))
+                    Text(waiting ? "\(Int(remaining.rounded(.up)))s" : "Dica")
+                        .font(LumeType.sans(14, weight: .heavy))
+                        .monospacedDigit()
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 13)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 18)
                 .padding(.vertical, 11)
+                .background(
+                    Capsule().fill(waiting ? LumeColor.textFainter : LumeColor.brand)
+                )
+                .shadow(
+                    color: available ? LumeColor.brand.opacity(0.32) : .clear,
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
             }
             .buttonStyle(.plain)
-            .lumeSoftGlass(cornerRadius: 16, opacity: 0.62, shadow: false)
-            .opacity(model.canUseHint ? 1 : 0.45)
-            .disabled(!model.canUseHint)
+            .disabled(!available)
+            .opacity(model.isComplete || !model.hasHiddenLetters ? 0.4 : 1)
+            .animation(.easeOut(duration: 0.2), value: waiting)
+            .accessibilityLabel("Dica")
+            .accessibilityHint(waiting ? "Disponível em \(Int(remaining.rounded(.up))) segundos" : "Revela uma letra")
         }
     }
 

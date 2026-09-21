@@ -5,14 +5,15 @@ import SwiftData
 /// sequência sai da contagem dessas linhas, então não há estado global para
 /// sair de sincronia.
 ///
-/// As dicas são por dia: cada dia começa com duas e cada palavra bônus
-/// encontrada naquele dia rende mais uma.
+/// As dicas não acabam: o que limita é uma espera entre uma e outra, guardada
+/// em `lastHintAt` para que sair da tela não zere o relógio.
 @Model
 final class WordDayProgress {
     var dayIndex: Int = 0
     var foundWords: [String] = []
     var bonusWords: [String] = []
     var hintsUsed: Int = 0
+    var lastHintAt: Date?
     var revealedByHint: [String] = []
     var completedAt: Date?
 
@@ -20,11 +21,8 @@ final class WordDayProgress {
         self.dayIndex = dayIndex
     }
 
-    static let hintsPerDay = 2
-
-    var hintsAvailable: Int {
-        max(0, Self.hintsPerDay + bonusWords.count - hintsUsed)
-    }
+    /// Espera entre duas dicas.
+    static let hintCooldown: TimeInterval = 60
 
     var isComplete: Bool { completedAt != nil }
 }

@@ -1,56 +1,35 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# Xcode / Swift
 .DS_Store
-.atom/
 .build/
-.buildlog/
-.history
-.svn/
 .swiftpm/
-migrate_working_dir/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
 
-# IntelliJ related
+# XcodeGen regenerates the project from project.yml — keep the spec, not
+# generated user-specific workspace state.
+Lume.xcodeproj/project.xcworkspace/xcuserdata/
+Lume.xcodeproj/xcuserdata/
+
+# IDE
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
 #.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-**/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
 
 # Local integration credentials and signing material
 *.p8
 client_secret*.json
 serviceAccount*.json
-
-# Firebase Functions build output and dependencies
-functions/node_modules/
-functions/lib/
-firebase/rules-tests/node_modules/
+*.mobileprovision
+*.p12

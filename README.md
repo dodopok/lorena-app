@@ -1,116 +1,63 @@
 # Lume
 
-Aplicativo pessoal para iPhone, planejado em Flutter, que reúne agenda, autocuidado, finanças, leituras, desejos e gratidão em um único espaço acolhedor.
+Aplicativo pessoal para iPhone, nativo em Swift/SwiftUI, que reúne agenda, autocuidado, finanças, leituras, desejos e gratidão em um único espaço acolhedor.
 
-> **Status:** MVP funcional em alpha, com modo offline, motion system sem layout shifting, ícone nativo rosa, mídia privada, exportação/exclusão, listas de compras nomeadas, undo para registros simples, Share Extension nativa e extração segura de links por Cloud Function. Ainda faltam validações em aparelho físico, deploy/configuração operacional da Function, OAuth iOS correto da Agenda e associação/assinatura do App Group descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md).
+> **Status:** reescrita nativa completa da proposta original (que era em Flutter — ver histórico do git para essa versão). Todos os módulos abaixo existem como telas reais; nada foi validado em dispositivo físico ainda porque foi escrito sem acesso a um Mac/Xcode. Veja [SETUP.md](SETUP.md) para gerar o projeto e rodar.
 
 ## Visão rápida
 
-O Lume quer reduzir a fricção de pequenos registros cotidianos. A tela **Hoje** será o ponto de entrada para consultar o dia, adicionar água, registrar autocuidado, acompanhar a mesada e guardar uma gratidão. Os módulos mais completos ficam disponíveis na navegação principal, sem transformar o aplicativo em um painel de produtividade.
+O Lume reduz a fricção de pequenos registros cotidianos. A tela **Hoje** é o ponto de entrada: próximo compromisso, água, ações rápidas de um toque e o quanto ainda está disponível até a próxima mesada. Os módulos mais completos ficam nas outras quatro abas, sem virar painel de produtividade.
 
 Princípios do produto:
 
 - registros rápidos, com as ações frequentes acessíveis em até dois toques;
-- funcionamento offline para os dados próprios, com sincronização posterior;
-- linguagem acolhedora e sem culpa;
-- privacidade por padrão, com exportação e exclusão dos dados;
-- identidade delicada, predominantemente rosa, sem infantilizar a experiência.
+- tudo funciona offline — os dados ficam no aparelho até ela escolher sincronizar;
+- linguagem acolhedora e sem culpa (o Banheiro é só contagem, por exemplo — nada de escala, nada de observação);
+- privacidade por padrão: Face ID opcional, exportação e exclusão de dados a qualquer momento;
+- identidade tátil e quente — rosa queimado sobre papel morno, Liquid Glass, sem infantilizar.
 
-## Escopo do MVP
+## Módulos
 
-- **Hoje:** resumo diário, próximo compromisso, progresso de água, ações rápidas, saldo mensal e gratidão do dia;
-- **Agenda:** conexão opcional com o Google Agenda para visualizar e editar compromissos;
-- **Bem-estar:** água, evacuações e exercícios registrados manualmente;
-- **Finanças:** mesada, receitas, despesas, categorias, saldo mensal e lista de compras;
-- **Favoritos e desejos:** links de produtos, revisão manual, imagem, preço e estados comprado/arquivado;
-- **Livros:** biblioteca, capa, status de leitura, avaliação e resenha;
-- **Gratidão:** uma entrada diária com texto, foto ou ambos;
-- **Conta e privacidade:** Sign in with Apple, bloqueio biométrico opcional, uso offline, exportação e exclusão.
+- **Hoje** — saudação, próximo compromisso, água (com log de um toque), grade "um toque" (Banheiro/Exercício/Gasto) e o saldo disponível até a mesada;
+- **Agenda** — visão dia/semana/mês, categorias coloridas, lembrete de anotar gasto após um compromisso, e leitura (somente leitura) dos eventos do Calendário do iPhone via EventKit — inclui contas Google já configuradas no aparelho, sem OAuth próprio;
+- **Bem-estar** — água, banheiro (contagem semanal) e exercícios num só lugar;
+- **Finanças** — saldo disponível, categorias, lista de gastos por dia, lançamento rápido, lista de compras e adições avulsas de dinheiro;
+- **Cantinho** — três abas: Gratidão (texto + foto, rascunho salvo automaticamente), Livros (biblioteca com progresso de leitura, busca via Google Books) e Filmes/Séries (status assistindo/assistido/quero assistir);
+- **Desejos** — colar um link de produto e deixar nome, preço e imagem se preencherem sozinhos (LinkPresentation + leitura best-effort da página), com aviso de queda de preço;
+- **Compartilhar** (Share Extension) — mandar um link de outro app direto para os Desejos do Lume;
+- **Ajustes** — perfil, metas (água/mesada), lembretes, Face ID, exportação de dados em JSON e apagar tudo;
+- **Tela bloqueada** — Live Activity/Dynamic Island da água, com "+300" funcionando direto da ilha dinâmica.
 
-Integrações como HealthKit, Open Finance, pagamentos, Apple Watch, Android, colaboração entre usuários e rastreamento contínuo de preços ficam fora do primeiro lançamento.
+Fora de escopo por enquanto: sincronização entre aparelhos/iCloud, notificações push, Apple Watch, Android.
 
-## Decisões atuais
+## Decisões técnicas
 
 | Tema | Escolha |
 |---|---|
-| Plataforma inicial | iPhone |
-| Aplicativo | Flutter/Dart |
-| Conta do app | Sign in with Apple via Firebase Authentication |
-| Agenda | Conta Google separada e opcional |
-| Backend | Firebase Authentication, Firestore, Storage e Functions pontuais no projeto compartilhado `lume-13125` |
-| Google Cloud | Calendar API e OAuth no projeto compartilhado `lume-app-506521` (“Lume App”) |
-| Offline | Persistência offline do Firestore para dados próprios |
-| Cache operacional | SQLite/Drift para Agenda, rascunhos e fila de fotos |
-| Idioma e localização | Português do Brasil, `America/Sao_Paulo` e BRL |
-| Distribuição inicial | Builds privadas e TestFlight |
+| Plataforma | iPhone, iOS 26+ |
+| Aplicativo | Swift 6 / SwiftUI nativo, sem framework cross-platform |
+| UI | Liquid Glass real (`.glassEffect`) para chrome/controles; `Material` para cards de conteúdo |
+| Dados | SwiftData, armazenado no App Group local (`group.com.dodopok.lume`) |
+| Conta | Sign in with Apple opcional — "usar só neste iPhone" é o caminho padrão |
+| Agenda | EventKit (Calendário do iPhone), leitura apenas — nenhum backend próprio |
+| Backend | Nenhum. Tudo local; exportação manual em JSON quando ela quiser uma cópia |
+| Notificações | Locais (UserNotifications), sem push |
+| Live Activity | ActivityKit, atualizada também por um App Intent rodando na Dynamic Island |
+| Idioma | Português do Brasil fixo (sem i18n) |
+| Projeto Xcode | Gerado via [XcodeGen](https://github.com/yonaskolb/XcodeGen) a partir de `project.yml` |
 
-## Documentação
+## Estrutura
 
-O [plano completo do produto](docs/README.md) é a fonte de verdade para escopo, arquitetura e execução.
-
-### Produto
-
-- [Visão do produto](docs/00-visao-produto.md)
-- [Escopo e requisitos](docs/01-escopo-requisitos.md)
-- [Experiência e design](docs/02-experiencia-design.md)
-- [Revisão de UI/UX e pendências atuais](docs/15-revisao-ui-ux.md)
-- [Roadmap e entregas](docs/08-roadmap.md)
-- [Backlog e critérios de aceite](docs/10-backlog-aceite.md)
-
-### Interfaces
-
-- [Contratos das telas](docs/12-contratos-telas.md)
-- [Componentes compartilhados](docs/13-componentes-compartilhados.md)
-
-### Engenharia
-
-- [Arquitetura técnica](docs/03-arquitetura-tecnica.md)
-- [Modelo de dados](docs/04-modelo-dados.md)
-- [Integrações](docs/05-integracoes.md)
-- [Segurança e privacidade](docs/06-seguranca-privacidade.md)
-- [Qualidade e testes](docs/07-qualidade-testes.md)
-
-### Operação
-
-- [Operação e distribuição](docs/09-operacao-distribuicao.md)
-- [Referências oficiais](docs/11-referencias.md)
-- [Decisões arquiteturais (ADRs)](docs/adr/README.md)
-
-## Roadmap resumido
-
-1. **Fundação:** inicializar Flutter/iOS, backend Firebase compartilhado, autenticação, offline, fotos, biometria e design system.
-2. **Primeira fatia diária:** onboarding, tela Hoje, água, gratidão em texto e configurações básicas.
-3. **Bem-estar:** evacuações, exercícios, fotos e lembretes locais opcionais.
-4. **Finanças:** mesada, lançamentos, rollover, saldo e lista de compras.
-5. **Google Agenda:** calendários, cache, sincronização incremental e edição de eventos.
-6. **Cantinho e lançamento:** livros, favoritos, portabilidade, Share Extension, extração segura de links e TestFlight.
-
-Consulte o [roadmap detalhado](docs/08-roadmap.md) e os [critérios de aceite](docs/10-backlog-aceite.md) antes de iniciar uma entrega.
-
-## Estado do repositório
-
-O repositório contém um projeto Flutter executável com onboarding, shell de cinco destinos, Hoje, água, evacuações, exercícios, finanças, listas nomeadas, desejos manuais/extração opcional, livros, gratidão, configurações, motion respeitando Reduzir Movimento, exportação ZIP, exclusão com reautenticação, Storage privado, cobertura no app switcher, regras Firebase, índices, Functions e CI. Dados próprios usam persistência local como recuperação offline e Firebase compartilhado nos builds `dev`/`prod`; a Agenda mantém somente cache local e segue desligada até o OAuth iOS correto ser cadastrado. A extração permanece atrás de `LUME_ENABLE_LINK_EXTRACTION=true` até o deploy e a validação integrada no projeto compartilhado.
-
-Para rodar localmente:
-
-```bash
-flutter pub get
-flutter run
+```
+project.yml       — spec do XcodeGen (fonte da verdade do projeto Xcode)
+Lume.xcodeproj/    — projeto gerado (regenerável com `xcodegen generate`)
+Lume/              — app target: Features/, Design/, Services/, App/
+LumeWidgets/       — extensão de widget: Live Activity + Dynamic Island
+LumeShare/         — Share Extension (mandar links pro Lume de outros apps)
+Shared/            — modelos SwiftData e utilitários compilados nos três alvos
+SETUP.md           — como gerar o projeto e rodar
 ```
 
-Para validar a entrega:
+## Rodando o projeto
 
-```bash
-dart format --output=none --set-exit-if-changed lib test
-flutter analyze
-flutter test
-npm --prefix functions test
-npm --prefix firebase/rules-tests test
-flutter build ios --no-codesign
-```
-
-As integrações externas e os gates de distribuição continuam condicionados às credenciais e aos spikes descritos em [docs/14-credenciais-e-integracoes.md](docs/14-credenciais-e-integracoes.md), [Arquitetura técnica](docs/03-arquitetura-tecnica.md#decisoes-que-exigem-spike-tecnico) e [Segurança e privacidade](docs/06-seguranca-privacidade.md).
-
-## Critério de sucesso da beta
-
-Após quatro semanas de uso real, a usuária deve conseguir continuar usando o Lume espontaneamente, sem perda ou duplicação de dados, com registros frequentes rápidos, saldo mensal confiável, notificações não invasivas e uma experiência visual aprovada sem reformulação estrutural.
+Veja [SETUP.md](SETUP.md) — resumo: `brew install xcodegen`, `xcodegen generate`, abrir `Lume.xcodeproj`, ajustar o Team em cada target e rodar.

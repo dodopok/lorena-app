@@ -3,6 +3,9 @@
 .build/
 .swiftpm/
 DerivedData/
+# saída de `xcodebuild -derivedDataPath build`
+build/
+*.xcresult
 *.xcuserstate
 xcuserdata/
 *.xcscmblueprint
@@ -33,3 +36,6 @@ client_secret*.json
 serviceAccount*.json
 *.mobileprovision
 *.p12
+
+# Ferramentas de geração (tools/wordpuzzles.py)
+tools/__pycache__/

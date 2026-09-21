@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		438D5D498535D703F850D4C6 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 27A9CA573034AD69E32E3B82 /* PrivacyInfo.xcprivacy */; };
 		E4FA59BDBCA31828F2C6CD17 /* LetterWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1D846003BB0200B6181290 /* LetterWheelView.swift */; };
 		72B059EBA4E5842F9D99FA8D /* WordGameModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9B75E5DAA0B427436A99256 /* WordGameModel.swift */; };
 		10D328FDC92E2CDBC1554072 /* WordGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA9093A707F4592DEC4D083 /* WordGameView.swift */; };
@@ -150,6 +151,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		27A9CA573034AD69E32E3B82 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6E1D846003BB0200B6181290 /* LetterWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterWheelView.swift; sourceTree = "<group>"; };
 		D9B75E5DAA0B427436A99256 /* WordGameModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordGameModel.swift; sourceTree = "<group>"; };
 		9FA9093A707F4592DEC4D083 /* WordGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordGameView.swift; sourceTree = "<group>"; };
@@ -318,6 +320,7 @@
 			isa = PBXGroup;
 			children = (
 				02747FD53B999CD5EF11E0BA /* Assets.xcassets */,
+				27A9CA573034AD69E32E3B82 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -674,6 +677,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0E66911AA7D5B8C42D37094B /* Assets.xcassets in Resources */,
+				438D5D498535D703F850D4C6 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

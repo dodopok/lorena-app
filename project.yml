@@ -31,6 +31,7 @@ targets:
       - path: Shared
     resources:
       - path: Lume/Resources/Assets.xcassets
+      - path: Lume/Resources/PrivacyInfo.xcprivacy
     entitlements:
       path: Lume/Lume.entitlements
     dependencies:

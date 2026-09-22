@@ -95,14 +95,15 @@ struct BooksTabView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // A review needs room for five stars and its action label. Three
-                    // narrow columns made the control wrap into an awkward second line
-                    // on the phone, so books use the same comfortable two-column rhythm
-                    // as films and the wishlist.
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
+                        spacing: 14
+                    ) {
                         ForEach(Array(books.enumerated()), id: \.element.persistentModelID) { index, book in
                             VStack(alignment: .leading, spacing: 8) {
-                                BookCoverView(seedHex: book.coverColorHex, coverURLString: book.coverURLString, coverImageData: book.coverImageData, width: nil, height: 174)
+                                // Mantém a capa alta o suficiente para parecer um livro,
+                                // sem ocupar espaço demais na grade de três colunas.
+                                BookCoverView(seedHex: book.coverColorHex, coverURLString: book.coverURLString, coverImageData: book.coverImageData, width: nil, height: 150)
                                     Text(book.title)
                                     .font(LumeType.sans(12, weight: .bold))
                                     .foregroundStyle(LumeColor.ink)
@@ -114,10 +115,17 @@ struct BooksTabView: View {
                                 Button {
                                     bookToEdit = book
                                 } label: {
-                                    HStack(spacing: 7) {
-                                        LumeStarDisplay(rating: book.rating, size: 11)
-                                        Text(book.rating == 0 ? "Avaliar" : "Editar avaliação")
-                                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                    HStack(spacing: 4) {
+                                        if book.rating == 0 {
+                                            Image(systemName: "star")
+                                                .font(.system(size: 11, weight: .semibold))
+                                        } else {
+                                            LumeStarDisplay(rating: book.rating, size: 9)
+                                        }
+                                        Text(book.rating == 0 ? "Avaliar" : "Editar")
+                                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
                                             .foregroundStyle(LumeColor.brand)
                                         Spacer(minLength: 0)
                                     }

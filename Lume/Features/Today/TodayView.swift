@@ -15,6 +15,7 @@ struct TodayView: View {
     @Query(sort: \MoneyAddition.date, order: .reverse) private var moneyAdditions: [MoneyAddition]
     @Query(sort: \CalendarEvent.startDate) private var events: [CalendarEvent]
     @Query(sort: \ExerciseEntry.date, order: .reverse) private var exerciseEntries: [ExerciseEntry]
+    @State private var calendarSync = CalendarSyncService.shared
 
     @State private var activeSheet: TodaySheet?
 
@@ -116,6 +117,7 @@ struct TodayView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .onAppear { calendarSync.refreshAuthorizationStatus() }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .bathroom: BathroomSheetView()
@@ -171,8 +173,13 @@ struct TodayView: View {
         expenses.filter(\.date.isToday).reduce(0) { $0 + $1.amount }
     }
 
-    private var nextEvent: CalendarEvent? {
-        events.first { $0.startDate >= .now }
+    private var nextEvent: AgendaItem? {
+        let now = Date.now
+        let local = events.first { $0.startDate >= now }.map(AgendaItem.init(event:))
+        let external = calendarSync.nextEvent(after: now).map(AgendaItem.init(external:))
+        return [local, external]
+            .compactMap { $0 }
+            .min { $0.start < $1.start }
     }
 
     private var availableBalance: Double {

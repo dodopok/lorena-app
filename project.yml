@@ -18,7 +18,7 @@ settings:
     SWIFT_EMIT_LOC_STRINGS: YES
     GENERATE_INFOPLIST_FILE: NO
     MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "10"
+    CURRENT_PROJECT_VERSION: "17"
     DEVELOPMENT_TEAM: "R573HPN65Q"
     CODE_SIGN_STYLE: Automatic
 
@@ -34,6 +34,15 @@ targets:
       - path: Lume/Resources/PrivacyInfo.xcprivacy
     entitlements:
       path: Lume/Lume.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.dodopok.lume
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.security.application-groups:
+          - group.com.dodopok.lume
     dependencies:
       - target: LumeWidgets
         embed: true
@@ -59,6 +68,9 @@ targets:
       - path: LumeWidgets/Resources/Assets.xcassets
     entitlements:
       path: LumeWidgets/LumeWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.dodopok.lume
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dodopok.lume.widgets
@@ -75,6 +87,9 @@ targets:
       - path: LumeShare
     entitlements:
       path: LumeShare/LumeShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.dodopok.lume
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dodopok.lume.share

@@ -3,15 +3,15 @@ import SwiftData
 
 /// The upcoming-appointment card — time + countdown on the left, title/place on the right.
 struct NextEventCard: View {
-    var event: CalendarEvent
+    var event: AgendaItem
 
     var body: some View {
         HStack(spacing: 16) {
             VStack(spacing: 4) {
-                Text(LumeDateFormat.time(event.startDate))
+                Text(LumeDateFormat.time(event.start))
                     .font(LumeType.serif(28))
                     .foregroundStyle(LumeColor.ink)
-                LumeEyebrow(text: LumeDateFormat.relativeCountdown(to: event.startDate), size: 10.5)
+                LumeEyebrow(text: LumeDateFormat.relativeCountdown(to: event.start), size: 10.5)
             }
             .frame(minWidth: 58)
 

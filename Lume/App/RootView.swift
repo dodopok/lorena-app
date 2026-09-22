@@ -34,6 +34,12 @@ struct RootView: View {
                 lockController.unlock()
             }
         }
+        .onChange(of: profile?.hasCompletedOnboarding) { _, isComplete in
+            guard isComplete == true else { return }
+            Task {
+                _ = await LumeCloudBackupService.shared.backupIfNeeded()
+            }
+        }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             guard let profile, profile.faceIDEnabled else { return }
             if newPhase == .background {

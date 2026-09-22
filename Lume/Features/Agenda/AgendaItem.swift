@@ -1,8 +1,8 @@
 import EventKit
 import Foundation
 
-/// A display-layer item merging Lume's own events with read-only ones synced
-/// in from the system Calendar (see `CalendarSyncService`).
+/// A display-layer item merging Lume's events with those in the system
+/// Calendar (see `CalendarSyncService`).
 struct AgendaItem: Identifiable, Hashable {
     let id: String
     var title: String
@@ -11,9 +11,11 @@ struct AgendaItem: Identifiable, Hashable {
     var end: Date?
     var category: AgendaCategory
     var isExternal: Bool
+    var isExternalEditable: Bool
     var remindToLogExpense: Bool
     var loggedExpense: Bool
     var sourceEvent: CalendarEvent?
+    var externalEvent: EKEvent?
 
     static func == (lhs: AgendaItem, rhs: AgendaItem) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -31,9 +33,11 @@ struct AgendaItem: Identifiable, Hashable {
         end = event.endDate
         category = event.category
         isExternal = false
+        isExternalEditable = true
         remindToLogExpense = event.remindToLogExpense
         loggedExpense = event.loggedExpense
         sourceEvent = event
+        externalEvent = nil
     }
 
     init(external ekEvent: EKEvent) {
@@ -44,9 +48,11 @@ struct AgendaItem: Identifiable, Hashable {
         end = ekEvent.endDate
         category = .rotina
         isExternal = true
+        isExternalEditable = ekEvent.calendar.allowsContentModifications
         remindToLogExpense = false
         loggedExpense = false
         sourceEvent = nil
+        externalEvent = ekEvent
     }
 
     static func merged(lumeEvents: [CalendarEvent], external: [EKEvent]) -> [AgendaItem] {

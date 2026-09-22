@@ -26,6 +26,8 @@
 		22B9D12E54B23C78824D5895 /* LumeStarRating.swift in Sources */ = {isa = PBXBuildFile; fileRef = E221874CAE456DB441B4F5F2 /* LumeStarRating.swift */; };
 		22C26BBDB1E451A4EEDD4338 /* WishlistTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98AAB85D11B739186B9F3B95 /* WishlistTabView.swift */; };
 		234A7C4D93D4458024FCD8CB /* WordDayProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC1B5F574482CF6F22865696 /* WordDayProgress.swift */; };
+		25EB27327153CB88136EA6D4 /* LumeCloudBackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AD3EAA8F6248219C6F5C3B /* LumeCloudBackupService.swift */; };
+		278A92C55832110EB4A7C589 /* LumeRecoveryImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8479F28D2EB6DFFE33080C /* LumeRecoveryImportService.swift */; };
 		2847FD1E7E2958497BBF58E2 /* NewEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B234DBED52334661EB428888 /* NewEventSheet.swift */; };
 		2CE6ABDA579FA71881B3E687 /* GratitudeTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA33AE4528FF80C77BE4EAE /* GratitudeTabView.swift */; };
 		2E25E554146CBBE3B5598A9F /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708F6F70B25F5D5C403D3546 /* LiveActivityController.swift */; };
@@ -62,9 +64,9 @@
 		7E0ECC65300C7B96431FD308 /* LumeModelContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03085E5ACC90A0FE7EAC1C4 /* LumeModelContainer.swift */; };
 		7E5C31FF549946A9E9ACCA3C /* AgendaContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E85A8396E27A89F56665871 /* AgendaContainerView.swift */; };
 		7E60D308DB208FE63C441695 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5B9C52E9C3FF4BF88220FD /* TodayView.swift */; };
+		834B8590F92E68EE33D77445 /* LumeRecoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDD5C13486E6945E7950ADDE /* LumeRecoveryService.swift */; };
 		86D0FA60CB2DD75F45418A67 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA03F45FAE503A494EDB36 /* ExerciseEntry.swift */; };
 		86E8751E2EFCB32269F35113 /* LumeColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00BC2AB53207CBE5D736A2C /* LumeColor.swift */; };
-		8867ADCCB15981093817A123 /* Lume.xcodeproj in Resources */ = {isa = PBXBuildFile; fileRef = 02DE4AE52C5BF25A9132DDE7 /* Lume.xcodeproj */; };
 		888B20CDF87FEDC06769C857 /* MovieShow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C86F135A5D84A3928FBFD79 /* MovieShow.swift */; };
 		8E790C626E5563E32FF47123 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC6D66C7C09478C2D060496 /* UserProfile.swift */; };
 		8F175C69E19B78ED5CDFEF04 /* GoogleBooksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC48264AA5A0AAF007626D77 /* GoogleBooksService.swift */; };
@@ -153,7 +155,6 @@
 
 /* Begin PBXFileReference section */
 		02747FD53B999CD5EF11E0BA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		02DE4AE52C5BF25A9132DDE7 /* Lume.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Lume.xcodeproj; sourceTree = "<group>"; };
 		03B3BF4884CE98A715CEF839 /* TodayComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayComponents.swift; sourceTree = "<group>"; };
 		03BEE23B93A94D105C0A987F /* LumeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeApp.swift; sourceTree = "<group>"; };
 		04E071BA9AD12EBD901F631E /* MoviesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoviesTabView.swift; sourceTree = "<group>"; };
@@ -162,6 +163,7 @@
 		0FFE4586B021941AF3F4C1C4 /* Lume.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Lume.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		121A7E00DAFCFC8B25836335 /* LumeAmountField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeAmountField.swift; sourceTree = "<group>"; };
 		1564AB93B39A08F1FA1E47B7 /* Expense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expense.swift; sourceTree = "<group>"; };
+		15AD3EAA8F6248219C6F5C3B /* LumeCloudBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeCloudBackupService.swift; sourceTree = "<group>"; };
 		1698EE4C06554AAFA32808CC /* LumeSheetHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeSheetHeader.swift; sourceTree = "<group>"; };
 		1812C408D90AC2513A02B931 /* LumeMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeMotion.swift; sourceTree = "<group>"; };
 		1BC6D66C7C09478C2D060496 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 		3A0E800B883420E91BA6CB07 /* GratitudeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GratitudeEntry.swift; sourceTree = "<group>"; };
 		3B3D1A501408C99B7BF573AB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3BD33722199521AF66C9AE2C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		3F8479F28D2EB6DFFE33080C /* LumeRecoveryImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeRecoveryImportService.swift; sourceTree = "<group>"; };
 		41C1E6444E3F4158A70A36DC /* AddBookSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddBookSheet.swift; sourceTree = "<group>"; };
 		45F8F6865BF1936FBB1030E9 /* EntertainmentSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntertainmentSearchService.swift; sourceTree = "<group>"; };
 		494D3A47C07E76ADAC373D6D /* OnboardingDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDraft.swift; sourceTree = "<group>"; };
@@ -228,6 +231,7 @@
 		BC1B5F574482CF6F22865696 /* WordDayProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDayProgress.swift; sourceTree = "<group>"; };
 		BC8EFB5FF6294F270D1B16A1 /* CalendarEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvent.swift; sourceTree = "<group>"; };
 		BD77386C02FF57221FCED54A /* ExerciseComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseComposerView.swift; sourceTree = "<group>"; };
+		BDD5C13486E6945E7950ADDE /* LumeRecoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumeRecoveryService.swift; sourceTree = "<group>"; };
 		BE1F17940E28F0E444A42F06 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C5315E05467E8D8408CC53BA /* RootTabContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabContainer.swift; sourceTree = "<group>"; };
 		CDA68EED423A974FB62AB0F2 /* WordOfDayTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordOfDayTabView.swift; sourceTree = "<group>"; };
@@ -257,7 +261,6 @@
 			children = (
 				BE1F17940E28F0E444A42F06 /* Info.plist */,
 				F59E31F93D55C74E563B9736 /* Lume.entitlements */,
-				02DE4AE52C5BF25A9132DDE7 /* Lume.xcodeproj */,
 				377369C59B8F39916FC0215A /* App */,
 				1A0E4D3596F262B8BC3EC8C4 /* Design */,
 				F44BA776020BB8AB72CDD3FB /* Features */,
@@ -334,6 +337,9 @@
 				45F8F6865BF1936FBB1030E9 /* EntertainmentSearchService.swift */,
 				FC48264AA5A0AAF007626D77 /* GoogleBooksService.swift */,
 				D72071DE2C2F2EF933C01AB3 /* LinkMetadataFetcher.swift */,
+				15AD3EAA8F6248219C6F5C3B /* LumeCloudBackupService.swift */,
+				3F8479F28D2EB6DFFE33080C /* LumeRecoveryImportService.swift */,
+				BDD5C13486E6945E7950ADDE /* LumeRecoveryService.swift */,
 				F97D096A2C15629A39CFCA9E /* NotificationScheduler.swift */,
 			);
 			path = Services;
@@ -680,7 +686,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				0E66911AA7D5B8C42D37094B /* Assets.xcassets in Resources */,
-				8867ADCCB15981093817A123 /* Lume.xcodeproj in Resources */,
 				55C523D685C135A8A8EC7652 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -743,6 +748,7 @@
 				AAA10422F016F61E3237B0B0 /* LumeAmountField.swift in Sources */,
 				7174D7CFF1F30E0E71AC9050 /* LumeApp.swift in Sources */,
 				6B70C36606110A3FD7E39C1D /* LumeButtons.swift in Sources */,
+				25EB27327153CB88136EA6D4 /* LumeCloudBackupService.swift in Sources */,
 				4F7867ED156C4E682B1105A6 /* LumeColor.swift in Sources */,
 				DFBC17A448B8DD5E007FE565 /* LumeCurrency.swift in Sources */,
 				55798607BDA496887897A71C /* LumeDateFormat.swift in Sources */,
@@ -750,6 +756,8 @@
 				1F2258FA55727EBF149C654A /* LumeLogoMark.swift in Sources */,
 				7E0ECC65300C7B96431FD308 /* LumeModelContainer.swift in Sources */,
 				0111A1511690FC1CB3FE7709 /* LumeMotion.swift in Sources */,
+				278A92C55832110EB4A7C589 /* LumeRecoveryImportService.swift in Sources */,
+				834B8590F92E68EE33D77445 /* LumeRecoveryService.swift in Sources */,
 				56B62865A27713F0A45A4308 /* LumeRoute.swift in Sources */,
 				D6989FBA076955FEEE5ACA65 /* LumeSheetHeader.swift in Sources */,
 				22B9D12E54B23C78824D5895 /* LumeStarRating.swift in Sources */,
@@ -931,7 +939,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 17;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = R573HPN65Q;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -996,7 +1004,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 17;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = R573HPN65Q;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

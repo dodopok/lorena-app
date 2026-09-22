@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import EventKit
 
 struct AgendaDayView: View {
     @Binding var selectedDate: Date
@@ -352,11 +353,36 @@ struct AgendaEventDetailSheet: View {
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var eventToEdit: CalendarEvent?
+    @State private var editTarget: EditTarget?
+
+    private enum EditTarget: Identifiable {
+        case lume(CalendarEvent)
+        case external(EKEvent)
+
+        var id: String {
+            switch self {
+            case .lume(let event): "lume-\(event.id.uuidString)"
+            case .external(let event): "ek-\(event.eventIdentifier ?? UUID().uuidString)"
+            }
+        }
+    }
 
     private var displayedItem: AgendaItem {
-        guard let event = item.sourceEvent else { return item }
-        return AgendaItem(event: event)
+        if let event = item.sourceEvent { return AgendaItem(event: event) }
+        if let event = item.externalEvent { return AgendaItem(external: event) }
+        return item
+    }
+
+    private var canEdit: Bool {
+        !displayedItem.isExternal || displayedItem.isExternalEditable
+    }
+
+    private func beginEditing() {
+        if let event = displayedItem.sourceEvent {
+            editTarget = .lume(event)
+        } else if let event = displayedItem.externalEvent, displayedItem.isExternalEditable {
+            editTarget = .external(event)
+        }
     }
 
     var body: some View {
@@ -364,10 +390,10 @@ struct AgendaEventDetailSheet: View {
             LumeSheetHeader(
                 leadingTitle: "Fechar",
                 title: "Detalhes",
-                trailingTitle: displayedItem.isExternal ? " " : "Editar",
-                trailingEnabled: !displayedItem.isExternal,
+                trailingTitle: canEdit ? "Editar" : " ",
+                trailingEnabled: canEdit,
                 onLeading: { dismiss() },
-                onTrailing: { eventToEdit = displayedItem.sourceEvent }
+                onTrailing: beginEditing
             )
             .padding(.horizontal, 24)
             .padding(.top, 18)
@@ -424,8 +450,14 @@ struct AgendaEventDetailSheet: View {
                         ) {
                             onDelete()
                         }
+                    } else if displayedItem.isExternalEditable {
+                        Text("As alterações serão salvas no calendário de origem do iPhone.")
+                            .font(LumeType.sans(13.5))
+                            .foregroundStyle(LumeColor.textFaint)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 14)
                     } else {
-                        Text("Este compromisso veio do Calendário do iPhone e não pode ser alterado no Lume.")
+                        Text("Este calendário permite visualizar o compromisso, mas não alterar.")
                             .font(LumeType.sans(13.5))
                             .foregroundStyle(LumeColor.textFaint)
                             .multilineTextAlignment(.center)
@@ -440,8 +472,13 @@ struct AgendaEventDetailSheet: View {
         .background(LumeColor.canvas.ignoresSafeArea())
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
-        .sheet(item: $eventToEdit) { event in
-            NewEventSheet(initialDate: event.startDate, eventToEdit: event)
+        .sheet(item: $editTarget) { target in
+            switch target {
+            case .lume(let event):
+                NewEventSheet(initialDate: event.startDate, eventToEdit: event)
+            case .external(let event):
+                NewEventSheet(initialDate: event.startDate, externalEventToEdit: event)
+            }
         }
     }
 

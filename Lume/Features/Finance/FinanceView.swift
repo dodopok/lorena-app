@@ -84,7 +84,7 @@ struct FinanceView: View {
                     .padding(.top, 4)
                 }
 
-                Menu {
+                LumeFloatingActionMenu(accessibilityLabel: "Adicionar movimentação financeira") {
                     Button {
                         showingNewExpense = true
                     } label: {
@@ -93,21 +93,9 @@ struct FinanceView: View {
                     Button {
                         showingNewMoneyAddition = true
                     } label: {
-                        Label("Adicionar dinheiro", systemImage: "plus.circle.fill")
+                        Label("Dinheiro recebido", systemImage: "plus.circle.fill")
                     }
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 26, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 62, height: 62)
-                        .background(Circle().fill(LumeColor.brand))
-                        .contentShape(Circle())
                 }
-                .buttonStyle(.plain)
-                .lumePulse(Circle(), color: LumeColor.brand)
-                .shadow(color: LumeColor.brand.opacity(0.4), radius: 16, x: 0, y: 10)
-                .padding(.trailing, 22)
-                .padding(.bottom, 130)
             }
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingNewExpense) {

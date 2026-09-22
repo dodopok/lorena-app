@@ -14,7 +14,7 @@ struct NewMoneyAdditionView: View {
         VStack(spacing: 0) {
             LumeSheetHeader(
                 leadingTitle: "Cancelar",
-                title: "Adicionar dinheiro",
+                title: "Dinheiro recebido",
                 trailingTitle: "Salvar",
                 trailingEnabled: amount > 0,
                 onLeading: { dismiss() },

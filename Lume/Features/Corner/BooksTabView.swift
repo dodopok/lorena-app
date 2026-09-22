@@ -15,137 +15,128 @@ struct BooksTabView: View {
     private var readingBook: Book? { books.first { $0.status == .reading } }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                if let readingBook {
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 18) {
-                            BookCoverView(seedHex: readingBook.coverColorHex, coverURLString: readingBook.coverURLString, coverImageData: readingBook.coverImageData, width: 86, height: 126)
+        ZStack(alignment: .bottomTrailing) {
+            ScrollView {
+                VStack(spacing: 18) {
+                    if let readingBook {
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack(spacing: 18) {
+                                BookCoverView(seedHex: readingBook.coverColorHex, coverURLString: readingBook.coverURLString, coverImageData: readingBook.coverImageData, width: 86, height: 126)
 
-                            VStack(alignment: .leading, spacing: 8) {
-                                LumeEyebrow(text: "Lendo agora")
-                                Text(readingBook.title)
-                                    .font(LumeType.serif(22))
-                                    .foregroundStyle(LumeColor.ink)
-                                    .lineLimit(2)
-                                Text(readingBook.author)
-                                    .font(LumeType.sans(13))
-                                    .foregroundStyle(LumeColor.textFaint)
+                                VStack(alignment: .leading, spacing: 8) {
+                                    LumeEyebrow(text: "Lendo agora")
+                                    Text(readingBook.title)
+                                        .font(LumeType.serif(22))
+                                        .foregroundStyle(LumeColor.ink)
+                                        .lineLimit(2)
+                                    Text(readingBook.author)
+                                        .font(LumeType.sans(13))
+                                        .foregroundStyle(LumeColor.textFaint)
 
-                                GeometryReader { geo in
-                                    Capsule().fill(LumeColor.brandPlumStart.opacity(0.1))
-                                        .overlay(alignment: .leading) {
-                                            Capsule().fill(LumeColor.brand)
-                                                .frame(width: geo.size.width * readingBook.progress)
-                                        }
+                                    GeometryReader { geo in
+                                        Capsule().fill(LumeColor.brandPlumStart.opacity(0.1))
+                                            .overlay(alignment: .leading) {
+                                                Capsule().fill(LumeColor.brand)
+                                                    .frame(width: geo.size.width * readingBook.progress)
+                                            }
+                                    }
+                                    .frame(height: 7)
+
+                                    Text("página \(readingBook.currentPage) de \(readingBook.totalPages)")
+                                        .font(LumeType.sans(12.5))
+                                        .foregroundStyle(LumeColor.textFaint)
                                 }
-                                .frame(height: 7)
-
-                                Text("página \(readingBook.currentPage) de \(readingBook.totalPages)")
-                                    .font(LumeType.sans(12.5))
-                                    .foregroundStyle(LumeColor.textFaint)
                             }
                         }
-                    }
-                    .padding(20)
-                    .lumeSoftGlass(cornerRadius: 28)
-                    .lumeRiseIn()
-                    .contextMenu { bookActions(for: readingBook) }
+                        .padding(20)
+                        .lumeSoftGlass(cornerRadius: 28)
+                        .lumeRiseIn()
+                        .contextMenu { bookActions(for: readingBook) }
 
-                    Button {
-                        showingPageUpdate = true
-                    } label: {
-                        Text("Atualizar página")
-                            .font(LumeType.sans(15, weight: .heavy))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(LumeColor.brand))
-                            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Button { showingAddBook = true } label: {
+                        Button {
+                            showingPageUpdate = true
+                        } label: {
+                            Text("Atualizar página")
+                                .font(LumeType.sans(15, weight: .heavy))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(LumeColor.brand))
+                                .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    } else {
                         VStack(spacing: 8) {
                             Image(systemName: "book").font(.system(size: 26)).foregroundStyle(LumeColor.textFainter)
-                            Text("Nenhum livro em andamento — adicionar um?")
+                            Text("Nenhum livro em andamento")
                                 .font(LumeType.sans(14)).foregroundStyle(LumeColor.textMuted)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 30)
-                    }
-                    .buttonStyle(.plain)
-                    .lumeSoftGlass(cornerRadius: 28, shadow: false)
-                }
-
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Biblioteca").font(LumeType.sans(17, weight: .heavy)).foregroundStyle(LumeColor.ink)
-                        Spacer()
-                        Button {
-                            showingAddBook = true
-                        } label: {
-                            Text("Adicionar")
-                                .font(LumeType.sans(14, weight: .bold))
-                                .foregroundStyle(LumeColor.brand)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 8)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                        .lumeSoftGlass(cornerRadius: 28, shadow: false)
                     }
 
-                    LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
-                        spacing: 14
-                    ) {
-                        ForEach(Array(books.enumerated()), id: \.element.persistentModelID) { index, book in
-                            VStack(alignment: .leading, spacing: 8) {
-                                // Mantém a capa alta o suficiente para parecer um livro,
-                                // sem ocupar espaço demais na grade de três colunas.
-                                BookCoverView(seedHex: book.coverColorHex, coverURLString: book.coverURLString, coverImageData: book.coverImageData, width: nil, height: 150)
-                                    Text(book.title)
-                                    .font(LumeType.sans(12, weight: .bold))
-                                    .foregroundStyle(LumeColor.ink)
-                                    .lineLimit(2)
-                                Text(statusLabel(book))
-                                    .font(LumeType.sans(11))
-                                    .foregroundStyle(LumeColor.textFaint)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Biblioteca")
+                            .font(LumeType.sans(17, weight: .heavy))
+                            .foregroundStyle(LumeColor.ink)
 
-                                Button {
-                                    bookToEdit = book
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        if book.rating == 0 {
-                                            Image(systemName: "star")
-                                                .font(.system(size: 11, weight: .semibold))
-                                        } else {
-                                            LumeStarDisplay(rating: book.rating, size: 9)
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
+                            spacing: 14
+                        ) {
+                            ForEach(Array(books.enumerated()), id: \.element.persistentModelID) { index, book in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    // Mantém a capa alta o suficiente para parecer um livro,
+                                    // sem ocupar espaço demais na grade de três colunas.
+                                    BookCoverView(seedHex: book.coverColorHex, coverURLString: book.coverURLString, coverImageData: book.coverImageData, width: nil, height: 150)
+                                        Text(book.title)
+                                        .font(LumeType.sans(12, weight: .bold))
+                                        .foregroundStyle(LumeColor.ink)
+                                        .lineLimit(2)
+                                    Text(statusLabel(book))
+                                        .font(LumeType.sans(11))
+                                        .foregroundStyle(LumeColor.textFaint)
+
+                                    Button {
+                                        bookToEdit = book
+                                    } label: {
+                                        HStack(spacing: 4) {
+                                            if book.rating == 0 {
+                                                Image(systemName: "star")
+                                                    .font(.system(size: 11, weight: .semibold))
+                                            } else {
+                                                LumeStarDisplay(rating: book.rating, size: 9)
+                                            }
+                                            Text(book.rating == 0 ? "Avaliar" : "Editar")
+                                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                                .lineLimit(1)
+                                                .minimumScaleFactor(0.8)
+                                                .foregroundStyle(LumeColor.brand)
+                                            Spacer(minLength: 0)
                                         }
-                                        Text(book.rating == 0 ? "Avaliar" : "Editar")
-                                            .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                            .lineLimit(1)
-                                            .minimumScaleFactor(0.8)
-                                            .foregroundStyle(LumeColor.brand)
-                                        Spacer(minLength: 0)
+                                        .padding(.vertical, 6)
+                                        .contentShape(Rectangle())
                                     }
-                                    .padding(.vertical, 6)
-                                    .contentShape(Rectangle())
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel(book.rating == 0 ? "Avaliar livro" : "Editar avaliação do livro")
+                                    .accessibilityHint("Abre as estrelas e o campo de resenha")
                                 }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel(book.rating == 0 ? "Avaliar livro" : "Editar avaliação do livro")
-                                .accessibilityHint("Abre as estrelas e o campo de resenha")
+                                .lumeRiseIn(delay: Double(index) * 0.05)
+                                .contextMenu { bookActions(for: book) }
                             }
-                            .lumeRiseIn(delay: Double(index) * 0.05)
-                            .contextMenu { bookActions(for: book) }
                         }
                     }
-                }
 
-                Color.clear.frame(height: 110)
+                    Color.clear.frame(height: 170)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 4)
+
+            LumeFloatingActionButton(accessibilityLabel: "Adicionar livro") {
+                showingAddBook = true
+            }
         }
         .sheet(isPresented: $showingAddBook) { AddBookSheet() }
         .sheet(item: $bookToEdit) { book in

@@ -6,31 +6,13 @@ struct MoviesTabView: View {
     @Environment(\.openURL) private var openURL
     @Query(sort: \MovieShow.dateAdded, order: .reverse) private var savedItems: [MovieShow]
 
-    @State private var query = ""
-    @State private var results: [EntertainmentSearchResult] = []
-    @State private var isSearching = false
+    @State private var showingAddSearch = false
     @State private var movieToReview: MovieShow?
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                searchField
-
-                if isSearching {
-                    ProgressView()
-                        .tint(LumeColor.brand)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                } else if !results.isEmpty {
-                    searchResults
-                } else if query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 {
-                    Text("Nada encontrado por aqui.")
-                        .font(LumeType.sans(14))
-                        .foregroundStyle(LumeColor.textMuted)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                }
-
+        ZStack(alignment: .bottomTrailing) {
+            ScrollView {
+              VStack(spacing: 18) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Minha lista")
@@ -47,7 +29,7 @@ struct MoviesTabView: View {
                             Image(systemName: "popcorn.fill")
                                 .font(.system(size: 26))
                                 .foregroundStyle(LumeColor.textFainter)
-                            Text("Pesquise um filme ou uma série para guardar aqui.")
+                            Text("Toque no botão + para pesquisar um filme ou uma série.")
                                 .font(LumeType.sans(14))
                                 .foregroundStyle(LumeColor.textMuted)
                                 .multilineTextAlignment(.center)
@@ -64,11 +46,91 @@ struct MoviesTabView: View {
                     }
                 }
 
-                Color.clear.frame(height: 110)
+                Color.clear.frame(height: 170)
             }
             .padding(.horizontal, 20)
             .padding(.top, 4)
+            }
+
+            LumeFloatingActionButton(accessibilityLabel: "Adicionar filme ou série") {
+                showingAddSearch = true
+            }
         }
+        .sheet(isPresented: $showingAddSearch) {
+            MovieAddSearchSheet(savedItems: savedItems)
+        }
+        .sheet(item: $movieToReview) { movie in
+            MovieShowReviewSheet(movie: movie)
+        }
+    }
+
+    private func openSource(_ item: MovieShow) {
+        guard let sourceURLString = item.sourceURLString, let url = URL(string: sourceURLString) else { return }
+        openURL(url)
+    }
+
+    private func delete(_ item: MovieShow) {
+        modelContext.delete(item)
+        try? modelContext.save()
+    }
+}
+
+private struct MovieAddSearchSheet: View {
+    let savedItems: [MovieShow]
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @State private var query = ""
+    @State private var results: [EntertainmentSearchResult] = []
+    @State private var isSearching = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            LumeSheetHeader(
+                leadingTitle: "Cancelar",
+                title: "Adicionar título",
+                trailingTitle: " ",
+                trailingEnabled: false,
+                onLeading: { dismiss() },
+                onTrailing: {}
+            )
+            .padding(.horizontal, 24)
+            .padding(.top, 18)
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    searchField
+
+                    if isSearching {
+                        ProgressView()
+                            .tint(LumeColor.brand)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                    } else if !results.isEmpty {
+                        searchResults
+                    } else if query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 {
+                        Text("Nada encontrado por aqui.")
+                            .font(LumeType.sans(14))
+                            .foregroundStyle(LumeColor.textMuted)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                    } else {
+                        Text("Busque um filme ou uma série e toque no resultado para adicionar.")
+                            .font(LumeType.sans(14))
+                            .foregroundStyle(LumeColor.textMuted)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 30)
+            }
+        }
+        .background(LumeColor.canvas.ignoresSafeArea())
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
         .task(id: query) {
             let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
             guard trimmed.count >= 2 else {
@@ -83,9 +145,6 @@ struct MoviesTabView: View {
             guard !Task.isCancelled else { return }
             results = found
             isSearching = false
-        }
-        .sheet(item: $movieToReview) { movie in
-            MovieShowReviewSheet(movie: movie)
         }
     }
 
@@ -119,34 +178,44 @@ struct MoviesTabView: View {
     private var searchResults: some View {
         VStack(alignment: .leading, spacing: 10) {
             LumeEyebrow(text: "Resultados")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 12) {
-                    ForEach(results) { result in
-                        Button {
-                            add(result)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 7) {
-                                PosterView(imageURL: result.imageURL, height: 148)
+            LazyVStack(spacing: 10) {
+                ForEach(results) { result in
+                    Button { add(result) } label: {
+                        HStack(spacing: 12) {
+                            PosterView(imageURL: result.imageURL, height: 86)
+                                .frame(width: 60)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                            VStack(alignment: .leading, spacing: 5) {
                                 Text(result.title)
-                                    .font(LumeType.sans(13, weight: .bold))
+                                    .font(LumeType.sans(14, weight: .bold))
                                     .foregroundStyle(LumeColor.ink)
                                     .lineLimit(2)
-                                    .frame(width: 104, alignment: .leading)
                                 Text([result.kind, result.year.map(String.init)].compactMap { $0 }.joined(separator: " · "))
-                                    .font(LumeType.sans(11))
+                                    .font(LumeType.sans(12))
                                     .foregroundStyle(LumeColor.textFaint)
                             }
-                            .frame(width: 104, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundStyle(LumeColor.brand)
                         }
-                        .buttonStyle(.plain)
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.68)))
+                        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
     }
 
     private func add(_ result: EntertainmentSearchResult) {
-        guard !savedItems.contains(where: { $0.title.caseInsensitiveCompare(result.title) == .orderedSame }) else { return }
+        guard !savedItems.contains(where: { $0.title.caseInsensitiveCompare(result.title) == .orderedSame }) else {
+            dismiss()
+            return
+        }
         modelContext.insert(MovieShow(
             title: result.title,
             kind: result.kind,
@@ -155,16 +224,7 @@ struct MoviesTabView: View {
             sourceURLString: result.sourceURL?.absoluteString
         ))
         try? modelContext.save()
-    }
-
-    private func openSource(_ item: MovieShow) {
-        guard let sourceURLString = item.sourceURLString, let url = URL(string: sourceURLString) else { return }
-        openURL(url)
-    }
-
-    private func delete(_ item: MovieShow) {
-        modelContext.delete(item)
-        try? modelContext.save()
+        dismiss()
     }
 }
 

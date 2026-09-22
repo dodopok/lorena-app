@@ -110,6 +110,58 @@ struct LumeSolidIconButton: View {
     }
 }
 
+/// Floating add action shared by list screens, positioned above the app tab bar.
+struct LumeFloatingActionButton: View {
+    var accessibilityLabel: String
+    var action: () -> Void
+
+    var body: some View {
+        LumeSolidIconButton(
+            systemImage: "plus",
+            size: 62,
+            iconSize: 26,
+            color: LumeColor.brand,
+            pulses: true,
+            action: action
+        )
+        .accessibilityLabel(accessibilityLabel)
+        .shadow(color: LumeColor.brand.opacity(0.4), radius: 16, x: 0, y: 10)
+        .padding(.trailing, 22)
+        .padding(.bottom, 118)
+    }
+}
+
+/// Menu variant of the shared floating add action, for screens with multiple
+/// kinds of items to create.
+struct LumeFloatingActionMenu<Actions: View>: View {
+    var accessibilityLabel: String
+    @ViewBuilder var actions: () -> Actions
+
+    init(accessibilityLabel: String, @ViewBuilder actions: @escaping () -> Actions) {
+        self.accessibilityLabel = accessibilityLabel
+        self.actions = actions
+    }
+
+    var body: some View {
+        Menu {
+            actions()
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 62, height: 62)
+                .background(Circle().fill(LumeColor.brand))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .lumePulse(Circle(), color: LumeColor.brand)
+        .shadow(color: LumeColor.brand.opacity(0.4), radius: 16, x: 0, y: 10)
+        .padding(.trailing, 22)
+        .padding(.bottom, 118)
+        .accessibilityLabel(accessibilityLabel)
+    }
+}
+
 private struct OptionalPulse: ViewModifier {
     var enabled: Bool
     var color: Color

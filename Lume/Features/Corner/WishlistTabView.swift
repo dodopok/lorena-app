@@ -71,13 +71,9 @@ struct WishlistTabView: View {
             .padding(.top, 4)
             }
 
-            LumeSolidIconButton(systemImage: "plus", size: 62, iconSize: 26, color: LumeColor.brand, pulses: true) {
+            LumeFloatingActionButton(accessibilityLabel: "Adicionar produto") {
                 showingCapture = true
             }
-            .accessibilityLabel("Adicionar produto")
-            .shadow(color: LumeColor.brand.opacity(0.4), radius: 16, x: 0, y: 10)
-            .padding(.trailing, 22)
-            .padding(.bottom, 118)
         }
         .sheet(isPresented: $showingCapture, onDismiss: {
             captureInitialURL = nil

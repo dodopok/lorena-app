@@ -33,6 +33,14 @@ struct AgendaContainerView: View {
                             .font(LumeType.serif(mode == .day ? 32 : 30))
                             .foregroundStyle(LumeColor.ink)
                         Spacer()
+                        if mode == .month {
+                            LumeGlassIconButton(systemImage: "chevron.left", size: 40, iconSize: 15) {
+                                moveMonth(by: -1)
+                            }
+                            LumeGlassIconButton(systemImage: "chevron.right", size: 40, iconSize: 15) {
+                                moveMonth(by: 1)
+                            }
+                        }
                         LumeGlassIconButton(systemImage: "plus", size: 40, iconSize: 18) {
                             showingNewEvent = true
                         }
@@ -122,6 +130,20 @@ struct AgendaContainerView: View {
 
     private func showDetails(_ item: AgendaItem) {
         selectedItem = item
+    }
+
+    private func moveMonth(by amount: Int) {
+        let calendar = LumeDateFormat.calendar
+        guard let month = calendar.dateInterval(of: .month, for: selectedDate),
+              let destination = calendar.date(byAdding: .month, value: amount, to: month.start) else { return }
+        let day = calendar.component(.day, from: selectedDate)
+        let destinationRange = calendar.range(of: .day, in: .month, for: destination) ?? 1..<2
+        let clampedDay = min(day, destinationRange.count)
+        var components = calendar.dateComponents([.year, .month], from: destination)
+        components.day = clampedDay
+        withAnimation(.easeOut(duration: 0.2)) {
+            selectedDate = calendar.date(from: components) ?? destination
+        }
     }
 
     private func deletePendingEvent() {

@@ -44,9 +44,6 @@ struct TodayView: View {
                                 .lumeRiseIn(delay: 0.06)
                         }
 
-                        WordOfDayHomeCard()
-                            .lumeRiseIn(delay: 0.09)
-
                         WaterQuickCard(currentML: todayWaterTotal, goalML: profile?.waterGoalML ?? 2000) { amount in
                             logWater(amount)
                         }
